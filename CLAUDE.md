@@ -1,0 +1,234 @@
+# Premium TV Player — Project Guide for Claude Code
+
+> **This file is the single source of truth.** Every new Claude session starts by reading this file top-to-bottom, then executes the block under **▶️ Next Run**. After finishing the run, Claude MUST update this file (tick the run, write the next "Next Run" block, append to Run Log) and commit.
+
+---
+
+## 🎯 Current State
+
+- **Phase:** A — Foundation & Specs
+- **Last completed run:** Run 1 — Repo skeleton + CLAUDE.md + LICENSE
+- **Current branch:** `claude/premium-tv-player-plan-WG2tC`
+- **Push target:** same branch (`-u origin claude/premium-tv-player-plan-WG2tC`)
+- **Logo status:** ⏳ pending — Claude will ask the user in **Run 6**
+- **applicationId:** ⏳ to be decided in **Run 11**
+
+---
+
+## ▶️ Next Run (Run 2): PRD + User Flows
+
+### Goal
+Produce the Product Requirements Document and the canonical user-flow reference so that every subsequent run (backend, UI, billing) has an unambiguous spec to consult. No code yet — only docs.
+
+### Deliverables
+- [ ] `docs/product/PRD.md` — product vision, personas, V1 feature list, out-of-scope list, monetization, success metrics
+- [ ] `docs/product/user-flows.md` — step-by-step flows for: Onboarding, Signup, Login, Trial activation, Purchase (Single + Family), Restore Purchase, Profile creation/switch, Kids profile + PIN, Add source (M3U/XMLTV), EPG browse, Playback (Live + VOD + Resume), Device management, Logout
+- [ ] Each flow diagrammed with a mermaid sequence or flowchart
+
+### Acceptance criteria
+- A new dev/agent reading only `PRD.md` + `user-flows.md` can understand what V1 must do
+- No ambiguity on: who owns trial state (server), what "family" means (1 account, 5 profiles, 5 device slots), what Lifetime unlocks
+- Flows are consistent with the locked decisions in the **Product Decisions** section below
+
+### After this run — update CLAUDE.md
+1. Tick Run 2 in the roadmap
+2. Set "Last completed run" to `Run 2 — PRD + user flows`
+3. Write the new "Next Run" block for **Run 3: Data Model**
+4. Append entry to **Run Log**
+5. Commit: `docs: add PRD and user flows (Run 2)` and push
+
+---
+
+## 📋 Locked Product Decisions
+
+These are FINAL. Do not re-litigate in future runs unless the user explicitly asks.
+
+| Area | Decision |
+|---|---|
+| Product name (working) | **Premium TV Player** |
+| Positioning | Neutral premium player for user-authorized sources (not a content provider) |
+| Platform order | 1) Android TV → 2) Android Mobile → 3) Admin Web → 4) tvOS/iOS → 5) Samsung Tizen → 6) LG webOS |
+| Primary language | English (i18n-ready from day one) |
+| Monetization | 14-day **server-side** trial → Lifetime Single (€19.99–24.99) + Lifetime Family (€39.99–49.99) |
+| Entitlement model | **Account-based, NOT MAC-based.** 1 account → up to 5 profiles → up to 5 server-managed device slots (family plan) |
+| Auth | Firebase Authentication (email/password) + own entitlement layer on own API |
+| Purchase rails | Google Play Billing (one-time products), server-verified, refund/revoke aware |
+| Kids safety | Dedicated kids profile + PIN gate + age filter |
+| Cloud sync | Watch history, continue watching, favorites, profiles (synced via own API) |
+| Sources | App ships **empty**; user adds M3U / M3U8 / XMLTV URLs themselves |
+| Recording / Timeshift | EPG + recording **schedule** in V1; actual recording V1.5; true timeshift V2+ |
+| Design direction | Dark, premium, between Apple and Netflix — large heroes, elegant typography, clean focus states |
+| License | **Proprietary / All Rights Reserved** (no OSS license) |
+
+---
+
+## 🏗 Architecture & Stack
+
+### Android TV (V1 client)
+- Kotlin + Jetpack Compose + **Compose for TV**
+- Media3 / ExoPlayer
+- Hilt (DI), Coroutines + Flow
+- Room (local cache), DataStore (prefs)
+- Google Play Billing Library
+- Firebase Auth SDK
+- Retrofit or Ktor client → own API
+
+### Backend (V1)
+- TypeScript + **NestJS**
+- PostgreSQL (primary store) + **Prisma** ORM
+- Redis (sessions, rate limiting, caches)
+- Docker + docker-compose for local dev
+- REST API + OpenAPI 3.1 contract
+- Firebase Admin SDK (verify ID tokens) + own user/entitlement tables
+
+### Workers (separate processes)
+- `billing-worker` — Play Billing server verification, purchase ack, refund handling
+- `epg-worker` — XMLTV fetch + cache
+- `recording-worker` (later) — scheduled recording jobs
+
+### Shared packages
+- `packages/domain` — shared TS types/models
+- `packages/api-contracts` — OpenAPI + Zod
+- `packages/parsers` — M3U + XMLTV parsers
+- `packages/i18n` — shared string keys
+- `packages/ui-tokens` — design tokens (colors, spacing, typography, motion)
+- `packages/entitlement-engine` — pure logic for trial/active/expired/revoked
+
+---
+
+## 📁 Repo Layout
+
+```
+premium-player/            (repo root = /home/user/Ibo_Player_Pro)
+  apps/
+    android-tv/            # V1 focus
+    android-mobile/        # V2
+    admin-web/             # V2
+    apple-tv/              # V3
+    samsung-tv/            # V3
+    lg-tv/                 # V3
+  services/
+    api/                   # NestJS — V1
+    entitlement-service/
+    billing-worker/
+    epg-worker/
+    recording-worker/
+  packages/
+    domain/
+    api-contracts/
+    parsers/
+    i18n/
+    ui-tokens/
+    entitlement-engine/
+  infra/
+    docker/
+    postgres/
+    redis/
+    ci/
+  docs/
+    product/
+    architecture/
+    ux/
+    launch/
+  assets/
+    logo/                  # populated in Run 6 when user uploads
+  CLAUDE.md                # ← you are here
+  LICENSE
+  README.md
+  .gitignore
+  .editorconfig
+```
+
+---
+
+## 🗺 Full Roadmap (20 Runs)
+
+### Phase A — Foundation & Specs
+- [x] **Run 1** — Repo skeleton + CLAUDE.md + LICENSE + .gitignore + .editorconfig + README
+- [ ] **Run 2** — PRD + user flows (`docs/product/`)
+- [ ] **Run 3** — Data model: SQL schemas + ER diagram (`docs/architecture/data-model.md`)
+- [ ] **Run 4** — API contracts: OpenAPI 3.1 + Zod (`packages/api-contracts/`)
+- [ ] **Run 5** — Entitlement state machine + billing event handling (`docs/architecture/entitlement-state-machine.md`)
+
+### Phase B — Backend V1
+- [ ] **Run 6** — NestJS bootstrap (`services/api/`): Prisma, Postgres, Redis, docker-compose, health endpoint, env setup. **→ Claude asks user for logo upload into `assets/logo/` here.**
+- [ ] **Run 7** — Auth module: Firebase Admin token verify, user sync, register/login/refresh
+- [ ] **Run 8** — Entitlement module: trial start, status, device register/list/revoke
+- [ ] **Run 9** — Billing worker: Play Billing verification, ack, lifetime flip, refund handler
+- [ ] **Run 10** — Profile + Source modules: 5-profile cap, PIN hash, kids flag; source CRUD + parser stubs
+
+### Phase C — Android TV Client
+- [ ] **Run 11** — `apps/android-tv/` Gradle/Compose/Compose-TV bootstrap. **→ applicationId is decided in this run.** Leanback intent, TV manifest, Hilt, Navigation-Compose, ui-tokens wiring
+- [ ] **Run 12** — Design system in Compose: dark theme, typography, colors, focus states, motion, reusable Card/Row/Hero
+- [ ] **Run 13** — Onboarding/Auth screens: Welcome → Signup/Login → Trial activation → Profile picker. Firebase Auth + API client
+- [ ] **Run 14** — Home screen: Hero carousel, rows, Continue Watching, Favorites. Logo wired in if not already
+- [ ] **Run 15** — Source management UI + EPG browse view
+- [ ] **Run 16** — Playback (Media3/ExoPlayer): Live, VOD, Resume, subtitles, audio-track picker, heartbeat sync
+- [ ] **Run 17** — Billing flow in app: Play Billing Client, purchase trigger, Restore Purchase, entitlement UI states
+- [ ] **Run 18** — Parental controls: PIN gate, age filter, device list / logout / unpair
+
+### Phase D — Polish & Ship-Ready
+- [ ] **Run 19** — i18n finalization (all strings keyed, en default, fallback), error states, diagnostics screen
+- [ ] **Run 20** — E2E smoke test script (backend + app against local docker stack), release build config (R8/Proguard), store-listing asset checklist, handover doc
+
+### Buffer Runs (21+, optional)
+- Recording / scheduler
+- Admin web portal
+- Android Mobile client
+- CI/CD pipeline (GitHub Actions)
+
+---
+
+## 🔁 Per-Run Protocol (Claude MUST follow)
+
+1. **Read** CLAUDE.md completely — especially **Current State** and **▶️ Next Run**
+2. **Execute** only the Deliverables listed in the Next Run block. No scope creep.
+3. **Verify** against Acceptance criteria before finishing
+4. **Update CLAUDE.md**:
+   - Tick the just-finished run in the Full Roadmap
+   - Update **Current State** (Phase, Last completed run)
+   - Replace the **▶️ Next Run** block with the next run's Goal / Deliverables / Acceptance criteria / After-this-run note
+   - Append a new entry to the **Run Log** below (date, title, 2–5 bullet summary)
+5. **Commit** with message format: `<area>: <short summary> (Run N)`
+   Examples: `docs: add PRD and user flows (Run 2)`, `api: scaffold NestJS service (Run 6)`, `tv: add home screen (Run 14)`
+6. **Push** to `claude/premium-tv-player-plan-WG2tC` with `git push -u origin claude/premium-tv-player-plan-WG2tC` (retry on network error: 2s, 4s, 8s, 16s)
+7. **Do NOT** open a Pull Request unless the user explicitly asks
+
+### Guardrails
+- **Never** introduce MAC-address based device binding. Always server-managed device slots tied to account.
+- **Never** store entitlement/trial state only on the client. Server is authoritative.
+- **Never** add an OSS license. This repo is proprietary.
+- **Never** scope-creep: if a task isn't in the current Next Run deliverables, note it under **Parking Lot** below instead of doing it.
+
+---
+
+## 🔐 Licensing
+
+Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distribute.
+
+---
+
+## 🖼 Logo
+
+- **Status:** pending upload
+- **Target path:** `assets/logo/` (PNG + SVG preferred; provide a dark and a light variant if possible)
+- **Requested in:** Run 6
+
+---
+
+## 🅿️ Parking Lot
+
+(Ideas or deferred items captured during any run that are NOT in the current scope. Claude adds here instead of acting on them.)
+
+- _(empty)_
+
+---
+
+## 📝 Run Log
+
+### Run 1 — 2026-04-12 — Repo skeleton + CLAUDE.md + LICENSE
+- Created monorepo folder tree (`apps/`, `services/`, `packages/`, `infra/`, `docs/`, `assets/logo/`) with `.gitkeep` placeholders
+- Wrote proprietary `LICENSE` (All Rights Reserved)
+- Wrote `.gitignore` (Node + Kotlin + Android + iOS + Docker + secrets) and `.editorconfig`
+- Replaced stub `README.md` with a short landing pointing to `CLAUDE.md`
+- Created this `CLAUDE.md` with locked product decisions, full 20-run roadmap, per-run protocol, and run log
