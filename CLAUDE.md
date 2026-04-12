@@ -7,7 +7,7 @@
 ## 🎯 Current State
 
 - **Phase:** A — Foundation & Specs
-- **Last completed run:** Run 1 — Repo skeleton + CLAUDE.md + LICENSE
+- **Last completed run:** Run 2 — PRD + user flows
 - **Current branch:** `claude/premium-tv-player-plan-WG2tC`
 - **Push target:** same branch (`-u origin claude/premium-tv-player-plan-WG2tC`)
 - **Logo status:** ⏳ pending — Claude will ask the user in **Run 6**
@@ -15,27 +15,32 @@
 
 ---
 
-## ▶️ Next Run (Run 2): PRD + User Flows
+## ▶️ Next Run (Run 3): Data Model
 
 ### Goal
-Produce the Product Requirements Document and the canonical user-flow reference so that every subsequent run (backend, UI, billing) has an unambiguous spec to consult. No code yet — only docs.
+Define the complete V1 database schema and an ER diagram that every backend/API/contract run will reference. Pure documentation — no migrations yet (those happen in Run 6 when NestJS + Prisma are bootstrapped).
 
 ### Deliverables
-- [ ] `docs/product/PRD.md` — product vision, personas, V1 feature list, out-of-scope list, monetization, success metrics
-- [ ] `docs/product/user-flows.md` — step-by-step flows for: Onboarding, Signup, Login, Trial activation, Purchase (Single + Family), Restore Purchase, Profile creation/switch, Kids profile + PIN, Add source (M3U/XMLTV), EPG browse, Playback (Live + VOD + Resume), Device management, Logout
-- [ ] Each flow diagrammed with a mermaid sequence or flowchart
+- [ ] `docs/architecture/data-model.md` containing:
+  - [ ] Narrative overview: entity responsibilities and relationships
+  - [ ] SQL DDL (PostgreSQL dialect) for every table: `accounts`, `devices`, `profiles`, `profile_pins`, `entitlements`, `purchases`, `sources`, `source_credentials`, `epg_channels`, `epg_programs`, `watch_history`, `continue_watching`, `favorites`, `playback_sessions`, `audit_log`
+  - [ ] Indexes and foreign keys for all common access paths (by account, by profile, by device, by source, by epg channel/time)
+  - [ ] An **ER diagram** as a mermaid `erDiagram`
+  - [ ] Notes on: encryption-at-rest for source URLs + credentials, PIN hashing (argon2id), soft-delete strategy, timestamps (`created_at`, `updated_at`), UUID primary keys
 
 ### Acceptance criteria
-- A new dev/agent reading only `PRD.md` + `user-flows.md` can understand what V1 must do
-- No ambiguity on: who owns trial state (server), what "family" means (1 account, 5 profiles, 5 device slots), what Lifetime unlocks
-- Flows are consistent with the locked decisions in the **Product Decisions** section below
+- Every entity referenced in `docs/product/user-flows.md` has a corresponding table
+- All five entitlement states (`none`, `trial`, `lifetime_single`, `lifetime_family`, `expired`, `revoked`) are representable
+- Family cap (5 profiles, 5 active devices) is enforceable from schema + app logic
+- A reader can move from this doc straight to Prisma schema in Run 6 without guessing
+- Diagrams render on GitHub (mermaid)
 
 ### After this run — update CLAUDE.md
-1. Tick Run 2 in the roadmap
-2. Set "Last completed run" to `Run 2 — PRD + user flows`
-3. Write the new "Next Run" block for **Run 3: Data Model**
+1. Tick Run 3 in the roadmap
+2. Set "Last completed run" to `Run 3 — Data model`
+3. Write the new "Next Run" block for **Run 4: API Contracts (OpenAPI + Zod)**
 4. Append entry to **Run Log**
-5. Commit: `docs: add PRD and user flows (Run 2)` and push
+5. Commit: `docs: add data model and ER diagram (Run 3)` and push
 
 ---
 
@@ -145,7 +150,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 
 ### Phase A — Foundation & Specs
 - [x] **Run 1** — Repo skeleton + CLAUDE.md + LICENSE + .gitignore + .editorconfig + README
-- [ ] **Run 2** — PRD + user flows (`docs/product/`)
+- [x] **Run 2** — PRD + user flows (`docs/product/`)
 - [ ] **Run 3** — Data model: SQL schemas + ER diagram (`docs/architecture/data-model.md`)
 - [ ] **Run 4** — API contracts: OpenAPI 3.1 + Zod (`packages/api-contracts/`)
 - [ ] **Run 5** — Entitlement state machine + billing event handling (`docs/architecture/entitlement-state-machine.md`)
@@ -232,3 +237,8 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Wrote `.gitignore` (Node + Kotlin + Android + iOS + Docker + secrets) and `.editorconfig`
 - Replaced stub `README.md` with a short landing pointing to `CLAUDE.md`
 - Created this `CLAUDE.md` with locked product decisions, full 20-run roadmap, per-run protocol, and run log
+
+### Run 2 — 2026-04-12 — PRD + user flows
+- Wrote `docs/product/PRD.md`: vision, personas, V1 in/out scope, monetization table (Trial / Lifetime Single / Lifetime Family), product principles, success metrics, risks, glossary
+- Wrote `docs/product/user-flows.md`: 17 canonical flows with mermaid diagrams — Onboarding, Signup, Login, Trial activation, Purchase, Restore, Profile picker, Profile CRUD, Add source, Home, Kids PIN gate, Device management, Playback + Resume, Logout, Expired/Revoked handling, Error surfaces, Happy path
+- All flows consistent with locked decisions (server-authoritative trial/entitlement, account-based device slots, no MAC binding, 5 profiles / 5 device slots for Family)
