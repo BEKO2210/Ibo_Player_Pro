@@ -34,6 +34,7 @@ import com.premiumtvplayer.app.ui.home.HomeScreen
 import com.premiumtvplayer.app.ui.nav.Routes
 import com.premiumtvplayer.app.ui.onboarding.LoginScreen
 import com.premiumtvplayer.app.ui.onboarding.ProfilePickerScreen
+import com.premiumtvplayer.app.ui.player.PlayerScreen
 import com.premiumtvplayer.app.ui.sources.AddSourceWizardScreen
 import com.premiumtvplayer.app.ui.sources.EpgBrowseScreen
 import com.premiumtvplayer.app.ui.sources.SourceManagementScreen
@@ -146,15 +147,48 @@ fun PremiumTvApp(navController: NavHostController = rememberNavController()) {
                 },
             ),
         ) {
+            // profileId is read out of the back-stack entry rather than
+            // plumbed through HomeScreen, so deep-link handling has access
+            // to it without a signature change.
+            val profileId = it.arguments?.getString(Routes.ProfileIdArg)
             HomeScreen(
                 onOpenDeeplink = { deeplink ->
                     when (deeplink) {
                         HomeDeeplink.AddSource -> navController.navigate(Routes.AddSource)
                         is HomeDeeplink.Source -> navController.navigate(Routes.Sources)
-                        // Deep-links into a live channel / VOD item kick off
-                        // playback — that's Run 16. For now we no-op.
-                        is HomeDeeplink.LiveChannel,
-                        is HomeDeeplink.VodItem -> Unit
+                        is HomeDeeplink.LiveChannel -> {
+                            if (profileId != null) {
+                                navController.navigate(
+                                    Routes.play(
+                                        profileId = profileId,
+                                        sourceId = deeplink.sourceId,
+                                        itemId = deeplink.channelId,
+                                        itemType = "live",
+                                        // Placeholder stream URL — a server-side
+                                        // resolver that decrypts source creds
+                                        // + signs temporary playback URLs is a
+                                        // follow-up (logged in Parking Lot).
+                                        // Apple's public BipBop HLS test feed.
+                                        mediaUrl = DEMO_LIVE_HLS,
+                                        title = "Live channel",
+                                    ),
+                                )
+                            }
+                        }
+                        is HomeDeeplink.VodItem -> {
+                            if (profileId != null) {
+                                navController.navigate(
+                                    Routes.play(
+                                        profileId = profileId,
+                                        sourceId = deeplink.sourceId,
+                                        itemId = deeplink.itemId,
+                                        itemType = "vod",
+                                        mediaUrl = DEMO_VOD_MP4,
+                                        title = "On-demand title",
+                                    ),
+                                )
+                            }
+                        }
                     }
                 },
                 onAddSource = { navController.navigate(Routes.AddSource) },
@@ -195,8 +229,54 @@ fun PremiumTvApp(navController: NavHostController = rememberNavController()) {
                 onBack = { navController.popBackStack() },
             )
         }
+        composable(
+            route = Routes.PlayerPattern,
+            arguments = listOf(
+                androidx.navigation.navArgument(Routes.SourceIdArg) {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = false
+                },
+                androidx.navigation.navArgument(Routes.ItemIdArg) {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = false
+                },
+                androidx.navigation.navArgument(Routes.ItemTypeArg) {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = false
+                },
+                androidx.navigation.navArgument(Routes.ProfileIdArg) {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = false
+                },
+                androidx.navigation.navArgument(Routes.MediaUrlArg) {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = false
+                },
+                androidx.navigation.navArgument(Routes.ItemTitleArg) {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) { entry ->
+            val mediaUrl = entry.arguments?.getString(Routes.MediaUrlArg).orEmpty()
+            val title = entry.arguments?.getString(Routes.ItemTitleArg).orEmpty()
+            PlayerScreen(
+                mediaUrl = mediaUrl,
+                itemTitle = title,
+                onExit = { navController.popBackStack() },
+            )
+        }
     }
 }
+
+// Public test streams — placeholders until a proper server-side
+// media-URL resolver lands. See CLAUDE.md Parking Lot "Playback URL
+// resolver".
+private const val DEMO_LIVE_HLS =
+    "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8"
+private const val DEMO_VOD_MP4 =
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
 
 @Composable
 private fun BootScreen(onReady: () -> Unit) {

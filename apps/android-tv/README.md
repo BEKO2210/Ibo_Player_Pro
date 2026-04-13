@@ -368,6 +368,68 @@ non-nullable nav argument read by `EpgBrowseViewModel` via
   happy-path → Done, Confirm with ENTITLEMENT_REQUIRED surfaces friendly
   error, back from Endpoint returns to Kind, cancel resets draft.
 
+## Playback (Run 16)
+
+`ui/player/PlayerScreen` hosts a Media3 `ExoPlayer` inside an
+`AndroidView` and drives `PlayerViewModel`, which owns the backend
+session lifecycle:
+
+1. **Start** — `POST /v1/playback/start { profileId, sourceId, itemId, itemType }`
+2. **Progress** — 1-second UI loop pumps `player.currentPosition` into
+   `onProgress(...)`; state transitions driven by ExoPlayer's
+   `Player.Listener`.
+3. **Heartbeat** — every 10 s (`PlayerClock.heartbeatIntervalMs`) the
+   VM posts `POST /v1/playback/heartbeat { sessionId, positionSeconds, state }`.
+   Server updates `playback_sessions` + upserts `continue_watching`
+   (for non-live items) in the same transaction.
+4. **Stop** — `POST /v1/playback/stop { sessionId, finalPositionSeconds, completed }`
+   writes a `watch_history` event and upserts (or clears, when
+   `completed=true`) the CW row.
+
+The overlay is bespoke — focusable `PremiumButton`s for -10s /
+Play-Pause / +10s / Exit plus a `PremiumChip` stack for state +
+position. No stock Media3 `PlayerView` UI.
+
+### Nav route
+
+```
+play/{sourceId}/{itemId}/{itemType}
+  ?profileId={profileId}&mediaUrl={urlEncoded}&itemTitle={urlEncoded}
+```
+
+`Routes.play(profileId, sourceId, itemId, itemType, mediaUrl, title)`
+URL-encodes the item id / mediaUrl / title.
+
+> **mediaUrl:** Run 16 passes the playback URL through the nav graph
+> because a proper server-side URL resolver (decrypts source creds,
+> signs short-lived playback URLs) is a follow-up — see
+> CLAUDE.md Parking Lot "Playback URL resolver". Home deep-links fall
+> back to Apple's public BipBop HLS feed + Big Buck Bunny MP4 so
+> playback is exercisable today.
+
+### Tests
+
+- `PlaybackRepositoryTest` (MockWebServer) — 5 cases: start / heartbeat /
+  stop body shape + parse, 402 ENTITLEMENT_REQUIRED, 404 mapping
+- `PlayerViewModelTest` (MockK + UnconfinedTestDispatcher) — 5 cases:
+  init → Buffering, onProgress → Playing, onPlayingStateChanged(false)
+  → Paused, heartbeat fires exactly once when clock completes a sleep,
+  stop posts final position + emits Stopped
+
+### EPG worker integration
+
+In Run 16 `EpgRepository.browse` calls the real
+`GET /v1/epg/channels?sourceId=` + `GET /v1/epg/programmes?channelId=...`
+endpoints. Data is populated by `services/epg-worker/` (see that
+service's README) which polls XMLTV-bearing sources, parses via
+`@premium-player/parsers`, and upserts `epg_channels` +
+`epg_programs`. `EpgBrowseSnapshot` shape is identical to the Run 15
+fixture — the UI didn't need to change.
+
+Continue-Watching rail on the home screen is also live now: the row is
+served by `GET /v1/continue-watching?profileId=` and populated by
+playback heartbeats + the stop event.
+
 ## Build + run
 
 > **Tooling required (cannot be run in this repo's CI sandbox — Android

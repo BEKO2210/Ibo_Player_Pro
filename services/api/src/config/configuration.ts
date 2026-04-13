@@ -50,6 +50,15 @@ const envSchema = z
       .min(60_000)
       .max(24 * 60 * 60_000)
       .default(15 * 60_000),
+
+    // EPG worker (Run 16).
+    EPG_WORKER_POLL_INTERVAL_MS: z.coerce
+      .number()
+      .int()
+      .min(60_000)
+      .max(24 * 60 * 60_000)
+      .default(30 * 60_000),
+    EPG_WINDOW_AHEAD_HOURS: z.coerce.number().int().min(1).max(168).default(48),
   })
   .superRefine((env, ctx) => {
     const hasJson = !!env.FIREBASE_SERVICE_ACCOUNT_JSON;
@@ -106,6 +115,10 @@ export interface AppConfig {
   pin: {
     maxFailedAttempts: number;
     lockoutDurationMs: number;
+  };
+  epg: {
+    workerPollIntervalMs: number;
+    windowAheadHours: number;
   };
 }
 
@@ -184,6 +197,10 @@ export function configuration(): AppConfig {
     pin: {
       maxFailedAttempts: env.PIN_MAX_FAILED_ATTEMPTS,
       lockoutDurationMs: env.PIN_LOCKOUT_DURATION_MS,
+    },
+    epg: {
+      workerPollIntervalMs: env.EPG_WORKER_POLL_INTERVAL_MS,
+      windowAheadHours: env.EPG_WINDOW_AHEAD_HOURS,
     },
   };
 }

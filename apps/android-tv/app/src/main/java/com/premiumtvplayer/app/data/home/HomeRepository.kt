@@ -1,6 +1,7 @@
 package com.premiumtvplayer.app.data.home
 
 import com.premiumtvplayer.app.data.api.SourceDto
+import com.premiumtvplayer.app.data.playback.ContinueWatchingRepository
 import com.premiumtvplayer.app.data.sources.SourceRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -8,29 +9,52 @@ import javax.inject.Singleton
 /**
  * Aggregates the data needed for the Home screen.
  *
- * Live endpoints today:
- *  - `sources` via [SourceRepository] → `/v1/sources`
+ * Live in Run 16:
+ *  - `sources`           via SourceRepository            → `/v1/sources`
+ *  - `continue-watching` via ContinueWatchingRepository  → `/v1/continue-watching`
  *
- * Stubbed until the matching endpoints land:
- *  - `continue-watching` → `/v1/continue-watching` (Run 16)
- *  - `favorites`         → `/v1/favorites` (Run 15)
- *  - `suggested`         → derived from sources + EPG worker (Run 15-16)
- *
- * The stub data is derived deterministically from the live source list
- * so that the UI always looks populated when sources exist, and cleanly
- * surfaces the empty-state when they don't — without a feature-flag
- * detour.
+ * Stubbed until their endpoints land:
+ *  - `favorites`  → `/v1/favorites` (future run)
+ *  - `suggested`  → editorial / algorithmic (future run)
  */
 @Singleton
 class HomeRepository @Inject constructor(
     private val sources: SourceRepository,
+    private val continueWatching: ContinueWatchingRepository,
 ) {
     suspend fun snapshot(profileId: String?): HomeSnapshot {
         val live = sources.list(profileId)
+
+        // Continue-watching row is per-profile. When no profile is selected
+        // (null), the row is simply omitted — matches premium-TV behaviour
+        // where the rail only appears after you pick a profile.
+        val cwTiles: List<HomeTile> = if (profileId == null) {
+            emptyList()
+        } else {
+            runCatching { continueWatching.list(profileId, limit = 10) }
+                .getOrDefault(emptyList())
+                .map { row ->
+                    val source = live.firstOrNull { it.id == row.sourceId }
+                    HomeTile(
+                        id = "cw-${row.id}",
+                        title = row.itemId,
+                        subtitle = source?.name ?: row.itemType,
+                        isLive = row.itemType == "live",
+                        deeplink = if (row.itemType == "live" && row.sourceId != null) {
+                            HomeDeeplink.LiveChannel(row.sourceId, row.itemId)
+                        } else if (row.sourceId != null) {
+                            HomeDeeplink.VodItem(row.sourceId, row.itemId)
+                        } else {
+                            HomeDeeplink.AddSource
+                        },
+                    )
+                }
+        }
+
         return HomeSnapshot(
             sources = live,
             heroes = heroes(live),
-            rows = rows(live),
+            rows = rows(live, cwTiles),
         )
     }
 
@@ -48,8 +72,6 @@ class HomeRepository @Inject constructor(
                 ),
             )
         }
-        // Build a 3-card hero deck from the first few sources. Real artwork
-        // + curated heroes land in Run 15-16 via an editorial endpoint.
         val palette = listOf(
             HomeHero.BackgroundAccent.Blue,
             HomeHero.BackgroundAccent.Cyan,
@@ -67,76 +89,49 @@ class HomeRepository @Inject constructor(
         }
     }
 
-    private fun rows(sources: List<SourceDto>): List<HomeRow> {
+    private fun rows(sources: List<SourceDto>, cwTiles: List<HomeTile>): List<HomeRow> {
         if (sources.isEmpty()) return emptyList()
-        return listOf(
-            HomeRow(
+        val out = mutableListOf<HomeRow>()
+        if (cwTiles.isNotEmpty()) {
+            out += HomeRow(
                 key = HomeRow.RowKey.ContinueWatching,
                 title = "Continue Watching",
-                tiles = sources.flatMap { src ->
-                    listOf(
-                        HomeTile(
-                            id = "${src.id}-cw1",
-                            title = "Last night's highlight",
-                            subtitle = src.name,
-                            deeplink = HomeDeeplink.VodItem(src.id, "vod-1"),
-                        ),
-                        HomeTile(
-                            id = "${src.id}-cw2",
-                            title = "Live feed · Match Day",
-                            subtitle = src.name,
-                            isLive = true,
-                            deeplink = HomeDeeplink.LiveChannel(src.id, "ch-1"),
-                        ),
-                    )
-                }.take(6),
-            ),
-            HomeRow(
-                key = HomeRow.RowKey.Favorites,
-                title = "Favorites",
-                tiles = sources.map { src ->
+                tiles = cwTiles,
+            )
+        }
+        out += HomeRow(
+            key = HomeRow.RowKey.Suggested,
+            title = "Suggested for you",
+            tiles = sources.flatMap { src ->
+                listOf(
                     HomeTile(
-                        id = "${src.id}-fav",
-                        title = "Starred channel",
+                        id = "${src.id}-sug1",
+                        title = "Tonight's headliner",
                         subtitle = src.name,
-                        isLive = src.kind != "m3u_plus_epg",
-                        deeplink = HomeDeeplink.LiveChannel(src.id, "fav"),
-                    )
-                },
-            ),
-            HomeRow(
-                key = HomeRow.RowKey.Suggested,
-                title = "Suggested for you",
-                tiles = sources.flatMap { src ->
-                    listOf(
-                        HomeTile(
-                            id = "${src.id}-sug1",
-                            title = "Tonight's headliner",
-                            subtitle = src.name,
-                            deeplink = HomeDeeplink.VodItem(src.id, "sug-1"),
-                        ),
-                        HomeTile(
-                            id = "${src.id}-sug2",
-                            title = "Trending now",
-                            subtitle = src.name,
-                            deeplink = HomeDeeplink.VodItem(src.id, "sug-2"),
-                        ),
-                    )
-                }.take(8),
-            ),
-            HomeRow(
-                key = HomeRow.RowKey.Sources,
-                title = "Your Sources",
-                tiles = sources.map { src ->
+                        deeplink = HomeDeeplink.VodItem(src.id, "sug-1"),
+                    ),
                     HomeTile(
-                        id = "source-${src.id}",
-                        title = src.name,
-                        subtitle = "${kindChip(src.kind)} · ${if (src.isActive) "Active" else "Paused"}",
-                        deeplink = HomeDeeplink.Source(src.id),
-                    )
-                },
-            ),
+                        id = "${src.id}-sug2",
+                        title = "Trending now",
+                        subtitle = src.name,
+                        deeplink = HomeDeeplink.VodItem(src.id, "sug-2"),
+                    ),
+                )
+            }.take(8),
         )
+        out += HomeRow(
+            key = HomeRow.RowKey.Sources,
+            title = "Your Sources",
+            tiles = sources.map { src ->
+                HomeTile(
+                    id = "source-${src.id}",
+                    title = src.name,
+                    subtitle = "${kindChip(src.kind)} · ${if (src.isActive) "Active" else "Paused"}",
+                    deeplink = HomeDeeplink.Source(src.id),
+                )
+            },
+        )
+        return out
     }
 
     private fun kindChip(kind: String): String = when (kind) {

@@ -28,4 +28,34 @@ object Routes {
     const val EpgBrowsePattern = "sources/{$SourceIdArg}/epg"
 
     fun epgBrowse(sourceId: String): String = "sources/$sourceId/epg"
+
+    // ── Player (Run 16) ────────────────────────────────────────────
+    const val ItemIdArg = "itemId"
+    const val ItemTypeArg = "itemType"
+    const val MediaUrlArg = "mediaUrl"
+    const val ItemTitleArg = "itemTitle"
+
+    /**
+     * Player requires profileId + sourceId + itemId + itemType, plus a
+     * pre-resolved mediaUrl + title. The mediaUrl is URL-encoded by the
+     * caller.
+     */
+    const val PlayerPattern =
+        "play/{$SourceIdArg}/{$ItemIdArg}/{$ItemTypeArg}?" +
+            "$ProfileIdArg={$ProfileIdArg}&$MediaUrlArg={$MediaUrlArg}&$ItemTitleArg={$ItemTitleArg}"
+
+    fun play(
+        profileId: String,
+        sourceId: String,
+        itemId: String,
+        itemType: String,
+        mediaUrl: String,
+        title: String,
+    ): String {
+        val enc = fun(s: String): String = java.net.URLEncoder.encode(s, "UTF-8")
+        return "play/$sourceId/${enc(itemId)}/$itemType" +
+            "?$ProfileIdArg=$profileId" +
+            "&$MediaUrlArg=${enc(mediaUrl)}" +
+            "&$ItemTitleArg=${enc(title)}"
+    }
 }

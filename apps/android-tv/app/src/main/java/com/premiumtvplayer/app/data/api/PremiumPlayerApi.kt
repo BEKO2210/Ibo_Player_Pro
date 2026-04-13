@@ -56,4 +56,31 @@ interface PremiumPlayerApi {
 
     @DELETE("sources/{id}")
     suspend fun deleteSource(@Path("id") id: String): Response<Unit>
+
+    // ── Playback (Run 16) ──────────────────────────────────────────────
+    @POST("playback/start")
+    suspend fun startPlayback(@Body body: StartPlaybackRequest): PlaybackSessionResponse
+
+    @POST("playback/heartbeat")
+    suspend fun heartbeat(@Body body: HeartbeatRequest): PlaybackSessionResponse
+
+    @POST("playback/stop")
+    suspend fun stopPlayback(@Body body: StopPlaybackRequest): PlaybackSessionResponse
+
+    @GET("continue-watching")
+    suspend fun listContinueWatching(
+        @Query("profileId") profileId: String,
+        @Query("limit") limit: Int? = null,
+    ): ContinueWatchingResponse
+
+    // ── EPG (Run 16) ───────────────────────────────────────────────────
+    @GET("epg/channels")
+    suspend fun listEpgChannels(@Query("sourceId") sourceId: String): EpgChannelsResponse
+
+    @GET("epg/programmes")
+    suspend fun listEpgProgrammes(
+        @Query("channelId") channelId: String,
+        @Query("from") from: String? = null,
+        @Query("to") to: String? = null,
+    ): EpgProgrammesResponse
 }
