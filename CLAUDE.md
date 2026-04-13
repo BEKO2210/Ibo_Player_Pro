@@ -6,42 +6,45 @@
 
 ## 🎯 Current State
 
-- **Phase:** A — Foundation & Specs
-- **Last completed run:** Run 5 — Entitlement state machine
-- **Current branch:** `claude/premium-tv-player-plan-WG2tC`
-- **Push target:** same branch (`-u origin claude/premium-tv-player-plan-WG2tC`)
-- **Logo status:** ⏳ pending — Claude will ask the user in **Run 6**
+- **Phase:** B — Backend V1
+- **Last completed run:** Run 6 — NestJS bootstrap
+- **Current branch:** `claude/fix-api-timeout-vFqPP`
+- **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
+- **Logo status:** ⏳ requested in Run 6 — waiting for user to upload to `assets/logo/` (PNG + SVG, dark + light variants)
 - **applicationId:** ⏳ to be decided in **Run 11**
 
 ---
 
-## ▶️ Next Run (Run 6): NestJS Bootstrap + Infra
+## ▶️ Next Run (Run 7): Auth Module
 
 ### Goal
-Bootstrap the V1 backend service foundation in `services/api` with NestJS, Prisma, PostgreSQL, Redis, and local Docker development workflow.
+Implement the Firebase-backed auth module in `services/api`: verify Firebase ID tokens, sync the caller's account row, and expose register/login/refresh endpoints aligned with `packages/api-contracts/openapi.yaml`.
 
 ### Deliverables
-- [ ] Create `services/api/` NestJS project scaffold (TypeScript strict mode)
-- [ ] Add Prisma setup with initial schema skeleton aligned to Run 3 docs
-- [ ] Add local `docker-compose` stack for Postgres + Redis under `infra/docker/`
-- [ ] Add `GET /health` endpoint returning service/db/redis readiness snapshot
-- [ ] Add environment config templates (`.env.example`) and runtime config module
-- [ ] Add minimal README in `services/api/` with run/migrate/test commands
-- [ ] Ask user to upload logo assets into `assets/logo/` (PNG/SVG, dark+light preferred)
+- [ ] Add Firebase Admin SDK integration (service-account config via env, lazy init)
+- [ ] Add `AuthGuard` that verifies `Authorization: Bearer <firebase_id_token>` and exposes the caller account on the request
+- [ ] Add `AccountsService` that upserts an `accounts` row on first successful token verify (firebase_uid, email, email_verified, locale)
+- [ ] Add REST endpoints per `packages/api-contracts/openapi.yaml`:
+  - `POST /v1/auth/register` (sync after Firebase signup, create local account + empty entitlement)
+  - `POST /v1/auth/login`   (token verify + account sync, return account snapshot)
+  - `POST /v1/auth/refresh` (token re-verify; return fresh account snapshot)
+- [ ] Generate the first Prisma migration covering all V1 tables (matches `schema.prisma`)
+- [ ] Add unit tests for `AccountsService` upsert logic and the guard's token handling (mock Firebase Admin)
+- [ ] Extend `.env.example` with `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (or `FIREBASE_SERVICE_ACCOUNT_JSON`)
+- [ ] Update `services/api/README.md` auth section and env table
 
 ### Acceptance criteria
-- `services/api` starts locally and responds on health endpoint
-- Prisma can connect to Postgres from docker-compose
-- Redis connectivity is verified in health/status output
-- Environment setup is documented and reproducible by a fresh developer
-- Logo upload request is explicitly made to the user during this run
+- Hitting a protected endpoint without a valid Firebase ID token returns `401` with the stable error envelope from Run 4
+- Valid token → account row exists/updated in Postgres, response matches OpenAPI `AccountSnapshot`
+- Prisma migration runs cleanly on the docker-compose Postgres and matches `schema.prisma`
+- Jest unit tests pass for the new module
 
 ### After this run — update CLAUDE.md
-1. Tick Run 6 in the roadmap
-2. Set "Last completed run" to `Run 6 — NestJS bootstrap`
-3. Write the new "Next Run" block for **Run 7: Auth module**
+1. Tick Run 7 in the roadmap
+2. Set "Last completed run" to `Run 7 — Auth module`
+3. Write the new "Next Run" block for **Run 8: Entitlement module**
 4. Append entry to **Run Log**
-5. Commit: `api: scaffold NestJS service with Prisma/Redis/Postgres (Run 6)` and push
+5. Commit: `api: add auth module with Firebase token verify + account sync (Run 7)` and push
 
 ---
 
@@ -157,7 +160,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 - [x] **Run 5** — Entitlement state machine + billing event handling (`docs/architecture/entitlement-state-machine.md`)
 
 ### Phase B — Backend V1
-- [ ] **Run 6** — NestJS bootstrap (`services/api/`): Prisma, Postgres, Redis, docker-compose, health endpoint, env setup. **→ Claude asks user for logo upload into `assets/logo/` here.**
+- [x] **Run 6** — NestJS bootstrap (`services/api/`): Prisma, Postgres, Redis, docker-compose, health endpoint, env setup. **→ Claude asks user for logo upload into `assets/logo/` here.**
 - [ ] **Run 7** — Auth module: Firebase Admin token verify, user sync, register/login/refresh
 - [ ] **Run 8** — Entitlement module: trial start, status, device register/list/revoke
 - [ ] **Run 9** — Billing worker: Play Billing verification, ack, lifetime flip, refund handler
@@ -216,9 +219,10 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 
 ## 🖼 Logo
 
-- **Status:** pending upload
+- **Status:** requested in Run 6 — awaiting upload from user
 - **Target path:** `assets/logo/` (PNG + SVG preferred; provide a dark and a light variant if possible)
 - **Requested in:** Run 6
+- **Next use:** wired into Android TV home screen in Run 14 (or earlier if provided)
 
 ---
 
@@ -264,3 +268,13 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Defined trial lifecycle rules (consume-once), refund/revoke fallback policy, and explicit device/profile caps by entitlement state
 - Documented idempotency keys, replay handling, and worker/API concurrency conflict resolution
 - Added GitHub-renderable mermaid state diagram and error semantics aligned to stable API error codes
+
+### Run 6 — 2026-04-13 — NestJS bootstrap + infra
+- Scaffolded `services/api/` NestJS 10 project (TypeScript strict, ES2022, nest-cli, ESLint + Prettier)
+- Added `ConfigModule` with Zod-validated env schema and typed `AppConfig`; wrote `.env.example`
+- Added global `PrismaModule`/`PrismaService` (connect/disconnect + ping) and `RedisModule`/`RedisService` (ioredis + ping)
+- Added `GET /health` via `@nestjs/terminus` reporting service, database, and redis status
+- Added V1 Prisma schema at `services/api/prisma/schema.prisma` mirroring Run 3 data model (15 tables, enums, indexes, soft deletes)
+- Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
+- Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
+- Requested logo upload from user into `assets/logo/` (pending)
