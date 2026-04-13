@@ -1,6 +1,7 @@
 import {
   allowsPlayback,
   deviceCapFor,
+  profileCapFor,
   trialEndFromStart,
   transition,
   TransitionError,
@@ -210,6 +211,15 @@ describe('entitlement state machine', () => {
       expect(deviceCapFor('lifetime_family')).toBe(5);
       expect(deviceCapFor('expired')).toBe(0);
       expect(deviceCapFor('revoked')).toBe(0);
+    });
+
+    it('profileCapFor matches spec table', () => {
+      expect(profileCapFor('none')).toBe(0);
+      expect(profileCapFor('trial')).toBe(1);
+      expect(profileCapFor('lifetime_single')).toBe(1);
+      expect(profileCapFor('lifetime_family')).toBe(5);
+      expect(profileCapFor('expired')).toBe(0);
+      expect(profileCapFor('revoked')).toBe(0);
     });
 
     it('allowsPlayback only for active states', () => {

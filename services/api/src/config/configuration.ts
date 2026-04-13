@@ -21,6 +21,35 @@ const envSchema = z
     FIREBASE_PROJECT_ID: z.string().optional(),
     FIREBASE_CLIENT_EMAIL: z.string().optional(),
     FIREBASE_PRIVATE_KEY: z.string().optional(),
+
+    // Billing (Google Play). The service-account reuses the Firebase
+    // credentials above — add the `androidpublisher` scope in GCP IAM.
+    BILLING_ANDROID_PACKAGE_NAME: z.string().optional(),
+    BILLING_PRODUCT_ID_SINGLE: z.string().default('premium_player_single'),
+    BILLING_PRODUCT_ID_FAMILY: z.string().default('premium_player_family'),
+    BILLING_WORKER_POLL_INTERVAL_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(300_000)
+      .default(15_000),
+
+    // Source credential envelope encryption (AES-256-GCM).
+    // 64 hex chars = 32 bytes = 256 bits. KMS key id is metadata only.
+    SOURCE_ENCRYPTION_KEY: z
+      .string()
+      .regex(/^[0-9a-fA-F]{64}$/, 'SOURCE_ENCRYPTION_KEY must be 64 hex characters (32 bytes)')
+      .optional(),
+    SOURCE_ENCRYPTION_KMS_KEY_ID: z.string().default('local-dev-v1'),
+
+    // Profile PIN — Argon2id. Lockout values; see ProfileService for use.
+    PIN_MAX_FAILED_ATTEMPTS: z.coerce.number().int().min(1).max(20).default(5),
+    PIN_LOCKOUT_DURATION_MS: z.coerce
+      .number()
+      .int()
+      .min(60_000)
+      .max(24 * 60 * 60_000)
+      .default(15 * 60_000),
   })
   .superRefine((env, ctx) => {
     const hasJson = !!env.FIREBASE_SERVICE_ACCOUNT_JSON;
@@ -62,6 +91,21 @@ export interface AppConfig {
   };
   firebase: {
     credentials: FirebaseCredentials | null;
+  };
+  billing: {
+    androidPackageName: string | null;
+    productIdSingle: string;
+    productIdFamily: string;
+    workerPollIntervalMs: number;
+  };
+  sourceCrypto: {
+    /** 32-byte raw key (resolved from hex env). null when not configured. */
+    key: Buffer | null;
+    kmsKeyId: string;
+  };
+  pin: {
+    maxFailedAttempts: number;
+    lockoutDurationMs: number;
   };
 }
 
@@ -125,5 +169,21 @@ export function configuration(): AppConfig {
     database: { url: env.DATABASE_URL },
     redis: { url: env.REDIS_URL },
     firebase: { credentials: resolveFirebaseCredentials(env) },
+    billing: {
+      androidPackageName: env.BILLING_ANDROID_PACKAGE_NAME ?? null,
+      productIdSingle: env.BILLING_PRODUCT_ID_SINGLE,
+      productIdFamily: env.BILLING_PRODUCT_ID_FAMILY,
+      workerPollIntervalMs: env.BILLING_WORKER_POLL_INTERVAL_MS,
+    },
+    sourceCrypto: {
+      key: env.SOURCE_ENCRYPTION_KEY
+        ? Buffer.from(env.SOURCE_ENCRYPTION_KEY, 'hex')
+        : null,
+      kmsKeyId: env.SOURCE_ENCRYPTION_KMS_KEY_ID,
+    },
+    pin: {
+      maxFailedAttempts: env.PIN_MAX_FAILED_ATTEMPTS,
+      lockoutDurationMs: env.PIN_LOCKOUT_DURATION_MS,
+    },
   };
 }

@@ -144,6 +144,14 @@ See `.env.example`. All values are validated at boot by
 | `FIREBASE_PROJECT_ID`           | **yes** (option B) | — | Firebase project ID                   |
 | `FIREBASE_CLIENT_EMAIL`         | **yes** (option B) | — | Service-account client email          |
 | `FIREBASE_PRIVATE_KEY`          | **yes** (option B) | — | PEM key; `\n` sequences are decoded   |
+| `BILLING_ANDROID_PACKAGE_NAME`  | yes (for billing) | — | Google Play package id (e.g. `com.premiumtvplayer.app`) |
+| `BILLING_PRODUCT_ID_SINGLE`     | no              | `premium_player_single` | SKU mapping for `lifetime_single` |
+| `BILLING_PRODUCT_ID_FAMILY`     | no              | `premium_player_family` | SKU mapping for `lifetime_family` |
+| `BILLING_WORKER_POLL_INTERVAL_MS` | no            | `15000`                 | Worker poll interval (1s..5min)   |
+| `SOURCE_ENCRYPTION_KEY`         | yes (for source create) | — | 64 hex chars (32 raw bytes) for AES-256-GCM |
+| `SOURCE_ENCRYPTION_KMS_KEY_ID`  | no              | `local-dev-v1`          | Audit metadata for key rotation     |
+| `PIN_MAX_FAILED_ATTEMPTS`       | no              | `5`                     | Consecutive misses before lockout (1-20) |
+| `PIN_LOCKOUT_DURATION_MS`       | no              | `900000`                | Lockout window after threshold (60s..24h) |
 
 In test environments (`NODE_ENV=test`) Firebase credentials are optional —
 the auth module is expected to be mocked.
@@ -203,6 +211,129 @@ table; the pure TypeScript implementation is in
 | `lifetime_family` | 5       | 5        | yes      |
 | `expired`         | 0 new   | 0 new    | no       |
 | `revoked`         | 0 new   | 0 new    | no       |
+
+## Profile module (Run 10)
+
+Account-scoped profiles with kids flag, age limit, and Argon2id PIN gate.
+
+### Endpoints (`AuthGuard`-protected)
+
+| Method | Path                              | Status codes                                                   |
+|--------|-----------------------------------|----------------------------------------------------------------|
+| GET    | `/v1/profiles`                    | `200`                                                          |
+| POST   | `/v1/profiles`                    | `201`, `402 ENTITLEMENT_REQUIRED`, `409 SLOT_FULL`             |
+| PUT    | `/v1/profiles/:id`                | `200`, `404`                                                   |
+| DELETE | `/v1/profiles/:id`                | `204`, `409` (last profile), `404`                             |
+| POST   | `/v1/profiles/:id/verify-pin`     | `200` with `{ ok, reason?, failedAttemptCount?, lockedUntil? }` |
+
+### Caps
+
+| Entitlement       | Profiles |
+|-------------------|----------|
+| `none`            | 0        |
+| `trial`           | 1        |
+| `lifetime_single` | 1        |
+| `lifetime_family` | 5        |
+| `expired`         | 0 new    |
+| `revoked`         | 0 new    |
+
+### PIN
+
+- Hashed with **Argon2id** (`argon2` package, default params).
+- `PIN_MAX_FAILED_ATTEMPTS` consecutive misses → lock for
+  `PIN_LOCKOUT_DURATION_MS`. Defaults: 5 attempts, 15-minute lock.
+- A successful verify resets counter + lockout. PIN replacement also
+  resets state.
+
+## Source module (Run 10)
+
+User-managed M3U / XMLTV / M3U+EPG sources with **AES-256-GCM envelope
+encryption** for URL, username, password, and headers JSON.
+
+### Endpoints (`AuthGuard`-protected)
+
+| Method | Path                  | Notes                                                       |
+|--------|-----------------------|-------------------------------------------------------------|
+| GET    | `/v1/sources?profileId=` | List account or profile-scoped sources (excluding deleted) |
+| POST   | `/v1/sources`         | Encrypts credentials on write; returns `validation_status='pending'` |
+| PUT    | `/v1/sources/:id`     | Rename / toggle isActive                                    |
+| DELETE | `/v1/sources/:id`     | Soft delete (sets `deleted_at` + `is_active=false`)         |
+
+### Encryption format
+
+```
+[ version: u8 ][ iv: 12 bytes ][ tag: 16 bytes ][ ciphertext ]
+```
+
+- `version=1` today; bump on key/format rotation.
+- IV is fresh per blob.
+- GCM auth tag (16 bytes) — tampering with any byte fails decryption.
+- `kms_key_id` column stores metadata for future audit / rotation.
+- Plaintext credentials are never persisted; even Prisma Studio shows
+  binary `encrypted_*` columns.
+
+### Generating a key
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Set the result as `SOURCE_ENCRYPTION_KEY`.
+
+## Parsers package (Run 10)
+
+`packages/parsers` exposes pure-TS stubs:
+
+- `parseM3U(input)` → `{ channels: M3UChannel[], ignoredLines, malformedEntries }`
+- `parseXmltv(input)` → `{ channels, programmes, malformed* }`
+- `parseXmltvTime(raw)` — XMLTV `YYYYMMDDHHmmss [±HHMM]` → ISO UTC string
+
+Used at source-create time for an item-count estimate; full network
+fetch + heavy parsing is the EPG worker's job (Run 15+).
+
+## Billing module (Run 9)
+
+The billing layer is the **single writer** of purchase- and refund-driven
+entitlement transitions. Both the API endpoints and the
+`services/billing-worker` process go through `BillingService.applyVerified`
+so they cannot diverge.
+
+### Endpoints (`AuthGuard`-protected)
+
+| Method | Path                | Purpose                                                                                |
+|--------|---------------------|----------------------------------------------------------------------------------------|
+| POST   | `/v1/billing/verify` | Verify a single purchase token with Google Play and apply the resulting event.         |
+| POST   | `/v1/billing/restore` | Re-verify all non-refunded purchases for the caller and re-apply to entitlement.       |
+
+Body for `/verify`: `{ purchaseToken: string, productId: string }`.
+Both return the current `EntitlementStatusResponse`.
+
+### Provider abstraction
+
+`src/billing/providers/provider.interface.ts` defines
+`ProviderVerificationClient`. The default binding in `BillingModule` is
+`GooglePlayProvider`, which uses the Firebase service-account credentials
+(must also have the `androidpublisher` GCP IAM scope) and calls
+`androidpublisher.googleapis.com/v3` directly via `google-auth-library`.
+Tests substitute via the DI token `PROVIDER_VERIFICATION_CLIENT`.
+
+### Idempotency + concurrency
+
+- `purchases` is unique on `(provider, purchase_token)` — replays just
+  upsert the row with the latest payload.
+- Before any entitlement mutation we take a row-level lock:
+  ```sql
+  SELECT id FROM entitlements WHERE account_id = $1 FOR UPDATE
+  ```
+  inside the same transaction as the upsert + `entitlement.update`.
+- Replay detection: when the persisted purchase already matches the
+  provider state AND the entitlement state already reflects the target,
+  the transition is skipped entirely.
+
+### See also
+
+`services/billing-worker/README.md` — the polling reconciliation process
+that retries unacked / pending purchases on the configured interval.
 
 ## Devices module (Run 8)
 
