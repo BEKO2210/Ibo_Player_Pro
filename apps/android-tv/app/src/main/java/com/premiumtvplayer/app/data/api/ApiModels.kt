@@ -105,6 +105,105 @@ data class SingleSourceResponse(
     val source: SourceDto,
 )
 
+// ── Playback ───────────────────────────────────────────────────────────
+
+@Serializable
+data class StartPlaybackRequest(
+    val profileId: String,
+    val sourceId: String,
+    val itemId: String,
+    val itemType: String,
+    val deviceId: String? = null,
+)
+
+@Serializable
+data class HeartbeatRequest(
+    val sessionId: String,
+    val positionSeconds: Int,
+    /** starting / playing / paused / buffering / stopped / error */
+    val state: String,
+    val durationSeconds: Int? = null,
+)
+
+@Serializable
+data class StopPlaybackRequest(
+    val sessionId: String,
+    val finalPositionSeconds: Int,
+    val durationSeconds: Int? = null,
+    val completed: Boolean? = null,
+)
+
+@Serializable
+data class PlaybackSessionDto(
+    val id: String,
+    val profileId: String,
+    val sourceId: String? = null,
+    val itemId: String,
+    val itemType: String,
+    val state: String,
+    val latestPositionSeconds: Int,
+    val sessionStartedAt: String,
+    val lastHeartbeatAt: String? = null,
+    val stoppedAt: String? = null,
+)
+
+@Serializable
+data class PlaybackSessionResponse(
+    val session: PlaybackSessionDto,
+)
+
+// ── Continue watching ──────────────────────────────────────────────────
+
+@Serializable
+data class ContinueWatchingRowDto(
+    val id: String,
+    val sourceId: String? = null,
+    val itemId: String,
+    val itemType: String,
+    val resumePositionSeconds: Int,
+    val durationSeconds: Int? = null,
+    val lastPlayedAt: String,
+)
+
+@Serializable
+data class ContinueWatchingResponse(
+    val items: List<ContinueWatchingRowDto>,
+)
+
+// ── EPG ────────────────────────────────────────────────────────────────
+
+@Serializable
+data class EpgChannelDto(
+    val id: String,
+    val sourceId: String,
+    val externalChannelId: String,
+    val displayName: String,
+    val iconUrl: String? = null,
+)
+
+@Serializable
+data class EpgChannelsResponse(
+    val channels: List<EpgChannelDto>,
+)
+
+@Serializable
+data class EpgProgrammeDto(
+    val id: String,
+    val channelId: String,
+    val sourceId: String,
+    val title: String,
+    val subtitle: String? = null,
+    val description: String? = null,
+    val category: String? = null,
+    val startsAt: String,
+    val endsAt: String,
+)
+
+@Serializable
+data class EpgProgrammesResponse(
+    val programmes: List<EpgProgrammeDto>,
+)
+
 // ── Stable error envelope (matches packages/api-contracts ErrorEnvelope) ──
 
 @Serializable

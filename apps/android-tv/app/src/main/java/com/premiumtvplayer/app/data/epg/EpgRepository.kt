@@ -1,86 +1,65 @@
 package com.premiumtvplayer.app.data.epg
 
-import com.premiumtvplayer.app.data.api.SourceDto
-import com.premiumtvplayer.app.data.sources.SourceRepository
+import com.premiumtvplayer.app.data.api.ApiErrorMapper
+import com.premiumtvplayer.app.data.api.EpgChannelDto
+import com.premiumtvplayer.app.data.api.EpgProgrammeDto
+import com.premiumtvplayer.app.data.api.PremiumPlayerApi
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * EPG data source.
- *
- * **Run 15 scope:** returns deterministic fixture data derived from the
- * source list so the EpgBrowseScreen can be exercised end-to-end without
- * depending on a live EPG worker.
- *
- * **Run 16 replaces** the fixture with real `/v1/epg/channels` +
- * `/v1/epg/programmes` calls served by the EPG worker. The return shape
- * ([EpgBrowseSnapshot]) stays fixed so the UI layer never changes.
+ * EPG data source — Run 16 wires this to the real API. The EPG worker
+ * fills `epg_channels` + `epg_programs` from XMLTV; this repo reads that
+ * data back through `/v1/epg/*` and exposes the same `EpgBrowseSnapshot`
+ * shape the Run 15 fixture used, so `EpgBrowseScreen` needs no change.
  */
 @Singleton
 class EpgRepository @Inject constructor(
-    private val sources: SourceRepository,
+    private val api: PremiumPlayerApi,
 ) {
-    suspend fun browse(sourceId: String, now: Instant = Instant.now()): EpgBrowseSnapshot {
-        val source = sources.list().firstOrNull { it.id == sourceId }
-            ?: error("Source $sourceId not found for EPG browse.")
-        return fixture(source, now)
-    }
+    suspend fun browse(sourceId: String, now: Instant = Instant.now()): EpgBrowseSnapshot = try {
+        val windowStart = now.truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS)
+        val windowEnd = windowStart.plus(6, ChronoUnit.HOURS)
 
-    private fun fixture(source: SourceDto, now: Instant): EpgBrowseSnapshot {
-        val start = now.truncatedTo(ChronoUnit.HOURS)
-        val end = start.plus(6, ChronoUnit.HOURS)
-
-        // 6 synthetic channels per source — enough to exercise the grid.
-        val channels = (1..6).map { idx ->
-            EpgChannel(
-                id = "${source.id}-ch$idx",
-                sourceId = source.id,
-                displayName = "${source.name} · Channel $idx",
-            )
-        }
+        val channels = api.listEpgChannels(sourceId).channels.map { it.toDomain() }
         val programmes = channels.associate { channel ->
-            channel.id to (0 until 12).map { slot ->
-                val slotStart = start.plus((slot * 30).toLong(), ChronoUnit.MINUTES)
-                val slotEnd = slotStart.plus(30, ChronoUnit.MINUTES)
-                EpgProgramme(
-                    id = "${channel.id}-$slot",
+            channel.id to api
+                .listEpgProgrammes(
                     channelId = channel.id,
-                    sourceId = source.id,
-                    title = programTitleFor(slot),
-                    subtitle = if (slot % 2 == 0) null else "Episode ${slot + 1}",
-                    description = "Premium-tier placeholder programme. " +
-                        "Real XMLTV-backed data lands in Run 16.",
-                    category = categoryFor(slot),
-                    startsAt = slotStart,
-                    endsAt = slotEnd,
+                    from = windowStart.toString(),
+                    to = windowEnd.toString(),
                 )
-            }
+                .programmes
+                .map { it.toDomain() }
         }
-        return EpgBrowseSnapshot(
+        EpgBrowseSnapshot(
             channels = channels,
             programmesByChannel = programmes,
-            windowStart = start,
-            windowEnd = end,
+            windowStart = windowStart,
+            windowEnd = windowEnd,
         )
-    }
-
-    private fun programTitleFor(slot: Int): String = when (slot % 6) {
-        0 -> "Morning News"
-        1 -> "Cinematic Feature"
-        2 -> "Live Match"
-        3 -> "Documentary"
-        4 -> "Prime Time"
-        else -> "Late Night"
-    }
-
-    private fun categoryFor(slot: Int): String = when (slot % 6) {
-        0 -> "News"
-        1 -> "Movies"
-        2 -> "Sport"
-        3 -> "Documentary"
-        4 -> "Entertainment"
-        else -> "Late Night"
+    } catch (t: Throwable) {
+        throw ApiErrorMapper.map(t)
     }
 }
+
+private fun EpgChannelDto.toDomain(): EpgChannel = EpgChannel(
+    id = id,
+    sourceId = sourceId,
+    displayName = displayName,
+    iconUrl = iconUrl,
+)
+
+private fun EpgProgrammeDto.toDomain(): EpgProgramme = EpgProgramme(
+    id = id,
+    channelId = channelId,
+    sourceId = sourceId,
+    title = title,
+    subtitle = subtitle,
+    description = description,
+    category = category,
+    startsAt = Instant.parse(startsAt),
+    endsAt = Instant.parse(endsAt),
+)

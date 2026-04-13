@@ -291,6 +291,41 @@ Set the result as `SOURCE_ENCRYPTION_KEY`.
 Used at source-create time for an item-count estimate; full network
 fetch + heavy parsing is the EPG worker's job (Run 15+).
 
+## Playback + Continue Watching (Run 16)
+
+`src/playback/` owns the server-authoritative playback lifecycle. Every
+session lives in `playback_sessions` and every heartbeat / stop upserts
+the caller's `continue_watching` row in the same DB transaction, so
+Home's CW rail reflects reality.
+
+### Endpoints (`AuthGuard`-protected)
+
+| Method | Path                         | Purpose                                    |
+|--------|------------------------------|--------------------------------------------|
+| POST   | `/v1/playback/start`         | `{ profileId, sourceId, itemId, itemType, deviceId? }` → session |
+| POST   | `/v1/playback/heartbeat`     | `{ sessionId, positionSeconds, state, durationSeconds? }` — every 10 s |
+| POST   | `/v1/playback/stop`          | `{ sessionId, finalPositionSeconds, durationSeconds?, completed? }` |
+| GET    | `/v1/continue-watching?profileId=&limit=` | Latest N CW rows for the profile   |
+
+Live items (`itemType == 'live'`) skip continue-watching upserts — the
+server doesn't track resume positions for live streams.
+
+`completed=true` on stop deletes the CW row so completed content falls
+off the rail.
+
+## EPG endpoints (Run 16)
+
+`src/epg/` serves read-only EPG data populated by the
+`services/epg-worker` process.
+
+| Method | Path                                                   | Purpose                  |
+|--------|--------------------------------------------------------|--------------------------|
+| GET    | `/v1/epg/channels?sourceId=`                            | Channels for a source   |
+| GET    | `/v1/epg/programmes?channelId=&from=&to=`               | Programmes in an ISO window (defaults to next 6h) |
+
+Defensive: both endpoints 404 when the source / channel doesn't belong
+to the caller.
+
 ## Billing module (Run 9)
 
 The billing layer is the **single writer** of purchase- and refund-driven

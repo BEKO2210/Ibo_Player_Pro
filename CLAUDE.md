@@ -7,7 +7,7 @@
 ## 🎯 Current State
 
 - **Phase:** C — Android TV Client
-- **Last completed run:** Run 15 — Source management UI + EPG browse
+- **Last completed run:** Run 16 — Playback + heartbeat + EPG worker
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
@@ -15,41 +15,35 @@
 
 ---
 
-## ▶️ Next Run (Run 16): Playback (Media3 / ExoPlayer) + Heartbeat Sync
+## ▶️ Next Run (Run 17): Billing flow in the app
 
 ### Goal
-Wire Media3 / ExoPlayer into the Android TV client so live channels and VOD items actually play, with server-side heartbeat sync so Continue Watching and Watch History become real instead of stubbed. Also stand up the `epg-worker` backend process so EPG browse graduates from fixture data to real `/v1/epg/*` responses.
+Wire the Google Play Billing Client into the Android TV app so users can actually purchase Lifetime Single / Family, trigger server verification through the Run 9 billing-worker path, and surface entitlement UI states (trial / active / expired / revoked) across the home + paywall surfaces.
 
 ### Deliverables
-- [ ] `PlayerScreen` composable (full-bleed) hosting a Media3 `ExoPlayer` with TV-friendly controls (seek bar, play/pause, audio-track picker, subtitle picker) built on Run 12 components (`PremiumButton`, `PremiumChip`).
-- [ ] Playback deep-links resolved from `HomeDeeplink.LiveChannel` + `HomeDeeplink.VodItem` + EPG programme blocks → `Routes.play(sourceId, itemId, itemType)`.
-- [ ] `PlaybackRepository` against these new backend endpoints:
-  - `POST /v1/playback/start { profileId, sourceId, itemId, itemType }` → returns `{ sessionId }`
-  - `POST /v1/playback/heartbeat { sessionId, positionSeconds, state }` (every 10 s while playing)
-  - `POST /v1/playback/stop { sessionId, finalPositionSeconds }`
-- [ ] API side — new `PlaybackModule` + controllers + `playback_sessions` writes + `continue_watching` upsert at the same time (`continue_watching` is updated on every heartbeat + on stop).
-- [ ] `GET /v1/continue-watching?profileId=` endpoint returning the latest N rows for the caller; wire into `HomeRepository` to replace the stub data.
-- [ ] `services/epg-worker/` — standalone Node process (mirroring the Run 9 billing-worker pattern) that fetches XMLTV from registered sources, runs it through `packages/parsers`, and persists `epg_channels` + `epg_programs`. Expose the data via `GET /v1/epg/channels?sourceId=` + `GET /v1/epg/programmes?channelId=&from=&to=` on the API; swap `EpgRepository.browse` from fixture to live calls.
-- [ ] Unit tests:
-  - `PlaybackRepositoryTest` (MockWebServer) — start / heartbeat / stop
-  - `PlayerViewModelTest` — state machine (buffering → playing → paused → stopped) + heartbeat scheduling
-  - API side: `PlaybackService.spec.ts` — session lifecycle, continue_watching upsert, error paths
-  - EPG worker: fetch + parse + persist round-trip with a fake HTTP server
-- [ ] Update both READMEs with a "Playback (Run 16)" + "EPG worker" section
+- [ ] Add `com.android.billingclient:billing-ktx` + wire `BillingClientWrapper` (lifecycle-aware, Hilt-injected)
+- [ ] `BillingRepository` with:
+  - `querySkuDetails()` — fetches the two one-time products
+  - `launchPurchase(activity, productId)` — kicks off the Play Billing flow
+  - `acknowledgeAndVerify(purchaseToken, productId)` — POST `/v1/billing/verify` + local state refresh
+  - `restore()` — POST `/v1/billing/restore`
+- [ ] `PaywallScreen` that opens when the user lands on a gated surface with `entitlement.state ∈ {none, expired, revoked}`. Premium look: two-plan comparison (Single vs Family), CTAs, restore link
+- [ ] Entitlement-aware gating: Home hero swaps between "Start trial" (for `none` + trial-not-consumed), "Upgrade" (for `expired`), or nothing (when active). Source create and playback start already 402 on the server — the client should route the 402 into `PaywallScreen` instead of an error banner
+- [ ] Unit tests for `BillingRepository.acknowledgeAndVerify` (MockWebServer) and `PaywallViewModel` state transitions
+- [ ] Update `apps/android-tv/README.md` with "Billing flow (Run 17)"
 
 ### Acceptance criteria
-- Selecting a live channel or VOD item from Home / Sources / EPG starts playback within < 2 s on an emulator (HLS + MP4)
-- Server-side `playback_sessions` row is created, heartbeat updates `latest_position_seconds`, and `continue_watching` row is upserted at 10 s cadence
-- Home Continue Watching row reflects the real user history (not the stub)
-- `EpgBrowseScreen` renders real programmes served by the EPG worker for an M3U+EPG source
-- Every new Kotlin test + Jest test + worker test passes; existing suites stay green
+- User can open the paywall from a gated action, pick Family, complete the Play Billing purchase sheet, and see the home flip to the active state within a few seconds (backend verify + local refresh)
+- Restore flow works end-to-end for an account with a known-good purchase
+- 402 ENTITLEMENT_REQUIRED from any server action automatically surfaces the paywall — never a raw error
+- Existing Run 9 billing-worker behaviour unchanged (refund-handling and replay idempotency still pass their tests)
 
 ### After this run — update CLAUDE.md
-1. Tick Run 16 in the roadmap
-2. Set "Last completed run" to `Run 16 — Playback + heartbeat + EPG worker`
-3. Write the new "Next Run" block for **Run 17: Billing flow in app (Play Billing Client, purchase, restore)**
+1. Tick Run 17 in the roadmap
+2. Set "Last completed run" to `Run 17 — Billing flow in app`
+3. Write the new "Next Run" block for **Run 18: Parental controls (PIN gate + age filter + device list)**
 4. Append entry to **Run Log**
-5. Commit: `tv+api: add playback + heartbeat + epg worker (Run 16)` and push
+5. Commit: `tv: add Play Billing purchase + restore + paywall (Run 17)` and push
 
 ---
 
@@ -178,7 +172,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 - [x] **Run 13** — Onboarding/Auth screens: Welcome → Signup/Login → Trial activation → Profile picker. Firebase Auth + API client
 - [x] **Run 14** — Home screen: Hero carousel, rows, Continue Watching, Favorites. Logo wired in if not already
 - [x] **Run 15** — Source management UI + EPG browse view
-- [ ] **Run 16** — Playback (Media3/ExoPlayer): Live, VOD, Resume, subtitles, audio-track picker, heartbeat sync
+- [x] **Run 16** — Playback (Media3/ExoPlayer): Live, VOD, Resume, subtitles, audio-track picker, heartbeat sync
 - [ ] **Run 17** — Billing flow in app: Play Billing Client, purchase trigger, Restore Purchase, entitlement UI states
 - [ ] **Run 18** — Parental controls: PIN gate, age filter, device list / logout / unpair
 
@@ -241,6 +235,8 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - **Logo variants (from Run 6):** SVG vector version and explicit dark/light PNG variants would help for the Android TV splash / launcher and light-theme surfaces. Not blocking Run 12/14 but nice to have.
 - **Entitlement scheduler (from Run 8):** currently trial→expired happens read-time (on `getOrInitialize`). For analytics and timely push notifications we may want a scheduled job that runs every 5–15 minutes and marks `trial`→`expired`. Not blocking — defer until Run 9 (worker infra exists) or Run 10.
 - **Device rename + list-by-device-token (from Run 8):** OpenAPI had `PUT /devices/{id}` rename; not yet implemented (out of Run 8 scope). Add when the Android TV device-management UI lands (Run 18).
+- **Playback URL resolver (from Run 16):** Run 16 passes the playback `mediaUrl` through the nav graph because the server doesn't yet have a dedicated resolver that decrypts source credentials + signs short-lived playback URLs. Home deep-links fall back to public test streams (Apple BipBop HLS / Big Buck Bunny MP4) so the playback path is exercisable today. Proper resolver (likely `POST /v1/playback/resolve`) is a Run 18.5 / 20 security hardening item; would also allow the server to enforce device-bound playback tokens and per-device concurrent-stream caps.
+- **EPG duplicate handling (from Run 16):** the EPG worker inserts programmes without a natural unique key (no provider consistently emits an id). Providers that re-emit the same programme window will create duplicates. A companion dedupe/cleanup job (on `(channel_id, starts_at)`) can be added if storage becomes an issue; defer until observability tells us it matters.
 
 ---
 
@@ -288,6 +284,25 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
 - Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 16 — 2026-04-13 — Playback + heartbeat + EPG worker
+- Backend `src/playback/` — `PlaybackService` is the single writer of playback lifecycle + continue-watching state. `start` checks `allowsPlayback()` entitlement + profile/source ownership (404 on foreign rows) and inserts into `playback_sessions`. `heartbeat` updates position + state in a tx and upserts `continue_watching` (unique on `profileId_itemId`) for non-live items. `stop` records a `watch_history` row, and either upserts (non-completed) or deletes (completed) the CW row. `listContinueWatching` serves the Home rail
+- Backend endpoints (`AuthGuard`-protected): `POST /v1/playback/{start,heartbeat,stop}`, `GET /v1/continue-watching?profileId=&limit=`
+- Backend `src/epg/` — `ApiEpgModule` serving `GET /v1/epg/channels?sourceId=` + `GET /v1/epg/programmes?channelId=&from=&to=`. Defensive ownership checks (404 on foreign source/channel). Programme window defaults to next 6h
+- 8 new backend tests (`playback.service.spec.ts`) — entitlement gate, profile/session ownership, CW upsert for vod, CW skip for live, CW delete on completed stop, watch_history write. Total suite now 125 (was 117)
+- **New worker** `services/epg-worker/` — standalone Node process mirroring the Run 9 billing-worker pattern. Reuses the API's config + Prisma + Firebase + Sources modules via the `@api/*` TS path alias + `@premium-player/parsers` for XMLTV parsing. Per-tick flow: SELECT active `xmltv`/`m3u_plus_epg` sources → decrypt credentials → fetch → `parseXmltv` → upsert `epg_channels` (unique on `sourceId_externalChannelId`) → insert `epg_programs` filtered to `[now-1h, now+48h]` → stamp `last_validated_at + validation_status=valid`. Per-source failure isolation. `WORKER_RUN_ONCE=true` for CI / on-demand reconciliation
+- Env: `EPG_WORKER_POLL_INTERVAL_MS` (default 30 min, min 1 min), `EPG_WINDOW_AHEAD_HOURS` (default 48, max 168)
+- 4 EPG worker tests: run-once tick persists channels + in-window programmes, programmes outside window are skipped, empty XMLTV still marks `valid`, per-source failure doesn't abort the batch
+- **Verified end-to-end live:** API boots with all 5 new routes mapped under `/v1`; all protected endpoints return the stable `UNAUTHORIZED` ErrorEnvelope. EPG worker boots against real Postgres 16 + Firebase-presence check, polls `sources` table, exits cleanly under `WORKER_RUN_ONCE=true`
+- Android TV client `data/playback/` — `PlaybackRepository.{start,heartbeat,stop}` + `ContinueWatchingRepository.list`, both through `ApiErrorMapper`. `PlaybackStateValue` enum mirrors the Prisma `PlaybackState`; `PlaybackItemType` mirrors the item-type union
+- Android `data/epg/EpgRepository` now calls the live `/v1/epg/*` endpoints — the Run 15 fixture is retired; `EpgBrowseSnapshot` shape kept identical so `EpgBrowseScreen` didn't change
+- Android `data/home/HomeRepository` now wires in `ContinueWatchingRepository` — the Continue Watching row becomes real whenever a profile id is present on the nav arg. Fallback to empty row when profileId is null or the call fails (no Home crash on backend issues)
+- Android `ui/player/PlayerViewModel` — sealed `PlayerUiState` (Starting / Buffering / Playing / Paused / Stopped / Error). `start` fires in `init`; `onProgress`/`onPlayingStateChanged`/`onBuffering`/`onError` drive transitions; `PlayerClock` interface lets tests control the 10-second heartbeat cadence; `stop(completed)` posts the final position and emits Stopped. Heartbeat loop is a single `viewModelScope.launch` that sleeps via the injected clock, maps the current UI state to a `PlaybackStateValue`, and fires `/heartbeat`
+- Android `ui/player/PlayerScreen` — full-bleed `AndroidView` wrapping Media3 `PlayerView` (controller disabled — our own overlay). 1-second UI loop pumps `player.currentPosition` into `onProgress`. Bespoke `PlayerOverlay` with bottom-up gradient scrim + `PremiumChip` state + position + `PremiumButton` controls (-10s / Play-Pause / +10s / Exit). `ErrorOverlay` on `PlaybackException`. Disposes ExoPlayer on exit
+- Nav route `Routes.PlayerPattern = "play/{sourceId}/{itemId}/{itemType}?profileId=&mediaUrl=&itemTitle="` + `Routes.play(profileId, sourceId, itemId, itemType, mediaUrl, title)` URL-encodes item id/URL/title. `NavHost` registers the route; `HomeScreen` deep-link callback routes `LiveChannel`/`VodItem` into the player with placeholder HLS/MP4 test URLs (BipBop / BigBuckBunny) until a server-side resolver lands
+- Tests: `PlaybackRepositoryTest` (MockWebServer, 5 cases — start/heartbeat/stop body shape + 402/404 mapping), `PlayerViewModelTest` (MockK, 5 cases — init→Buffering, onProgress→Playing, onPlayingStateChanged(false)→Paused, heartbeat fires once when clock completes a sleep, stop posts final position + emits Stopped)
+- Parking Lot: **Playback URL resolver** — Run 16 passes mediaUrl through the nav graph; a proper server endpoint that decrypts source credentials and signs short-lived playback URLs is a follow-up (likely Run 18.5 or 20)
+- Docs: `services/api/README.md` gained "Playback + Continue Watching (Run 16)" + "EPG endpoints (Run 16)" sections; `apps/android-tv/README.md` gained "Playback (Run 16)" with state machine description + nav route + EPG worker integration note; `services/epg-worker/README.md` documents architecture, commands, env, per-tick flow, test matrix
 
 ### Run 15 — 2026-04-13 — Source management UI + EPG browse view
 - Extended `PremiumPlayerApi` with `POST /v1/sources`, `PUT /v1/sources/{id}`, `DELETE /v1/sources/{id}`. Added matching DTOs (`CreateSourceRequest`, `UpdateSourceRequest`, `SingleSourceResponse`). `SourceRepository` grew `create`, `rename`, `setActive`, `delete` — all routed through `ApiErrorMapper` and a non-2xx DELETE response is re-thrown as `HttpException` so the stable ErrorEnvelope path stays uniform
