@@ -8,6 +8,9 @@ import type { AppConfig } from './config/configuration';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
+  // All v1 routes live under /v1 (health remains unversioned for infra probes).
+  app.setGlobalPrefix('v1', { exclude: ['health'] });
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
