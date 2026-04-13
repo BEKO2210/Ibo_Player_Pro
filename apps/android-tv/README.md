@@ -76,6 +76,55 @@ the Kotlin files mirror it verbatim. Always update the TS file first.
 
 See `packages/ui-tokens/README.md` for the token catalog and rationale.
 
+## Component catalog (Run 12)
+
+All premium primitives live under
+`app/src/main/java/com/premiumtvplayer/app/ui/components/`.
+
+### Atoms
+
+| Component           | File                  | Purpose                                                                         |
+|---------------------|-----------------------|---------------------------------------------------------------------------------|
+| `BrandLogo`         | `BrandLogo.kt`        | Renders `res/drawable/brand_logo.png` (mirror of the canonical PNG). 3 sizes. |
+| `BootProgress`      | `BootProgress.kt`     | Three-bar accent-cyan pulse for boot / loading. 1.2s linear loop.             |
+| `PremiumChip`       | `PremiumChip.kt`      | All-caps `LabelSmall` chip; `Filled` or `Outline` variants.                   |
+| `PremiumButton`     | `PremiumButton.kt`    | `Primary` / `Secondary` / `Ghost` variants. Focus 1.04× scale + accent border. |
+| `PremiumTextField`  | `PremiumTextField.kt` | TV-friendly input. Focus border switches to `FocusAccent`; error state in `DangerRed`. |
+| `PremiumCard`       | `PremiumCard.kt`      | Focusable card primitive. 1.06× scale + glow ring + dim-veil hook on focus.    |
+
+### Molecules
+
+| Component       | File              | Purpose                                                                                          |
+|-----------------|-------------------|--------------------------------------------------------------------------------------------------|
+| `RowOfTiles<T>` | `RowOfTiles.kt`   | Compose-TV `TvLazyRow` of `PremiumCard`s with the **focus-veil pattern** (40% dim on siblings). |
+| `HeroSection`   | `HeroSection.kt`  | Full-bleed hero with backdrop slot, bottom-up scrim, title/subtitle stack, CTA row.            |
+
+### Focus-veil pattern (premium TV signature)
+
+`RowOfTiles` tracks the focused index in row state and passes
+`unfocusedDim = 0.4f` to every `PremiumCard` whose index ≠ focused
+index. Each card animates its veil alpha through `PremiumTransitions`,
+so as the user navigates left/right the dim swaps fluidly. This is the
+visual cue that lifts a row above a generic carousel and matches the
+behaviour seen on Sony Bravia, Apple TV, and Samsung Tizen Premium.
+
+### Token usage rules
+
+- Never hard-code `Color(...)`, `dp`, or `TextStyle(...)` in component
+  bodies. Pull from `PremiumColors`, `LocalPremiumSpacing.current`,
+  `LocalPremiumShapes.current`, and `PremiumType`.
+- Animations always go through `PremiumTransitions` /
+  `PremiumEasing` / `LocalPremiumDurations.current`. Standalone
+  `tween(...)` calls are an anti-pattern — they bypass the design
+  language.
+
+### `@Preview`
+
+Every component has at least one `@Preview` exercising it under
+`PremiumTvTheme {}` with `backgroundColor = 0xFF050608` (the brand
+`BackgroundBase`). Open the file in Android Studio → "Split" / "Design"
+view to see the rendering live.
+
 ## Build + run
 
 > **Tooling required (cannot be run in this repo's CI sandbox — Android
