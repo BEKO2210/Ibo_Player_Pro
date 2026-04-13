@@ -2,6 +2,9 @@ package com.premiumtvplayer.app.data.entitlement
 
 import com.premiumtvplayer.app.data.TestApiFactory
 import com.premiumtvplayer.app.data.api.ApiException
+import com.premiumtvplayer.app.data.auth.FirebaseTokenSource
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -15,11 +18,15 @@ import org.junit.Test
 class EntitlementRepositoryTest {
     private lateinit var server: MockWebServer
     private lateinit var repo: EntitlementRepository
+    private lateinit var cache: FakeEntitlementCache
+    private lateinit var tokens: FirebaseTokenSource
 
     @Before
     fun setup() {
         server = MockWebServer().apply { start() }
-        repo = EntitlementRepository(TestApiFactory.build(server))
+        cache = FakeEntitlementCache()
+        tokens = mockk<FirebaseTokenSource>().also { every { it.currentUid() } returns "uid-test" }
+        repo = EntitlementRepository(TestApiFactory.build(server), cache, tokens)
     }
 
     @After
