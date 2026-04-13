@@ -38,7 +38,7 @@ describe('AuthGuard', () => {
     );
   });
 
-  function makeContext(authHeader?: string | string[]): {
+  function makeContext(authHeader?: string): {
     ctx: ExecutionContext;
     req: Partial<AuthenticatedRequest>;
   } {

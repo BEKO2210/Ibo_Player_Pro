@@ -8,9 +8,11 @@ generator client {
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  extensions = [pgcrypto, citext]
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // Extensions (pgcrypto, citext) are installed via the init migration
+  // SQL and infra/postgres/init/01-extensions.sql, so the Prisma
+  // `extensions` preview feature is not required here.
 }
 
 // ============================================================================
