@@ -7,7 +7,7 @@
 ## 🎯 Current State
 
 - **Phase:** A — Foundation & Specs
-- **Last completed run:** Run 4 — API contracts
+- **Last completed run:** Run 5 — Entitlement state machine
 - **Current branch:** `claude/premium-tv-player-plan-WG2tC`
 - **Push target:** same branch (`-u origin claude/premium-tv-player-plan-WG2tC`)
 - **Logo status:** ⏳ pending — Claude will ask the user in **Run 6**
@@ -15,34 +15,33 @@
 
 ---
 
-## ▶️ Next Run (Run 5): Entitlement State Machine + Billing Events
+## ▶️ Next Run (Run 6): NestJS Bootstrap + Infra
 
 ### Goal
-Define the authoritative entitlement lifecycle and billing event handling rules so backend modules and workers share one deterministic state transition model.
+Bootstrap the V1 backend service foundation in `services/api` with NestJS, Prisma, PostgreSQL, Redis, and local Docker development workflow.
 
 ### Deliverables
-- [ ] `docs/architecture/entitlement-state-machine.md` containing:
-  - [ ] State catalog: `none`, `trial`, `lifetime_single`, `lifetime_family`, `expired`, `revoked`
-  - [ ] Transition table (allowed transitions + guard conditions)
-  - [ ] Billing event mapping: purchase verified, restore, refund, revoke, chargeback, duplicate token, replay event
-  - [ ] Trial lifecycle rules (start, consume-once, end)
-  - [ ] Device/profile cap policy by entitlement state (1 vs 5)
-  - [ ] Idempotency strategy and conflict resolution (worker/API races)
-  - [ ] Mermaid state diagram (GitHub-renderable)
-- [ ] Error semantics section referencing stable codes (`SLOT_FULL`, `ENTITLEMENT_REQUIRED`, etc.)
+- [ ] Create `services/api/` NestJS project scaffold (TypeScript strict mode)
+- [ ] Add Prisma setup with initial schema skeleton aligned to Run 3 docs
+- [ ] Add local `docker-compose` stack for Postgres + Redis under `infra/docker/`
+- [ ] Add `GET /health` endpoint returning service/db/redis readiness snapshot
+- [ ] Add environment config templates (`.env.example`) and runtime config module
+- [ ] Add minimal README in `services/api/` with run/migrate/test commands
+- [ ] Ask user to upload logo assets into `assets/logo/` (PNG/SVG, dark+light preferred)
 
 ### Acceptance criteria
-- Every transition in docs is deterministic and has explicit source event
-- Refund/revoke handling is unambiguous for Single and Family products
-- Trial re-issue prevention is explicitly defined
-- A backend engineer can implement Run 8/9 logic without making policy assumptions
+- `services/api` starts locally and responds on health endpoint
+- Prisma can connect to Postgres from docker-compose
+- Redis connectivity is verified in health/status output
+- Environment setup is documented and reproducible by a fresh developer
+- Logo upload request is explicitly made to the user during this run
 
 ### After this run — update CLAUDE.md
-1. Tick Run 5 in the roadmap
-2. Set "Last completed run" to `Run 5 — Entitlement state machine`
-3. Write the new "Next Run" block for **Run 6: NestJS bootstrap + infra**
+1. Tick Run 6 in the roadmap
+2. Set "Last completed run" to `Run 6 — NestJS bootstrap`
+3. Write the new "Next Run" block for **Run 7: Auth module**
 4. Append entry to **Run Log**
-5. Commit: `docs: define entitlement state machine and billing events (Run 5)` and push
+5. Commit: `api: scaffold NestJS service with Prisma/Redis/Postgres (Run 6)` and push
 
 ---
 
@@ -155,7 +154,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 - [x] **Run 2** — PRD + user flows (`docs/product/`)
 - [x] **Run 3** — Data model: SQL schemas + ER diagram (`docs/architecture/data-model.md`)
 - [x] **Run 4** — API contracts: OpenAPI 3.1 + Zod (`packages/api-contracts/`)
-- [ ] **Run 5** — Entitlement state machine + billing event handling (`docs/architecture/entitlement-state-machine.md`)
+- [x] **Run 5** — Entitlement state machine + billing event handling (`docs/architecture/entitlement-state-machine.md`)
 
 ### Phase B — Backend V1
 - [ ] **Run 6** — NestJS bootstrap (`services/api/`): Prisma, Postgres, Redis, docker-compose, health endpoint, env setup. **→ Claude asks user for logo upload into `assets/logo/` here.**
@@ -258,3 +257,10 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added `packages/api-contracts/src/zod.ts` with runtime schemas mirroring OpenAPI requests/responses and core enums
 - Added `packages/api-contracts/README.md` documenting contract rules, stable error envelope, and usage expectations
 - Kept entitlement states and error codes aligned with locked product decisions and user-flow endpoints
+
+
+### Run 5 — 2026-04-13 — Entitlement state machine + billing events
+- Added `docs/architecture/entitlement-state-machine.md` with canonical entitlement states, deterministic transition table, and billing event mapping
+- Defined trial lifecycle rules (consume-once), refund/revoke fallback policy, and explicit device/profile caps by entitlement state
+- Documented idempotency keys, replay handling, and worker/API concurrency conflict resolution
+- Added GitHub-renderable mermaid state diagram and error semantics aligned to stable API error codes
