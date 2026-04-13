@@ -125,6 +125,100 @@ Every component has at least one `@Preview` exercising it under
 `BackgroundBase`). Open the file in Android Studio → "Split" / "Design"
 view to see the rendering live.
 
+## Onboarding flow (Run 13)
+
+The app now owns a full onboarding graph on top of the design system:
+
+```
+Boot ──► Welcome ──► Signup / Login ──► TrialActivation ──► ProfilePicker ──► Home
+```
+
+All screen transitions go through `PremiumEasing.Premium` fades over
+`LocalPremiumDurations.current.short` — editorial, not jittery.
+
+### Runtime config — `BuildConfig` + `local.properties`
+
+Network + Firebase wiring is fed by `BuildConfig` fields set at build
+time. Defaults are dev placeholders so the project imports without
+secrets.
+
+Override in `apps/android-tv/local.properties` (this file is
+`.gitignore`d) **or** on the Gradle command line:
+
+```properties
+apiBaseUrl=http://10.0.2.2:3000/v1/
+firebaseApiKey=AIza…
+firebaseProjectId=premium-player-prod
+firebaseApplicationId=1:000000000000:android:0000000000000000000000
+```
+
+Firebase is initialized **programmatically** from those fields (see
+`di/FirebaseModule.kt`) — no `google-services.json` plugin or file
+required. Drop your real Firebase project values into `local.properties`
+and rebuild.
+
+Base URL defaults:
+
+| Target                       | Value                         |
+|------------------------------|-------------------------------|
+| Emulator pointing at local API | `http://10.0.2.2:3000/v1/`  |
+| Staging / Production         | Override via `-PapiBaseUrl=…` |
+
+### Layer map
+
+```
+data/
+  api/
+    ApiModels.kt              # kotlinx.serialization DTOs (AccountSnapshot,
+                              #   EntitlementStatus, ProfileList,
+                              #   ApiErrorEnvelope, FirebaseTokenRequest)
+    PremiumPlayerApi.kt       # Retrofit interface
+    ApiError.kt               # ApiException sealed hierarchy + ApiErrorMapper
+  auth/
+    FirebaseTokenSource.kt    # suspend wrapper around FirebaseUser#getIdToken
+    AuthRepository.kt         # register / login / refresh — Firebase + /auth
+  entitlement/
+    EntitlementRepository.kt  # /entitlement/status + /entitlement/trial/start
+  profiles/
+    ProfileRepository.kt      # /profiles (read-only in V1 onboarding)
+di/
+  NetworkModule.kt            # Retrofit + OkHttp + Json + AuthInterceptor
+  FirebaseModule.kt           # programmatic FirebaseApp + FirebaseAuth
+ui/
+  nav/Routes.kt               # route constants
+  onboarding/
+    WelcomeScreen.kt          # logo + copy + Sign In / Create Account
+    AuthFormScaffold.kt       # shared email/password layout (Signup + Login)
+    SignupScreen.kt    + ViewModel
+    LoginScreen.kt     + ViewModel
+    TrialActivationScreen.kt  + ViewModel  (handles TRIAL_ALREADY_CONSUMED)
+    ProfilePickerScreen.kt    + ViewModel  (loads /profiles, focus-veil row)
+  PremiumTvApp.kt             # owns NavHost + Boot + transitions + Home stub
+```
+
+### Error envelope → user copy
+
+`ApiErrorCopy.forCode(code, fallback)` maps stable `ErrorCode` values
+from the V1 backend (`services/api/src/common/errors.ts`) into English
+strings. i18n hooks in Run 19 replace this with a resource lookup.
+
+### Running onboarding locally end-to-end
+
+1. Bring up the V1 backend + deps:
+   ```bash
+   docker compose -f infra/docker/docker-compose.yml up -d
+   cd services/api && npm install && cp .env.example .env && \
+     npm run prisma:migrate:deploy && npm run start:dev
+   ```
+2. In Android Studio, set `local.properties` with a real Firebase
+   project's API key / project id / application id.
+3. Install + launch on a Google TV emulator. The app boots into
+   Welcome, you can Sign Up, the backend logs show
+   `POST /v1/auth/register` followed by `POST /v1/entitlement/trial/start`,
+   and the Profile Picker loads the account's profiles.
+4. Tearing down trial on the same account twice surfaces the friendly
+   "already used" state (driven by `TRIAL_ALREADY_CONSUMED`).
+
 ## Build + run
 
 > **Tooling required (cannot be run in this repo's CI sandbox — Android

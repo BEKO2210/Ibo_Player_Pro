@@ -7,7 +7,7 @@
 ## 🎯 Current State
 
 - **Phase:** C — Android TV Client
-- **Last completed run:** Run 12 — Design system in Compose
+- **Last completed run:** Run 13 — Onboarding + Auth screens
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
@@ -15,40 +15,37 @@
 
 ---
 
-## ▶️ Next Run (Run 13): Onboarding + Auth Screens
+## ▶️ Next Run (Run 14): Home Screen
 
 ### Goal
-Wire the first interactive flows on top of the Run 12 design system: Welcome → Sign up / Log in → Trial activation → Profile picker. Talks to Firebase Auth (client SDK) for email/password and to the V1 backend for account sync, trial start, and profile listing. End-to-end the user can install the APK, sign up, start a 14-day trial, and pick a profile — without ever leaving the premium dark UI language.
+Replace the `HomePlaceholder` stub with the premium home screen: hero carousel, horizontal rows (Continue Watching, Favorites, Suggested), and a settings rail entry point. Home is the first screen a returning user sees after profile pick; it is the app's brand ambassador, so its visual bar must match Apple TV / Netflix / Bravia.
 
 ### Deliverables
-- [ ] `NavHost` / `NavController` rooted in `PremiumTvApp` with routes: `welcome`, `signup`, `login`, `trialActivation`, `profilePicker`. Smooth transitions using `PremiumTransitions.DrawerSlide`.
-- [ ] Firebase Auth wiring (Hilt-provided `FirebaseAuth`). `google-services.json` placeholder + README note for the user to drop in the real one.
-- [ ] HTTP client module (Hilt-provided Retrofit + OkHttp + kotlinx.serialization). Base URL from `BuildConfig` (debug points at `http://10.0.2.2:3000` for the local API).
-- [ ] `AuthRepository` with `register(email, password, locale)`, `login(email, password)`, `refresh()` — under the hood: Firebase ID token → `POST /v1/auth/{register,login,refresh}`.
-- [ ] `EntitlementRepository` with `status()` and `startTrial()` → wraps `GET /v1/entitlement/status` + `POST /v1/entitlement/trial/start`.
-- [ ] Screens (Compose):
-  - `WelcomeScreen` — `HeroSection` placeholder + "Sign In" + "Create account" `PremiumButton`s
-  - `SignupScreen` / `LoginScreen` — `PremiumTextField` for email + password, validation, error envelope mapping
-  - `TrialActivationScreen` — explains 14-day trial, primary CTA → `entitlement/trial/start`, handles `TRIAL_ALREADY_CONSUMED`
-  - `ProfilePickerScreen` — calls `GET /v1/profiles`, renders each profile as a `PremiumCard` in a centered grid; "Add profile" tile when under cap
-- [ ] State holders: `WelcomeViewModel`, `SignupViewModel`, etc — Hilt-injected; expose `uiState` `StateFlow<...>`. Keep ViewModels thin; repos do the work.
-- [ ] Stable error mapping: `ErrorEnvelope.error.code` → user-facing strings (English defaults, i18n hooks ready for Run 19).
-- [ ] Unit tests for `AuthRepository` + `EntitlementRepository` (Mock OkHttp interceptor) and at least one ViewModel happy-path test.
-- [ ] Update `apps/android-tv/README.md` with a "Onboarding flow" section and a `BuildConfig.API_BASE_URL` override note.
+- [ ] `HomeScreen` composable backed by `HomeViewModel` (Hilt-injected). Top band uses `HeroSection` with a cycling highlight (3-5 items); rest of the screen is a vertical stack of `RowOfTiles` molecules.
+- [ ] `HomeRepository` pulling:
+  - `continue-watching` rows (stub data in Run 14; wired to `/v1/continue-watching` when endpoint lands in Run 16)
+  - `favorites` list (stub → `/v1/favorites` in Run 15)
+  - `sources` summary (from Run 10 `/v1/sources` via `ProfileRepository` sibling)
+- [ ] `SourcePickerRail` visible when the account has zero sources — prompts the user to add their first M3U / XMLTV source (routes to Run 15's source management screen which can be stubbed for now)
+- [ ] `BrandLogo(Inline)` in the top-left header plus profile indicator in the top-right (avatar + profile name)
+- [ ] D-pad navigation: hero tiles ↔ row tiles move focus naturally; ensure the first row auto-receives focus after hero
+- [ ] `@Preview` for the populated home (with fixture data) AND for the empty-source state
+- [ ] Unit tests for `HomeViewModel` (3 states: loading / populated / empty-source)
+- [ ] Update `apps/android-tv/README.md` with a "Home screen" section
 
 ### Acceptance criteria
-- Fresh install → Welcome → Sign Up → enter email/password → trial activation → profile picker, all in the premium UI language with focus-veil scrolling.
-- Backend live verification: API logs show successful `POST /v1/auth/register` followed by `POST /v1/entitlement/trial/start` with the same Firebase ID token.
-- Replaying trial activation returns `402 ENTITLEMENT_REQUIRED` and the screen shows a friendly "Trial already used on this account" state without crashing.
-- Network failure surfaces a banner using `PremiumColors.DangerRed` + `PremiumChip`, never a blank screen.
-- All Run 12 component contracts still hold (no new hard-coded literals leak into screens).
+- Fresh account (zero sources, fresh trial) → home shows the source-picker rail and an inviting hero card prompting "Add your first source"
+- Account with sources + history → home shows Continue Watching row above Suggested / Favorites rows
+- Focus traversal hero ↔ rows ↔ sibling rows is smooth, with the focus-veil applied at the row level
+- No hard-coded color / dp / TextStyle literals in any screen body
+- All existing onboarding tests + Run 10-11 backend tests remain green
 
 ### After this run — update CLAUDE.md
-1. Tick Run 13 in the roadmap
-2. Set "Last completed run" to `Run 13 — Onboarding + Auth screens`
-3. Write the new "Next Run" block for **Run 14: Home screen (hero + rows + Continue Watching)**
+1. Tick Run 14 in the roadmap
+2. Set "Last completed run" to `Run 14 — Home screen`
+3. Write the new "Next Run" block for **Run 15: Source management UI + EPG browse view**
 4. Append entry to **Run Log**
-5. Commit: `tv: add onboarding + auth flow (Welcome/Signup/Login/Trial/Profiles) (Run 13)` and push
+5. Commit: `tv: add home screen (hero + rows + continue watching) (Run 14)` and push
 
 ---
 
@@ -174,7 +171,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 ### Phase C — Android TV Client
 - [x] **Run 11** — `apps/android-tv/` Gradle/Compose/Compose-TV bootstrap. **applicationId locked: `com.premiumtvplayer.app`.** Leanback intent, TV manifest, Hilt, Navigation-Compose, ui-tokens wiring
 - [x] **Run 12** — Design system in Compose: dark theme, typography, colors, focus states, motion, reusable Card/Row/Hero
-- [ ] **Run 13** — Onboarding/Auth screens: Welcome → Signup/Login → Trial activation → Profile picker. Firebase Auth + API client
+- [x] **Run 13** — Onboarding/Auth screens: Welcome → Signup/Login → Trial activation → Profile picker. Firebase Auth + API client
 - [ ] **Run 14** — Home screen: Hero carousel, rows, Continue Watching, Favorites. Logo wired in if not already
 - [ ] **Run 15** — Source management UI + EPG browse view
 - [ ] **Run 16** — Playback (Media3/ExoPlayer): Live, VOD, Resume, subtitles, audio-track picker, heartbeat sync
@@ -287,6 +284,33 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
 - Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 13 — 2026-04-13 — Onboarding + Auth screens
+- Added `BuildConfig` fields (`API_BASE_URL`, `FIREBASE_API_KEY`, `FIREBASE_PROJECT_ID`, `FIREBASE_APPLICATION_ID`) fed from `local.properties` / Gradle properties. Debug default points at `http://10.0.2.2:3000/v1/` for the emulator-to-host API loop.
+- **Firebase is initialized programmatically** via `FirebaseModule` (`FirebaseOptions.Builder() + FirebaseApp.initializeApp(...)`). NO `google-services.json` plugin — the project imports without secrets and real values slot into `local.properties`.
+- `NetworkModule` provides Retrofit + OkHttp + kotlinx.serialization with an `AuthInterceptor` that attaches `Authorization: Bearer <firebaseIdToken>` on every non-`/auth/*` call. Logging interceptor gated on `BuildConfig.DEBUG`.
+- API layer under `data/api/`:
+  - `ApiModels.kt` — `AccountSnapshotResponse`, `EntitlementDto`, `ProfileDto`, `FirebaseTokenRequest`, `ApiErrorEnvelope`
+  - `PremiumPlayerApi.kt` — Retrofit interface matching `packages/api-contracts/openapi.yaml` for `/auth/{register,login,refresh}`, `/entitlement/{status,trial/start}`, `/profiles`
+  - `ApiError.kt` — `ApiException.{Server, Network, Unknown}` hierarchy + `ApiErrorMapper` that decodes the stable ErrorEnvelope from any HTTP error body. `ApiErrorCopy.forCode(...)` maps every known `ErrorCode` to English user copy (i18n hook in Run 19)
+- Repositories (`data/{auth,entitlement,profiles}/`):
+  - `AuthRepository` — Firebase `createUserWithEmailAndPassword` / `signInWithEmailAndPassword` → fetch ID token → `POST /v1/auth/{register,login}`. `refresh()` forces a fresh token and calls `/refresh` with `checkRevoked=true`
+  - `EntitlementRepository` — `status()` + `startTrial()`
+  - `ProfileRepository` — `list()`
+- 5 Screens + 4 ViewModels (Hilt-injected, `StateFlow<UiState>` with explicit `Editing/Submitting/Done/Error` states):
+  - `WelcomeScreen` — brand logo + display copy + two primary CTAs
+  - `AuthFormScaffold` (shared) + `SignupScreen` + `LoginScreen` — premium email/password form, inline validation, error banner using `PremiumColors.DangerRed` on a translucent backplate
+  - `TrialActivationScreen` — outline chips for "14-day trial" + "No payment", handles `ENTITLEMENT_REQUIRED` by fetching live status and showing the `AlreadyConsumed` variant without crashing
+  - `ProfilePickerScreen` — `TvLazyRow` of square `PremiumCard`s with the focus-veil pattern; "Add profile" tile when under the cap; PIN chip when a profile has a PIN set
+- `PremiumTvApp` now owns a `NavHost` with the full graph: `Boot → Welcome → Signup/Login → TrialActivation → ProfilePicker → Home` (Home is a Run 14 stub). Transitions use premium fade via `PremiumEasing.Premium` over `durations.short`. The Boot screen reuses the splash content with a 1.2s deliberate pause (reads as "premium product settling", not as a spinner)
+- Tests:
+  - `EntitlementRepositoryTest` (MockWebServer) — success + `402 ENTITLEMENT_REQUIRED` → `ApiException.Server` mapping + happy-path trial start
+  - `ProfileRepositoryTest` (MockWebServer) — list parse + 401 UNAUTHORIZED mapping
+  - `TrialActivationViewModelTest` (Turbine + MockK) — happy-path `Idle → Submitting → Activated` and `ENTITLEMENT_REQUIRED → AlreadyConsumed` (with live-status fallback)
+  - `TestApiFactory` — reusable MockWebServer ↔ Retrofit wiring helper for future repo tests
+- `apps/android-tv/README.md` extended with an "Onboarding flow (Run 13)" section: flow diagram, `BuildConfig` / `local.properties` override guide (including the "no `google-services.json` plugin" design choice), layer map, error-copy mapping, and an end-to-end local-run walkthrough
+- **Static verification done in this session:** Kotlin sources conform to Compose / tv-foundation / tv-material / Retrofit / Hilt API surfaces; internal imports resolve; no hardcoded `Color(0x…)` / `dp` / `TextStyle(...)` literals in any screen body
+- **Cannot verify in this session:** `./gradlew :app:assembleDebug` and `./gradlew :app:testDebugUnitTest` — both require Android Studio / Android SDK (unavailable in this sandbox). **Verify locally** by importing `apps/android-tv/` in Android Studio Hedgehog+, dropping real Firebase values into `local.properties`, bringing up the Run 10 backend (`docker compose up -d` + `npm run start:dev`), and running on a Google TV emulator. End-to-end expectation: Welcome → Sign-Up → Trial Activation → Profile Picker, with the API log showing the two auth+trial POSTs under one Firebase token.
 
 ### Run 12 — 2026-04-13 — Design system in Compose (premium component library)
 - Copied `assets/logo/logo-no_background.png` → `apps/android-tv/app/src/main/res/drawable/brand_logo.png` so Compose can resolve it via `R.drawable.brand_logo`

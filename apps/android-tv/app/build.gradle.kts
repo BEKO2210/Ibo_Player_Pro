@@ -25,6 +25,30 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
+
+        // ── BuildConfig fields read by NetworkModule + FirebaseModule ──
+        // Defaults are dev placeholders; override via local.properties or
+        // CI env (-PapiBaseUrl=... -PfirebaseApiKey=... etc).
+        buildConfigField(
+            "String",
+            "API_BASE_URL",
+            "\"" + (project.findProperty("apiBaseUrl") as String? ?: "http://10.0.2.2:3000/v1/") + "\""
+        )
+        buildConfigField(
+            "String",
+            "FIREBASE_API_KEY",
+            "\"" + (project.findProperty("firebaseApiKey") as String? ?: "REPLACE_ME_FIREBASE_WEB_API_KEY") + "\""
+        )
+        buildConfigField(
+            "String",
+            "FIREBASE_PROJECT_ID",
+            "\"" + (project.findProperty("firebaseProjectId") as String? ?: "REPLACE_ME_FIREBASE_PROJECT_ID") + "\""
+        )
+        buildConfigField(
+            "String",
+            "FIREBASE_APPLICATION_ID",
+            "\"" + (project.findProperty("firebaseApplicationId") as String? ?: "1:000000000000:android:0000000000000000000000") + "\""
+        )
     }
 
     buildTypes {
@@ -58,6 +82,9 @@ android {
 
     buildFeatures {
         compose = true
+        // BuildConfig generation needs to be opted in on AGP 8+; we use
+        // it for API_BASE_URL + Firebase Options (see defaultConfig).
+        buildConfig = true
     }
 
     packaging {
@@ -122,6 +149,10 @@ dependencies {
 
     // Tests
     testImplementation(libs.junit)
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
