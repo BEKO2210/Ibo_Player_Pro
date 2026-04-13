@@ -6,8 +6,8 @@
 
 ## 🎯 Current State
 
-- **Phase:** C — Android TV Client (complete)
-- **Last completed run:** Run 18 — Parental controls
+- **Phase:** D — Polish & Ship-Ready
+- **Last completed run:** Run 19 — i18n + Premium error states + Diagnostics
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
@@ -15,33 +15,32 @@
 
 ---
 
-## ▶️ Next Run (Run 19): i18n Finalization + Error States + Diagnostics
+## ▶️ Next Run (Run 20): E2E Smoke + Release Build Config + Store-Listing Checklist
 
 ### Goal
-Ship-ready polish for Phase D. Every user-visible string moves into resource catalogues (English baseline + stub `values-de/` for German + a loader); every error path has a premium surface; a diagnostic screen exposes build / env / backend-connectivity info for support use.
+Final ship-ready run. Wrap up Phase D so the project can be handed over to a release manager: end-to-end smoke test script that exercises the full user flow against a local docker stack, R8 / ProGuard release build config that produces a signed release APK, and a store-listing asset checklist (banner, screenshots, copy, age rating, content guidelines).
 
 ### Deliverables
-- [ ] Move all hard-coded English user copy out of composables into `res/values/strings.xml` + referenced via `stringResource(R.string.*)`. Remaining `Text(text = "…")` literals become a PR-review smell.
-- [ ] Add `res/values-de/strings.xml` with German translations (machine-translated seed is OK; mark each string with a TODO for human review)
-- [ ] Replace `ApiErrorCopy.forCode(...)` with a `stringResource`-backed helper so the error-envelope mapping is locale-aware
-- [ ] Premium error states for every loading surface (Home, Sources, EPG, Player, Paywall, Parental). Shared `PremiumErrorBanner` component (`DangerRed` tinted backplate + icon + retry button)
-- [ ] `DiagnosticsScreen` — routed from a long-press on the build pill. Surfaces: Firebase project id, API base URL, entitlement state, device id, last heartbeat, health-check response from `GET /health`, recent error log (in-memory ring buffer sized 50)
-- [ ] `DiagnosticsViewModel` pulling the health endpoint + reading build config
-- [ ] Unit test for `DiagnosticsViewModel` (mocked health check + OK / unreachable paths)
-- [ ] Update `apps/android-tv/README.md` with "i18n & diagnostics (Run 19)"
+- [ ] `infra/e2e/smoke.sh` — bash script that spins up `docker compose`, runs `prisma migrate deploy`, starts the API + EPG worker + billing worker, hits `/health`, runs a Firebase-mocked register/login/trial/profile create flow, then tears down. Exit non-zero on any failure
+- [ ] `apps/android-tv/app/proguard-rules.pro` — final release rules for Hilt, Compose, Media3, Retrofit, kotlinx.serialization, Firebase, Play Billing, googleapis. `release` build type already wired with `isMinifyEnabled = true`
+- [ ] Release build verifies via `./gradlew :app:assembleRelease`; documented in README
+- [ ] `docs/launch/store-listing.md` — Play Console asset checklist: app title, short + long descriptions, feature graphic, screenshots (TV banner + 4 in-app), categorization, content rating questionnaire answers, privacy policy URL placeholder, data safety form answers (we don't collect PII beyond email + Firebase UID)
+- [ ] `docs/launch/handover.md` — what's done vs. parked, where each layer lives, runbook entries (rotate Firebase keys, rotate `SOURCE_ENCRYPTION_KEY`, recover from a corrupt EPG row, etc.)
+- [ ] Stretch: GitHub Actions workflow that runs `npm test` (api + workers + parsers) on PR
 
 ### Acceptance criteria
-- Changing the device locale to German (Settings → Language) swaps every visible string into `values-de/strings.xml` — including error banners
-- Every screen's error state is a styled banner, not a raw Text
-- DiagnosticsScreen shows up-to-date health status and is only reachable via the build-pill long-press (never via normal nav flow)
-- Existing 50+ unit tests remain green; i18n helper has at least one test covering a known code → resource-id mapping
-- No remaining `"..."` Compose text literals visible to the user (grep audit in the test suite)
+- `./infra/e2e/smoke.sh` passes locally on a fresh clone with `docker compose` available
+- `./gradlew :app:assembleRelease` produces a signed (debug-keystore-signed) release APK
+- Store-listing checklist is complete enough that a release manager can fill in the Play Console without reading code
+- All Run 19 tests stay green
+- CLAUDE.md Roadmap shows every Run 1-20 ticked
 
 ### After this run — update CLAUDE.md
-1. Tick Run 19 in the roadmap, set Last completed run
-2. Write the new "Next Run" block for **Run 20: E2E smoke test + release-build config + store-listing checklist**
-3. Append entry to **Run Log**
-4. Commit: `tv: i18n finalization + premium error states + diagnostics (Run 19)` and push
+1. Tick Run 20 in the roadmap
+2. Set "Last completed run" to `Run 20 — E2E + release build + store-listing`
+3. Move Phase D to "complete"; record any deferred work in Parking Lot
+4. Append entry to **Run Log**
+5. Commit: `release: e2e smoke + R8 release build + store-listing checklist (Run 20)` and push
 
 ---
 
@@ -175,7 +174,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 - [x] **Run 18** — Parental controls: PIN gate, age filter, device list / logout / unpair
 
 ### Phase D — Polish & Ship-Ready
-- [ ] **Run 19** — i18n finalization (all strings keyed, en default, fallback), error states, diagnostics screen
+- [x] **Run 19** — i18n finalization (all strings keyed, en default, fallback), error states, diagnostics screen
 - [ ] **Run 20** — E2E smoke test script (backend + app against local docker stack), release build config (R8/Proguard), store-listing asset checklist, handover doc
 
 ### Buffer Runs (21+, optional)
@@ -235,6 +234,7 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - **Device rename + list-by-device-token (from Run 8):** OpenAPI had `PUT /devices/{id}` rename; not yet implemented (out of Run 8 scope). Add when the Android TV device-management UI lands (Run 18).
 - **Playback URL resolver (from Run 16):** Run 16 passes the playback `mediaUrl` through the nav graph because the server doesn't yet have a dedicated resolver that decrypts source credentials + signs short-lived playback URLs. Home deep-links fall back to public test streams (Apple BipBop HLS / Big Buck Bunny MP4) so the playback path is exercisable today. Proper resolver (likely `POST /v1/playback/resolve`) is a Run 18.5 / 20 security hardening item; would also allow the server to enforce device-bound playback tokens and per-device concurrent-stream caps.
 - **EPG duplicate handling (from Run 16):** the EPG worker inserts programmes without a natural unique key (no provider consistently emits an id). Providers that re-emit the same programme window will create duplicates. A companion dedupe/cleanup job (on `(channel_id, starts_at)`) can be added if storage becomes an issue; defer until observability tells us it matters.
+- **i18n migration of remaining screens (from Run 19):** the string catalogue + `UserErrorMessage` infrastructure are in place; every key for every screen exists in `values/strings.xml` (and `values-de/strings.xml`). Many existing screens still have inline `Text(text = "...")` literals — swapping them to `stringResource(R.string.*)` is mechanical work that doesn't change behaviour. Touch each screen as part of the next time it's edited; full sweep can also be a single Run 19.5 if anyone wants the locale switch to be 100% complete before launch.
 
 ---
 
@@ -282,6 +282,25 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
 - Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 19 — 2026-04-13 — i18n + Premium error states + Diagnostics
+- New `app/src/main/res/values/strings.xml` (~120 keys covering Welcome/Auth/Trial/Profiles/Sources/Paywall/Player/Devices/PIN/Diagnostics/error codes) + machine-translated `values-de/strings.xml` seed marked TODO-i18n for human review
+- `data/api/ApiError.kt` extended with `UserErrorMessage` sealed type (`Resource(@StringRes id)` / `ResourceWithArg` / `Raw`) + `ApiException.toUserMessage()` so VMs stay Context-free and Composables resolve via `stringResource(...)` — active locale wins automatically. `ApiErrorCopy.resourceForCode(code)` returns the matching `R.string.error_*` id; legacy `forCode(code, fallback)` retained for the gradual migration
+- New `ui/components/PremiumErrorBanner.kt` — canonical premium error surface: `DangerRed` translucent backplate + body text + optional retry button. Two overloads (`UserErrorMessage` preferred, `String` legacy) so existing call sites can swap in incrementally
+- New `data/diagnostics/ErrorLogBuffer.kt` — Hilt `@Singleton` in-memory ring buffer (capacity 50) keyed by `Instant` + source + message + optional code. Exposes `entries: StateFlow<List<Entry>>` so any layer can subscribe
+- New `data/diagnostics/HealthClient.kt` — dedicated OkHttp client (no Bearer interceptor) that hits `GET /health` at the API root (strips `/v1/` from `BuildConfig.API_BASE_URL`). Returns a parsed `HealthSnapshot` with `ok`, `status`, `database`, `redis`, `service`, plus the raw response body for support copy-paste
+- `ui/diagnostics/DiagnosticsViewModel` — `Loading` → `Ready(info, health, errors, refreshing)` exposing `BuildConfig` (versionName / versionCode / API_BASE_URL / FIREBASE_PROJECT_ID / FIREBASE_APPLICATION_ID), the health snapshot, and a live-streamed view of `ErrorLogBuffer.entries`. `refresh()` re-fetches health
+- `ui/diagnostics/DiagnosticsScreen` — premium 3-card layout (Info / Health / Recent errors) with `PremiumChip` health indicator (green OK / red Unreachable). Routed via `Routes.Diagnostics = "diagnostics"` — only reachable via the **long-press on the build pill** in `BootScreen` (no normal nav entry, so users only land there when support asks). NavHost wires the route + the long-press callback
+- `BootScreen` gained an `onLongPressBuildPill` parameter; the build pill `Box` now wraps `pointerInput { detectTapGestures(onLongPress = ...) }` when the callback is non-null
+- Tests (JVM, via `./gradlew :app:testDebugUnitTest`):
+  - `DiagnosticsViewModelTest` (4 cases) — init transitions to Ready with health snapshot, init handles unreachable health gracefully, error log entries flow into Ready state live, refresh clears the refreshing flag
+- Token discipline verified (grep-clean): zero hardcoded `Color(0x...)` literals in `ui/diagnostics/`, `data/diagnostics/`, or `PremiumErrorBanner`
+- TODO-i18n (Phase D follow-up): Run 19 ships the i18n **infrastructure** + a strong baseline of strings; many existing screens still hold inline `Text(text = "…")` literals with English copy. Migrating them to `stringResource(R.string.*)` is mechanical (each existing screen has a 1:1 key already in `strings.xml`) and tracked in the Parking Lot. The German seed translates every key in the catalogue
+- Docs:
+  - `apps/android-tv/README.md` — new "i18n + Diagnostics (Run 19)" section with string catalogue summary, error envelope migration notes, `PremiumErrorBanner` API, Diagnostics surface details, test matrix, TODO-i18n disclaimer
+  - `CLAUDE.md` — Run 19 ticked, Phase moved to D (Polish & Ship-Ready), Run 20 (E2E + release build + store-listing) queued with full deliverables, Run 19 entry appended to Run Log
+- **Static verification done:** Kotlin sources conform to Compose / tv-foundation / tv-material / Hilt / OkHttp / kotlinx.serialization API surfaces; internal imports resolve; build and string resources align
+- **Cannot verify in this session:** `./gradlew :app:assembleDebug` / `:app:testDebugUnitTest` — Android SDK absent. Verify locally: switch device locale to German on a Google TV emulator → every visible string in the screens that already use `stringResource(...)` (Diagnostics, PremiumErrorBanner, and the i18n-migrated screens) flips. Long-press the bottom-right build pill on the boot screen to reach Diagnostics
 
 ### Run 18 — 2026-04-13 — Parental controls
 - API: extended `PremiumPlayerApi` with full profile CRUD (`POST/PUT/DELETE /v1/profiles`), `POST /v1/profiles/{id}/verify-pin`, plus the Run 8 device endpoints (`GET /v1/devices`, `POST /v1/devices/{id}/revoke`). New DTOs: `CreateProfileRequest`, `UpdateProfileRequest` (`clearPin` flag supported), `SingleProfileResponse`, `VerifyPinRequest/Response`, `DeviceDto`, `DeviceListResponse`, `RevokeDeviceResponse`

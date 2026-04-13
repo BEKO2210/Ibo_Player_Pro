@@ -68,7 +68,14 @@ object ApiErrorMapper {
     }
 }
 
-/** User-facing English copy for known error codes. i18n lands in Run 19. */
+/**
+ * User-facing copy for known error codes.
+ *
+ * Run 19 migration: `forCode(code, fallback)` kept for ViewModels that
+ * still emit raw strings. New callers should prefer [resourceForCode]
+ * and resolve via `stringResource(id)` in Composables — that picks up
+ * the active locale automatically (see `values-de/strings.xml`).
+ */
 object ApiErrorCopy {
     fun forCode(code: String, fallback: String): String = when (code) {
         "UNAUTHORIZED" -> "Your session expired. Please sign in again."
@@ -78,4 +85,50 @@ object ApiErrorCopy {
         "VALIDATION_ERROR" -> "Something's off with the request. Please try again."
         else -> fallback
     }
+
+    /**
+     * Returns the `R.string.*` resource id for a known error code. The
+     * resource lookup happens at the Composable layer via
+     * `stringResource(id)` so the active locale wins automatically.
+     *
+     * Returns null for unknown codes — caller falls back to the raw
+     * server message.
+     */
+    fun resourceForCode(code: String): Int? = when (code) {
+        "UNAUTHORIZED" -> com.premiumtvplayer.app.R.string.error_unauthorized
+        "ENTITLEMENT_REQUIRED" -> com.premiumtvplayer.app.R.string.error_entitlement_required
+        "SLOT_FULL" -> com.premiumtvplayer.app.R.string.error_slot_full
+        "PIN_INVALID" -> com.premiumtvplayer.app.R.string.error_pin_invalid
+        "VALIDATION_ERROR" -> com.premiumtvplayer.app.R.string.error_validation
+        else -> null
+    }
+}
+
+/**
+ * A localized error message payload returned by [ApiErrorMapper.toMessage].
+ * Prefer this over raw strings in ViewModels: the Composable layer can
+ * then resolve to the active locale via `stringResource(resId)`.
+ */
+sealed interface UserErrorMessage {
+    /** Raw string (server-provided fallback or network layer). */
+    data class Raw(val message: String) : UserErrorMessage
+
+    /** A localized message backed by a string resource. */
+    data class Resource(val resId: Int) : UserErrorMessage
+
+    /** A localized message + a positional string arg (for "%1$s"-style keys). */
+    data class ResourceWithArg(val resId: Int, val arg: String) : UserErrorMessage
+}
+
+/** Translate any throwable into a UI-ready message token. */
+fun ApiException.toUserMessage(): UserErrorMessage {
+    if (this is ApiException.Server) {
+        val res = ApiErrorCopy.resourceForCode(code)
+        if (res != null) return UserErrorMessage.Resource(res)
+        return UserErrorMessage.Raw(message)
+    }
+    if (this is ApiException.Network) {
+        return UserErrorMessage.Resource(com.premiumtvplayer.app.R.string.error_network)
+    }
+    return UserErrorMessage.Raw(message ?: "")
 }

@@ -575,6 +575,70 @@ maps to `Routes.ProfileManagement` + `Routes.DeviceManagement`.
   confirmRevoke without request is a no-op, revoke error surfaces
   errorMessage.
 
+## i18n + Diagnostics (Run 19)
+
+### String catalogue
+
+- Baseline: `app/src/main/res/values/strings.xml` (~120 user-facing
+  strings covering Welcome, Auth, Trial, Profiles, Sources, Paywall,
+  Player, Devices, PIN gate, Diagnostics, error codes).
+- German seed: `app/src/main/res/values-de/strings.xml`. Machine-
+  translated; every key carries an implicit TODO for human review
+  before public release.
+- Adding another locale = `values-<lang>/strings.xml`; the system
+  resolves by device locale automatically.
+
+### Error envelope → localized copy
+
+`data/api/ApiError.kt` adds `UserErrorMessage` (sealed, with
+`Resource(@StringRes id)`, `ResourceWithArg`, and `Raw` variants) plus
+`ApiException.toUserMessage()`. ViewModels stay Context-free; the
+Compose layer resolves via `stringResource(...)` and the active locale
+wins automatically. The legacy `ApiErrorCopy.forCode(code, fallback)`
+remains for callers that emit raw strings — full migration is a
+follow-up polish pass.
+
+### `PremiumErrorBanner`
+
+`ui/components/PremiumErrorBanner.kt` is the canonical premium error
+surface. `DangerRed`-tinted backplate, optional retry button,
+locale-aware via `stringResource`. Two overloads:
+
+- `PremiumErrorBanner(message: UserErrorMessage, ...)` — preferred
+- `PremiumErrorBanner(raw: String, ...)` — legacy callers
+
+### Diagnostics
+
+`ui/diagnostics/DiagnosticsScreen` is reachable from a **long-press on
+the build pill** at the bottom-right of the boot screen — never via
+the normal nav graph, so users only land there when support asks.
+
+Surfaces:
+
+- App build (`versionName` + `versionCode`)
+- API base URL (from `BuildConfig.API_BASE_URL`)
+- Firebase project id + application id
+- Live `GET /health` snapshot (status / database / redis / service)
+- Recent error log (in-memory ring buffer, capacity 50, populated by
+  any layer via the Hilt-injected `ErrorLogBuffer`)
+
+Health is fetched via a dedicated `HealthClient` (OkHttp, no Bearer
+interceptor) so it works even with a stale Firebase token.
+
+### Tests
+
+- `ui/diagnostics/DiagnosticsViewModelTest` (4 cases): init transitions
+  to Ready with health snapshot, init handles unreachable health
+  gracefully, error log entries flow into Ready state live, refresh
+  clears the refreshing flag.
+
+### TODO-i18n (Phase D follow-up)
+
+Run 19 ships the **infrastructure** + a strong baseline of strings.
+Many existing screens still hold `Text(text = "…")` literals with
+English copy; migrating them to `stringResource(R.string.*)` is
+mechanical and tracked in the Parking Lot.
+
 ## Build + run
 
 > **Tooling required (cannot be run in this repo's CI sandbox — Android
