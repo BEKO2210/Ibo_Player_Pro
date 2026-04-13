@@ -10,7 +10,7 @@
 - **Last completed run:** Run 6 — NestJS bootstrap
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
-- **Logo status:** ⏳ requested in Run 6 — waiting for user to upload to `assets/logo/` (PNG + SVG, dark + light variants)
+- **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
 - **applicationId:** ⏳ to be decided in **Run 11**
 
 ---
@@ -219,10 +219,11 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 
 ## 🖼 Logo
 
-- **Status:** requested in Run 6 — awaiting upload from user
-- **Target path:** `assets/logo/` (PNG + SVG preferred; provide a dark and a light variant if possible)
-- **Requested in:** Run 6
-- **Next use:** wired into Android TV home screen in Run 14 (or earlier if provided)
+- **Status:** ✅ received in Run 6
+- **File:** `assets/logo/logo-no_background.png` (transparent PNG, ~208 KB)
+- **Design:** Blue gradient play-button with signal/sound waves, on transparent background. Optimized for dark UI.
+- **Optional follow-ups:** SVG vector variant, explicit dark/light variants — can be added any time; not blocking.
+- **Next use:** wired into Android TV home screen in Run 14 (splash/launcher in earlier runs if needed).
 
 ---
 
