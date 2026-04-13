@@ -107,8 +107,21 @@ services/api/
       auth.service.ts
       auth.guard.ts            # verifies Bearer <firebase_id_token>
       accounts.service.ts      # idempotent account sync + snapshot
-      dto.ts                   # class-validator DTOs
-      *.spec.ts                # unit tests
+      dto.ts
+      *.spec.ts
+    entitlement/
+      entitlement.module.ts
+      entitlement.controller.ts   # GET /v1/entitlement/status + trial/start
+      entitlement.service.ts
+      entitlement.state-machine.ts  # pure transition function (Run 5 aligned)
+      *.spec.ts
+    devices/
+      devices.module.ts
+      devices.controller.ts    # POST /v1/devices/register|:id/revoke, GET /v1/devices
+      devices.service.ts       # slot-cap enforcement + token hashing
+      device.guard.ts          # validates X-Device-Token
+      dto.ts
+      *.spec.ts
   .env.example                 # copy to .env
   package.json
   tsconfig.json
@@ -160,12 +173,59 @@ and return `{ account, entitlement }`:
 | POST   | `/v1/auth/login`      | Token verify + account sync                          |
 | POST   | `/v1/auth/refresh`    | Token re-verify with revocation check                |
 
-**Note — contract deviation:** `packages/api-contracts/openapi.yaml`
-currently defines `AuthResponse` with additional `accessToken` /
-`refreshToken` / `deviceToken` fields. Custom token issuance + device
-slot binding land in **Run 8 (Devices + Entitlement)**, at which point
-the OpenAPI contract will be reconciled. Run 7 endpoints return a pure
-account + entitlement snapshot.
+OpenAPI contract (`packages/api-contracts/openapi.yaml`) was reconciled in
+Run 8 to match: Firebase-only auth, no custom access/refresh/device
+tokens. Device registration is a separate explicit flow — see below.
+
+## Entitlement module (Run 8)
+
+The server-authoritative entitlement lifecycle lives in
+`src/entitlement/`. It is the single source of truth for what the caller
+can do — playback, device registration, profile creation. See
+`docs/architecture/entitlement-state-machine.md` for the full transition
+table; the pure TypeScript implementation is in
+`src/entitlement/entitlement.state-machine.ts`.
+
+### Endpoints (all require `Authorization: Bearer <firebase_id_token>`)
+
+| Method | Path                              | Purpose                                                       |
+|--------|-----------------------------------|---------------------------------------------------------------|
+| GET    | `/v1/entitlement/status`          | Current entitlement (auto-expires stale trials on read)       |
+| POST   | `/v1/entitlement/trial/start`     | Start 14-day trial; `402 ENTITLEMENT_REQUIRED` if already consumed |
+
+### Derived caps
+
+| State             | Devices | Profiles | Playback |
+|-------------------|---------|----------|----------|
+| `none`            | 0       | 0        | no       |
+| `trial`           | 1       | 1        | yes      |
+| `lifetime_single` | 1       | 1        | yes      |
+| `lifetime_family` | 5       | 5        | yes      |
+| `expired`         | 0 new   | 0 new    | no       |
+| `revoked`         | 0 new   | 0 new    | no       |
+
+## Devices module (Run 8)
+
+Device slots are server-managed and enforced against the entitlement cap.
+The plaintext `deviceToken` is returned exactly once at registration; the
+server stores only its sha256 hash. Subsequent device-bound requests
+present it via the `X-Device-Token` header (see `DeviceGuard`).
+
+### Endpoints (all require `Authorization: Bearer <firebase_id_token>`)
+
+| Method | Path                           | Status codes                                      |
+|--------|--------------------------------|---------------------------------------------------|
+| POST   | `/v1/devices/register`         | `201`, `402 ENTITLEMENT_REQUIRED`, `409 SLOT_FULL` |
+| GET    | `/v1/devices`                  | `200` — list with `isCurrent` / `isRevoked`        |
+| POST   | `/v1/devices/:id/revoke`       | `200`, `404`                                       |
+
+### DeviceGuard
+
+`src/devices/device.guard.ts` validates `X-Device-Token`, attaches
+`request.device`, and issues a fire-and-forget `last_seen_at` touch. It
+**must** run AFTER `AuthGuard` (it relies on `request.account`). Run 8 does
+not apply it to any route yet — it will be wired into playback / source
+mutation endpoints in Runs 15–16.
 
 ## Migrations
 

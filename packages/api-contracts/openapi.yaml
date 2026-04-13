@@ -1,10 +1,25 @@
 openapi: 3.1.0
 info:
   title: Premium TV Player API Contracts
-  version: 0.1.0
-  description: V1 contract baseline for backend and clients.
+  version: 0.2.0
+  description: |
+    V1 contract baseline for backend and clients.
+
+    **Auth model (V1 — reconciled in Run 8):** all protected endpoints require
+    `Authorization: Bearer <firebase_id_token>`. The server verifies the token
+    via Firebase Admin on every request. There is no custom access/refresh
+    token layer — clients obtain and refresh Firebase ID tokens via the
+    Firebase Auth SDK directly.
+
+    **Device model:** a device slot is a separate concept from auth. Endpoints
+    that require an active device (playback, source mutations) additionally
+    require `X-Device-Token: <plaintext>` — issued exactly once by
+    `POST /devices/register`.
 servers:
-  - url: https://api.premium-tv-player.example
+  - url: https://api.premium-tv-player.example/v1
+
+security:
+  - FirebaseBearer: []
 
 tags:
   - name: Auth
@@ -20,19 +35,24 @@ paths:
     post:
       tags: [Auth]
       operationId: register
+      security: []
+      description: |
+        First sync after Firebase signup. Verifies the Firebase ID token,
+        creates the local `accounts` row (keyed on `firebase_uid`) and an
+        empty `entitlements` row with `state=none`. Idempotent.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterRequest'
+              $ref: '#/components/schemas/FirebaseTokenRequest'
       responses:
         '200':
-          description: Registered and authenticated.
+          description: Registered / synced.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: '#/components/schemas/AccountSnapshotResponse'
         default:
           $ref: '#/components/responses/ErrorResponse'
 
@@ -40,41 +60,23 @@ paths:
     post:
       tags: [Auth]
       operationId: login
+      security: []
+      description: |
+        Verify the Firebase ID token and return the current account snapshot.
+        Account row is upserted (idempotent).
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: '#/components/schemas/FirebaseTokenRequest'
       responses:
         '200':
           description: Authenticated.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '409':
-          description: Active device slot cap reached.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        default:
-          $ref: '#/components/responses/ErrorResponse'
-
-  /auth/logout:
-    post:
-      tags: [Auth]
-      operationId: logout
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LogoutRequest'
-      responses:
-        '204':
-          description: Logged out and device token revoked.
+                $ref: '#/components/schemas/AccountSnapshotResponse'
         default:
           $ref: '#/components/responses/ErrorResponse'
 
@@ -82,19 +84,24 @@ paths:
     post:
       tags: [Auth]
       operationId: refreshSession
+      security: []
+      description: |
+        Re-verify the Firebase ID token with revocation check enabled and
+        return a fresh account snapshot. Clients call this after a Firebase
+        token refresh to surface any server-side state drift.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RefreshRequest'
+              $ref: '#/components/schemas/FirebaseTokenRequest'
       responses:
         '200':
-          description: Session refreshed.
+          description: Session re-verified; fresh account snapshot returned.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenRefreshResponse'
+                $ref: '#/components/schemas/AccountSnapshotResponse'
         default:
           $ref: '#/components/responses/ErrorResponse'
 
@@ -112,6 +119,31 @@ paths:
         default:
           $ref: '#/components/responses/ErrorResponse'
 
+  /entitlement/trial/start:
+    post:
+      tags: [Entitlement]
+      operationId: startTrial
+      description: |
+        Start a 14-day server-side trial. Consume-once: any prior trial
+        (regardless of expiry) blocks this endpoint with
+        `402 ENTITLEMENT_REQUIRED`. On success the account's
+        `trial_consumed` flag is flipped atomically.
+      responses:
+        '200':
+          description: Trial started.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntitlementStatusResponse'
+        '402':
+          description: Trial already consumed for this account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
   /devices:
     get:
       tags: [Devices]
@@ -126,33 +158,75 @@ paths:
         default:
           $ref: '#/components/responses/ErrorResponse'
 
-  /devices/{deviceId}:
-    parameters:
-      - $ref: '#/components/parameters/DeviceId'
-    put:
+  /devices/register:
+    post:
       tags: [Devices]
-      operationId: renameDevice
+      operationId: registerDevice
+      description: |
+        Register a new device slot for the account. Enforces the slot cap
+        derived from entitlement state (1 for `trial`/`lifetime_single`, 5
+        for `lifetime_family`, 0 for `none`/`expired`/`revoked`).
+
+        The returned `deviceToken` is the ONE-TIME plaintext value; the server
+        stores only its sha256 hash. Clients must persist this token locally
+        and send it on subsequent device-bound requests via
+        `X-Device-Token`.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RenameDeviceRequest'
+              $ref: '#/components/schemas/RegisterDeviceRequest'
       responses:
-        '200':
-          description: Device updated.
+        '201':
+          description: Device slot registered; plaintext token returned once.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Device'
+                $ref: '#/components/schemas/RegisterDeviceResponse'
+        '402':
+          description: Entitlement does not permit device registration.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Active device slot cap reached for current entitlement.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
         default:
           $ref: '#/components/responses/ErrorResponse'
-    delete:
+
+  /devices/{deviceId}/revoke:
+    parameters:
+      - $ref: '#/components/parameters/DeviceId'
+    post:
       tags: [Devices]
       operationId: revokeDevice
+      description: |
+        Soft-revoke a device slot owned by the caller. The device's
+        `revoked_at` is set; its stored token hash becomes invalid. Existing
+        playback sessions on that device will receive `401 UNAUTHORIZED` on
+        next heartbeat.
       responses:
-        '204':
+        '200':
           description: Device revoked.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [device]
+                properties:
+                  device:
+                    $ref: '#/components/schemas/Device'
+        '404':
+          description: Device not found for this account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
         default:
           $ref: '#/components/responses/ErrorResponse'
 
@@ -395,6 +469,25 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
 
 components:
+  securitySchemes:
+    FirebaseBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Firebase ID Token
+      description: |
+        Firebase ID token from the Firebase Auth SDK. Verified server-side
+        on every request via Firebase Admin. Short-lived (1h) — clients must
+        refresh via the Firebase SDK.
+    DeviceToken:
+      type: apiKey
+      in: header
+      name: X-Device-Token
+      description: |
+        Plaintext device token returned exactly once by
+        `POST /devices/register`. Required on endpoints that require an
+        active device slot (playback, source mutations). Never returned by
+        the server again; lose it and you must re-register.
+
   parameters:
     DeviceId:
       name: deviceId
@@ -455,11 +548,13 @@ components:
 
     DeviceInfo:
       type: object
-      required: [platform, appVersion]
+      description: |
+        Reserved for future client hints. Not used by Run 8 auth flow — use
+        `/devices/register` for device slot creation.
       properties:
         platform:
           type: string
-          enum: [android_tv, android_mobile]
+          enum: [android_tv, android_mobile, web, ios, tvos, tizen, webos]
         appVersion:
           type: string
         osVersion:
@@ -473,7 +568,15 @@ components:
       properties:
         state:
           $ref: '#/components/schemas/EntitlementState'
+        trialStartedAt:
+          type: string
+          format: date-time
+          nullable: true
         trialEndsAt:
+          type: string
+          format: date-time
+          nullable: true
+        activatedAt:
           type: string
           format: date-time
           nullable: true
@@ -481,10 +584,14 @@ components:
           type: string
           format: date-time
           nullable: true
+        revokedAt:
+          type: string
+          format: date-time
+          nullable: true
 
     Account:
       type: object
-      required: [id, email, locale]
+      required: [id, email, emailVerified, locale, createdAt]
       properties:
         id:
           type: string
@@ -492,61 +599,37 @@ components:
         email:
           type: string
           format: email
+        emailVerified:
+          type: boolean
         locale:
           type: string
+        createdAt:
+          type: string
+          format: date-time
 
-    RegisterRequest:
+    FirebaseTokenRequest:
       type: object
-      required: [firebaseIdToken, locale, device]
+      required: [firebaseIdToken]
       properties:
         firebaseIdToken:
           type: string
+          description: Firebase ID token from the client-side Firebase Auth SDK.
         locale:
           type: string
-        device:
-          $ref: '#/components/schemas/DeviceInfo'
+          description: |
+            Optional locale hint (e.g. `de`, `en-US`). When provided, the
+            server updates `accounts.locale`. When omitted, the server
+            preserves the existing value.
+          maxLength: 16
 
-    LoginRequest:
-      allOf:
-        - $ref: '#/components/schemas/RegisterRequest'
-
-    LogoutRequest:
+    AccountSnapshotResponse:
       type: object
-      required: [deviceToken]
-      properties:
-        deviceToken:
-          type: string
-
-    RefreshRequest:
-      type: object
-      required: [refreshToken]
-      properties:
-        refreshToken:
-          type: string
-
-    AuthResponse:
-      type: object
-      required: [account, deviceToken, accessToken, refreshToken, entitlement]
+      required: [account, entitlement]
       properties:
         account:
           $ref: '#/components/schemas/Account'
-        deviceToken:
-          type: string
-        accessToken:
-          type: string
-        refreshToken:
-          type: string
         entitlement:
           $ref: '#/components/schemas/Entitlement'
-
-    TokenRefreshResponse:
-      type: object
-      required: [accessToken, refreshToken]
-      properties:
-        accessToken:
-          type: string
-        refreshToken:
-          type: string
 
     EntitlementStatusResponse:
       type: object
@@ -557,7 +640,7 @@ components:
 
     Device:
       type: object
-      required: [id, name, platform, isCurrent, isRevoked]
+      required: [id, name, platform, isCurrent, isRevoked, createdAt]
       properties:
         id:
           type: string
@@ -566,6 +649,13 @@ components:
           type: string
         platform:
           type: string
+          enum: [android_tv, android_mobile, web, ios, tvos, tizen, webos, unknown]
+        appVersion:
+          type: string
+          nullable: true
+        osVersion:
+          type: string
+          nullable: true
         isCurrent:
           type: boolean
         isRevoked:
@@ -574,27 +664,55 @@ components:
           type: string
           format: date-time
           nullable: true
+        revokedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
 
     DeviceListResponse:
       type: object
-      required: [items, maxActiveSlots]
+      required: [devices]
       properties:
-        items:
+        devices:
           type: array
           items:
             $ref: '#/components/schemas/Device'
-        maxActiveSlots:
-          type: integer
-          minimum: 1
 
-    RenameDeviceRequest:
+    RegisterDeviceRequest:
       type: object
-      required: [name]
+      required: [name, platform]
       properties:
         name:
           type: string
           minLength: 1
-          maxLength: 80
+          maxLength: 120
+        platform:
+          type: string
+          enum: [android_tv, android_mobile, web, ios, tvos, tizen, webos, unknown]
+        appVersion:
+          type: string
+          maxLength: 64
+        osVersion:
+          type: string
+          maxLength: 64
+        lastIp:
+          type: string
+          format: ipv4
+
+    RegisterDeviceResponse:
+      type: object
+      required: [device, deviceToken]
+      properties:
+        device:
+          $ref: '#/components/schemas/Device'
+        deviceToken:
+          type: string
+          description: |
+            Plaintext device token — returned exactly once. Client MUST
+            persist locally; server stores only sha256 hash.
 
     Profile:
       type: object
@@ -805,18 +923,17 @@ components:
 
     BillingVerifyRequest:
       type: object
-      required: [purchaseToken, productId, deviceToken]
+      required: [purchaseToken, productId]
       properties:
         purchaseToken:
           type: string
         productId:
           type: string
-        deviceToken:
-          type: string
 
     BillingRestoreRequest:
       type: object
-      required: [deviceToken]
+      description: |
+        Restores prior Google Play purchase. Authenticated via Firebase
+        Bearer token only; no extra body fields required for V1.
       properties:
-        deviceToken:
-          type: string
+        # Intentionally empty — body reserved for future hints.

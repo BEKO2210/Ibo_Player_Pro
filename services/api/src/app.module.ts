@@ -8,6 +8,8 @@ import { RedisModule } from './redis/redis.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
+import { EntitlementModule } from './entitlement/entitlement.module';
+import { DevicesModule } from './devices/devices.module';
 import { AllExceptionsFilter } from './common/http-exception.filter';
 
 @Module({
@@ -24,6 +26,8 @@ import { AllExceptionsFilter } from './common/http-exception.filter';
     FirebaseModule,
     HealthModule,
     AuthModule,
+    EntitlementModule,
+    DevicesModule,
   ],
   providers: [
     {

@@ -17,53 +17,55 @@ export const errorCodeSchema = z.enum([
   'VALIDATION_ERROR',
 ]);
 
-export const deviceInfoSchema = z.object({
-  platform: z.enum(['android_tv', 'android_mobile']),
-  appVersion: z.string().min(1),
-  osVersion: z.string().min(1).optional(),
-  deviceName: z.string().min(1).optional(),
-});
+export const devicePlatformSchema = z.enum([
+  'android_tv',
+  'android_mobile',
+  'web',
+  'ios',
+  'tvos',
+  'tizen',
+  'webos',
+  'unknown',
+]);
 
 export const entitlementSchema = z.object({
   state: entitlementStateSchema,
+  trialStartedAt: z.string().datetime().nullable().optional(),
   trialEndsAt: z.string().datetime().nullable().optional(),
+  activatedAt: z.string().datetime().nullable().optional(),
   expiresAt: z.string().datetime().nullable().optional(),
+  revokedAt: z.string().datetime().nullable().optional(),
 });
 
 export const accountSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
-  locale: z.string().min(2),
+  emailVerified: z.boolean(),
+  locale: z.string().min(1),
+  createdAt: z.string().datetime(),
 });
 
-export const registerRequestSchema = z.object({
-  firebaseIdToken: z.string().min(1),
-  locale: z.string().min(2),
-  device: deviceInfoSchema,
+/**
+ * Unified request body for /auth/register|login|refresh. V1 auth is
+ * Firebase-only: clients pass their Firebase ID token on every request.
+ */
+export const firebaseTokenRequestSchema = z.object({
+  firebaseIdToken: z.string().min(20).max(4096),
+  locale: z.string().max(16).optional(),
 });
 
-export const loginRequestSchema = registerRequestSchema;
+// Legacy aliases for existing consumers.
+export const registerRequestSchema = firebaseTokenRequestSchema;
+export const loginRequestSchema = firebaseTokenRequestSchema;
+export const refreshRequestSchema = firebaseTokenRequestSchema;
 
-export const logoutRequestSchema = z.object({
-  deviceToken: z.string().min(1),
-});
-
-export const refreshRequestSchema = z.object({
-  refreshToken: z.string().min(1),
-});
-
-export const authResponseSchema = z.object({
+export const accountSnapshotResponseSchema = z.object({
   account: accountSchema,
-  deviceToken: z.string().min(1),
-  accessToken: z.string().min(1),
-  refreshToken: z.string().min(1),
   entitlement: entitlementSchema,
 });
 
-export const tokenRefreshResponseSchema = z.object({
-  accessToken: z.string().min(1),
-  refreshToken: z.string().min(1),
-});
+/** Deprecated name — kept exported for incremental migration. */
+export const authResponseSchema = accountSnapshotResponseSchema;
 
 export const entitlementStatusResponseSchema = z.object({
   entitlement: entitlementSchema,
@@ -72,19 +74,31 @@ export const entitlementStatusResponseSchema = z.object({
 export const deviceSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1),
-  platform: z.string().min(1),
+  platform: devicePlatformSchema,
+  appVersion: z.string().nullable().optional(),
+  osVersion: z.string().nullable().optional(),
   isCurrent: z.boolean(),
   isRevoked: z.boolean(),
   lastSeenAt: z.string().datetime().nullable().optional(),
+  revokedAt: z.string().datetime().nullable().optional(),
+  createdAt: z.string().datetime(),
 });
 
 export const deviceListResponseSchema = z.object({
-  items: z.array(deviceSchema),
-  maxActiveSlots: z.number().int().min(1),
+  devices: z.array(deviceSchema),
 });
 
-export const renameDeviceRequestSchema = z.object({
-  name: z.string().min(1).max(80),
+export const registerDeviceRequestSchema = z.object({
+  name: z.string().min(1).max(120),
+  platform: devicePlatformSchema,
+  appVersion: z.string().max(64).optional(),
+  osVersion: z.string().max(64).optional(),
+  lastIp: z.string().ip().optional(),
+});
+
+export const registerDeviceResponseSchema = z.object({
+  device: deviceSchema,
+  deviceToken: z.string().min(20),
 });
 
 export const profileSchema = z.object({
@@ -180,12 +194,9 @@ export const playbackStopRequestSchema = z.object({
 export const billingVerifyRequestSchema = z.object({
   purchaseToken: z.string().min(1),
   productId: z.string().min(1),
-  deviceToken: z.string().min(1),
 });
 
-export const billingRestoreRequestSchema = z.object({
-  deviceToken: z.string().min(1),
-});
+export const billingRestoreRequestSchema = z.object({}).passthrough();
 
 export const errorEnvelopeSchema = z.object({
   error: z.object({

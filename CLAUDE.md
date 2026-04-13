@@ -7,7 +7,7 @@
 ## 🎯 Current State
 
 - **Phase:** B — Backend V1
-- **Last completed run:** Run 7 — Auth module
+- **Last completed run:** Run 8 — Entitlement + Device module
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
@@ -15,38 +15,43 @@
 
 ---
 
-## ▶️ Next Run (Run 8): Entitlement + Device Module
+## ▶️ Next Run (Run 9): Billing Worker
 
 ### Goal
-Implement the account-scoped entitlement lifecycle and server-managed device slots in `services/api`, enforcing the caps and transitions defined in `docs/architecture/entitlement-state-machine.md` and the data model from Run 3.
+Stand up the `services/billing-worker` process that verifies Google Play purchases, acknowledges them, and drives entitlement transitions end-to-end. This is the first worker alongside the NestJS API and is the single writer for billing events per the state machine doc.
 
 ### Deliverables
-- [ ] Add `EntitlementService` implementing the Run 5 state machine (trial start / active / expired / revoked) with deterministic transitions + idempotency keys
-- [ ] Add `GET /v1/entitlement/status` endpoint returning the current `Entitlement` for the caller
-- [ ] Add `POST /v1/entitlement/trial/start` — starts a 14-day server-side trial; rejects if `trial_consumed=true` (returns `ENTITLEMENT_REQUIRED`)
-- [ ] Add `DevicesService` + endpoints per OpenAPI:
-  - `POST /v1/devices/register` — registers caller's device slot, returns `deviceToken` (hashed server-side); enforces per-entitlement slot cap (1 single/trial, 5 family) → `409 SLOT_FULL` when exceeded
-  - `GET  /v1/devices`          — list account's devices with `isCurrent`/`isRevoked`
-  - `POST /v1/devices/{id}/revoke` — revoke a device slot (soft-revoke via `revoked_at`)
-- [ ] Reconcile `packages/api-contracts/openapi.yaml` auth response shape with what Run 7 actually returns — decide: keep Firebase-ID-token-only auth (preferred for V1 simplicity) OR add custom access/refresh/device tokens. Update the contract accordingly.
-- [ ] Extend `AuthGuard` to also enforce "active device required" on protected endpoints that need it (via a new `@RequiresDevice()` decorator, or a second guard)
-- [ ] Add unit tests for `EntitlementService` transition table and `DevicesService` slot-cap enforcement
-- [ ] Update `services/api/README.md` entitlement + devices sections
+- [ ] Scaffold `services/billing-worker/` as a standalone Node.js worker (TypeScript strict, shared Prisma client, shared Redis, shared env validation approach)
+- [ ] Add a provider-verification client abstraction with a `GooglePlayProvider` implementation (validate purchase token via Play Developer API; treat as stubbable interface so tests don't hit Google)
+- [ ] Persist a `purchases` row per purchase token (idempotent on `provider + purchase_token`), including `raw_payload`
+- [ ] Acknowledge purchases back to Google (respect grace window + retries)
+- [ ] Drive `EntitlementService.applyEvent(...)` with the correct event:
+  - valid new SKU → `PURCHASE_VERIFIED_SINGLE` / `PURCHASE_VERIFIED_FAMILY`
+  - refund/voided notification → `REFUND_OR_REVOKE_ACTIVE_PURCHASE`
+  - duplicate event → `DUPLICATE_OR_REPLAY_EVENT` (no-op)
+- [ ] Implement single-writer concurrency: row-level `SELECT ... FOR UPDATE` on the target entitlement before state mutation
+- [ ] Add API endpoint `POST /v1/billing/verify` that enqueues + synchronously forwards to the worker's verification path (so the Android TV client can use the same code path as the worker for on-device restore/verify)
+- [ ] Add API endpoint `POST /v1/billing/restore` that triggers the worker's restore logic for the caller's account
+- [ ] Add unit tests for:
+  - provider adapter (mocked Google API responses: valid / refunded / voided)
+  - idempotency on duplicate `(provider, purchase_token, provider_event_id)`
+  - entitlement-transition wiring (purchase succeeds → state moves correctly; replay stays no-op)
+- [ ] Document the new service in a `services/billing-worker/README.md` and extend `services/api/README.md` with the `/v1/billing/*` section
+- [ ] Extend `.env.example` (and billing-worker env) with Google Play service-account credentials
 
 ### Acceptance criteria
-- Starting a trial twice on the same account returns `ENTITLEMENT_REQUIRED` (trial is consume-once)
-- Registering a 6th device on a `lifetime_family` account returns `409 SLOT_FULL`
-- Registering a 2nd device on a `lifetime_single`/`trial` account returns `409 SLOT_FULL`
-- Revoking a device clears its `deviceToken`; re-using the revoked token returns `401 UNAUTHORIZED`
-- The OpenAPI auth-response shape matches what the API actually returns
-- Jest unit tests cover all deterministic transitions and slot-cap branches
+- A purchase acknowledged by Google Play flips the caller's entitlement to `lifetime_single` or `lifetime_family` exactly once, even under duplicated webhook delivery
+- A refund on an active lifetime purchase transitions entitlement to `expired` (or `none` when trial was never consumed) and records `revoke_reason`
+- Replay of the same Google event id is a no-op that returns the current entitlement
+- `/v1/billing/verify` and `/v1/billing/restore` both respond with the stable `ErrorEnvelope` on failures and the current `EntitlementStatusResponse` on success
+- All Jest unit tests pass; CI builds the worker project
 
 ### After this run — update CLAUDE.md
-1. Tick Run 8 in the roadmap
-2. Set "Last completed run" to `Run 8 — Entitlement + Device module`
-3. Write the new "Next Run" block for **Run 9: Billing worker**
+1. Tick Run 9 in the roadmap
+2. Set "Last completed run" to `Run 9 — Billing worker`
+3. Write the new "Next Run" block for **Run 10: Profile + Source modules**
 4. Append entry to **Run Log**
-5. Commit: `api: add entitlement + device modules with slot-cap enforcement (Run 8)` and push
+5. Commit: `api+worker: add billing worker with Play verify, refund, and restore (Run 9)` and push
 
 ---
 
@@ -164,7 +169,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 ### Phase B — Backend V1
 - [x] **Run 6** — NestJS bootstrap (`services/api/`): Prisma, Postgres, Redis, docker-compose, health endpoint, env setup. **→ Claude asks user for logo upload into `assets/logo/` here.**
 - [x] **Run 7** — Auth module: Firebase Admin token verify, user sync, register/login/refresh
-- [ ] **Run 8** — Entitlement module: trial start, status, device register/list/revoke
+- [x] **Run 8** — Entitlement module: trial start, status, device register/list/revoke
 - [ ] **Run 9** — Billing worker: Play Billing verification, ack, lifetime flip, refund handler
 - [ ] **Run 10** — Profile + Source modules: 5-profile cap, PIN hash, kids flag; source CRUD + parser stubs
 
@@ -233,8 +238,10 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 
 (Ideas or deferred items captured during any run that are NOT in the current scope. Claude adds here instead of acting on them.)
 
-- **OpenAPI auth-response reconciliation (from Run 7):** Run 7 `POST /v1/auth/{register,login,refresh}` return an `AccountSnapshot` (`{ account, entitlement }`). The current OpenAPI contract in `packages/api-contracts/openapi.yaml` still declares `AuthResponse` with `accessToken`/`refreshToken`/`deviceToken`. Reconcile in **Run 8**: either (a) keep Firebase-ID-token-only auth for V1 and drop the custom token fields from the contract, or (b) add a custom JWT + refresh token layer alongside Firebase. Decision should factor in Android TV client simplicity + server-side revocation needs.
+- **~~OpenAPI auth-response reconciliation~~ (resolved in Run 8):** chose option (a) — Firebase-only auth for V1. `AuthResponse` replaced with `AccountSnapshotResponse` (`{ account, entitlement }`). Device slots are a separate explicit flow via `/devices/register` with an `X-Device-Token` header. OpenAPI + Zod contracts updated.
 - **Logo variants (from Run 6):** SVG vector version and explicit dark/light PNG variants would help for the Android TV splash / launcher and light-theme surfaces. Not blocking Run 12/14 but nice to have.
+- **Entitlement scheduler (from Run 8):** currently trial→expired happens read-time (on `getOrInitialize`). For analytics and timely push notifications we may want a scheduled job that runs every 5–15 minutes and marks `trial`→`expired`. Not blocking — defer until Run 9 (worker infra exists) or Run 10.
+- **Device rename + list-by-device-token (from Run 8):** OpenAPI had `PUT /devices/{id}` rename; not yet implemented (out of Run 8 scope). Add when the Android TV device-management UI lands (Run 18).
 
 ---
 
@@ -282,6 +289,17 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
 - Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 8 — 2026-04-13 — Entitlement + Device module
+- Added `entitlement.state-machine.ts` — pure, deterministic transition function mirroring `docs/architecture/entitlement-state-machine.md` exactly: `TRIAL_STARTED` (guards R-1/R-3), `TRIAL_EXPIRED` (guards `now >= trial_ends_at`), `PURCHASE_VERIFIED_SINGLE/FAMILY` (supports upgrade path), `REFUND_OR_REVOKE_ACTIVE_PURCHASE` (R-7 fallback to `expired` or `none`), `ADMIN_REVOKE`, `DUPLICATE_OR_REPLAY_EVENT` no-op; derived helpers `deviceCapFor()` and `allowsPlayback()`
+- Added `EntitlementService` with `getOrInitialize` (auto-expires stale trials on read), `startTrial` (atomic `account.trial_consumed=true` + entitlement mutation), and `applyEvent` (single-writer row update suitable for Run 9 billing worker)
+- Added `POST /v1/entitlement/trial/start` (returns `402 ENTITLEMENT_REQUIRED` with `TRIAL_ALREADY_CONSUMED` details when re-started) and `GET /v1/entitlement/status`
+- Added `DevicesService` — slot-cap enforcement derived from entitlement (1 trial/single, 5 family, 0 none/expired/revoked), `generateDeviceToken()` (256-bit base64url) + `hashDeviceToken()` (sha256); plaintext token returned only at registration time
+- Added `POST /v1/devices/register` (`201` with plaintext `deviceToken` once; `409 SLOT_FULL` on cap; `402 ENTITLEMENT_REQUIRED` on insufficient entitlement), `GET /v1/devices`, `POST /v1/devices/:id/revoke` (soft revoke via `revoked_at`)
+- Added `DeviceGuard` validating `X-Device-Token` header against non-revoked account-owned device; attaches `req.device`, fire-and-forget `last_seen_at` touch; must run after `AuthGuard`
+- **OpenAPI + Zod reconciliation (resolved Parking Lot item):** chose Firebase-only auth for V1 — dropped `accessToken`/`refreshToken`/`deviceToken` from `AuthResponse`, replaced with `AccountSnapshotResponse`. Added `FirebaseBearer` + `DeviceToken` security schemes. Added `/entitlement/trial/start`, `/devices/register`, aligned `/devices/{id}/revoke` path
+- Added 41 unit tests (state machine 20, entitlement service 6, devices service 9, device guard 6) — total suite now 72 tests green
+- **Verified end-to-end live:** boots against real Postgres 16 + Redis 7, all routes mapped, `/health` returns full status, protected endpoints return stable `UNAUTHORIZED` ErrorEnvelope, validation errors return `VALIDATION_ERROR` with `details.issues`, Firebase Admin lazy-initializes and actually rejects bogus tokens
 
 ### Run 7 — 2026-04-13 — Auth module (Firebase verify + account sync)
 - Added `FirebaseModule`/`FirebaseService` — lazy `firebase-admin` init, credentials via `FIREBASE_SERVICE_ACCOUNT_JSON` blob or discrete `FIREBASE_PROJECT_ID`/`CLIENT_EMAIL`/`PRIVATE_KEY` trio; PEM `\n` sequences auto-decoded; credential requirement enforced in non-test envs via Zod `superRefine`
