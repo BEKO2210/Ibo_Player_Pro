@@ -38,6 +38,9 @@ room = "2.6.1"
 # Firebase
 firebaseBom = "33.5.1"
 
+# Play Billing (Run 17)
+billingClient = "7.1.1"
+
 # Test
 junit = "4.13.2"
 androidxTestExt = "1.2.1"
@@ -98,6 +101,9 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 # Firebase Auth (used in Run 13 onboarding)
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx" }
+
+# Play Billing (Run 17)
+androidx-billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billingClient" }
 
 # Test
 junit = { module = "junit:junit", version.ref = "junit" }

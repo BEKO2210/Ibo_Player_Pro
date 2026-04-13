@@ -35,9 +35,34 @@ interface PremiumPlayerApi {
     @POST("entitlement/trial/start")
     suspend fun startTrial(): EntitlementStatusResponse
 
-    // ── Profiles (read-only here; full CRUD lands in Run 18) ────────
+    // ── Profiles (Run 18: full CRUD + verify-pin) ─────────────────────
     @GET("profiles")
     suspend fun listProfiles(): ProfileListResponse
+
+    @POST("profiles")
+    suspend fun createProfile(@Body body: CreateProfileRequest): SingleProfileResponse
+
+    @PUT("profiles/{id}")
+    suspend fun updateProfile(
+        @Path("id") id: String,
+        @Body body: UpdateProfileRequest,
+    ): SingleProfileResponse
+
+    @DELETE("profiles/{id}")
+    suspend fun deleteProfile(@Path("id") id: String): Response<Unit>
+
+    @POST("profiles/{id}/verify-pin")
+    suspend fun verifyProfilePin(
+        @Path("id") id: String,
+        @Body body: VerifyPinRequest,
+    ): VerifyPinResponse
+
+    // ── Devices (Run 8 endpoints; client-side CRUD in Run 18) ─────
+    @GET("devices")
+    suspend fun listDevices(): DeviceListResponse
+
+    @POST("devices/{id}/revoke")
+    suspend fun revokeDevice(@Path("id") id: String): RevokeDeviceResponse
 
     // ── Sources (full CRUD — Run 15) ───────────────────────────────────
     @GET("sources")
@@ -83,4 +108,11 @@ interface PremiumPlayerApi {
         @Query("from") from: String? = null,
         @Query("to") to: String? = null,
     ): EpgProgrammesResponse
+
+    // ── Billing (Run 17) ───────────────────────────────────────────────
+    @POST("billing/verify")
+    suspend fun verifyPurchase(@Body body: BillingVerifyRequest): EntitlementStatusResponse
+
+    @POST("billing/restore")
+    suspend fun restorePurchases(): EntitlementStatusResponse
 }

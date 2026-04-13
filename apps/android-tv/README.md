@@ -430,6 +430,151 @@ Continue-Watching rail on the home screen is also live now: the row is
 served by `GET /v1/continue-watching?profileId=` and populated by
 playback heartbeats + the stop event.
 
+## Billing flow (Run 17)
+
+Google Play Billing wired into a bespoke premium paywall. Two one-time
+products:
+
+| Catalog | Product id                |
+|---------|---------------------------|
+| Single  | `premium_player_single`   |
+| Family  | `premium_player_family`   |
+
+These MUST match `BILLING_PRODUCT_ID_{SINGLE,FAMILY}` in
+`services/api/.env.example`.
+
+### Layer map
+
+```
+data/billing/
+  ProductCatalog.kt       # PremiumProduct.Single / Family + display copy
+  BillingClientWrapper.kt # Hilt @Singleton wrapper around BillingClient:
+                          #   ensureReady(), queryProducts(),
+                          #   launchPurchase(), queryExistingPurchases(),
+                          #   purchaseFlow (Channel of success/cancel/error)
+  BillingRepository.kt    # Facade used by PaywallViewModel:
+                          #   querySkus, launchPurchase, acknowledgeAndVerify,
+                          #   restore → /v1/billing/{verify,restore}
+ui/billing/
+  PaywallScreen.kt        # side-by-side plan cards; Family highlighted;
+                          # Restore + Not Now bottom row
+  PaywallViewModel.kt     # loads SKUs on init, collects BillingClient
+                          # purchase results, routes success through
+                          # acknowledgeAndVerify → PurchaseSucceeded
+```
+
+### Entitlement-aware gating
+
+`HomeUiState.Error.isEntitlementGated` is `true` when the server
+returned `code = "ENTITLEMENT_REQUIRED"`. `HomeScreen` watches the
+state in a `LaunchedEffect` and calls `onOpenPaywall()` — users never
+see a raw "requires active entitlement" banner, they see the paywall.
+
+### Nav route
+
+`Routes.Paywall = "paywall"` — registered in `PremiumTvApp`. The
+paywall pops itself when the user completes a purchase, when restore
+succeeds, or when the user explicitly presses "Not Now".
+
+### Tests
+
+- `BillingRepositoryTest` (MockWebServer, 4 cases): `acknowledgeAndVerify`
+  POST body + parse, 402 ENTITLEMENT_REQUIRED mapping, `restore` POST,
+  401 UNAUTHORIZED mapping.
+- `PaywallViewModelTest` (MockK + UnconfinedTestDispatcher, 6 cases):
+  init loads SKUs, init Error on failure, full purchase flow
+  (BillingClient emit → verify → PurchaseSucceeded), user cancel
+  clears submitting, restore success, restore failure surfaces
+  friendly copy.
+
+### Not unit-tested (requires Play-Store-equipped device)
+
+- `BillingClient.launchBillingFlow(...)` — run manually on an
+  emulator with Google Play Services + a signed test account linked to
+  Play Console's test-track offers
+- `BillingClientStateListener.onBillingSetupFinished` handshake
+
+The server-side verification path (`BillingService.verifyAndApply`)
+already has full test coverage in `services/api/src/billing/` from
+Run 9, so the only untested layer on-device is the Play-Store handshake.
+
+## Parental controls (Run 18)
+
+Three new screens plus an `AgeFilter` helper round out Phase C.
+
+### PinGate
+
+`ui/parental/PinGateScreen` — full-screen PIN entry invoked before
+switching into a PIN-protected profile. Numeric-only input via
+`PremiumTextField`, lockout state surfaces a live countdown chip with
+`MM:SS` until expiry. Server is the source of truth — we never
+validate PINs locally. The VM handles the four server outcomes: `ok`
+(Unlocked), `mismatch` (increment counter, clear PIN), `locked` (set
+`lockedUntilIso` + red countdown chip), and `no_pin` (defensive
+fallback → Unlocked).
+
+### Profile management
+
+`ui/parental/ProfileManagementScreen` — per-profile row editor:
+inline rename, age-cap edit (0–21), PIN set / change / clear, default
+flip, delete with confirmation overlay. Plus an "Add profile" form
+underneath the list. All mutations route through the Run 10
+`/v1/profiles` CRUD endpoints via `ProfileRepository`
+(`create`, `update`, `delete`, `verifyPin`).
+
+### Device management
+
+`ui/parental/DeviceManagementScreen` — lists every device from
+`/v1/devices`. Each row shows the platform chip, "This device" chip for
+the current device, last-seen timestamp. "Revoke" button on each
+non-revoked device opens a confirmation overlay; revoking the current
+device calls the button "Sign Out This Device" instead. Wired to Run 8's
+`POST /v1/devices/{id}/revoke`.
+
+### Age filter
+
+`data/parental/AgeFilter` — pure helper. `isAllowed(profileAgeLimit,
+ratingString)` compares the caller's cap against the item's rating.
+`ratingToMinAge(ratingString)` handles MPAA, US TV, BBFC, FSK, and
+bare-number rating vocabularies. Unknown ratings default to allowed
+(adult-safe default; kids-strict enforcement is a source-validation
+polish pass).
+
+### HomeHeader overflow
+
+The top bar now exposes optional "Profiles" + "Devices" ghost buttons
+next to the profile indicator. `HomeScreen` wires them to
+`onOpenProfileSettings()` + `onOpenDeviceSettings()` which the NavHost
+maps to `Routes.ProfileManagement` + `Routes.DeviceManagement`.
+
+### Routes
+
+| Constant                     | Path                                               |
+|------------------------------|----------------------------------------------------|
+| `Routes.ProfileManagement`   | `profiles/manage`                                  |
+| `Routes.DeviceManagement`    | `devices/manage`                                   |
+| `Routes.PinGatePattern`      | `profiles/{profileId}/pin-gate?profileName={name}` |
+
+`Routes.pinGate(profileId, profileName)` URL-encodes the profile name.
+
+### Tests
+
+- `data/parental/AgeFilterTest` (7 cases) — null cap allows all,
+  null rating allows under any cap, MPAA + TV-MA + FSK + BBFC rating
+  mappings, unknown rating returns null.
+- `data/profiles/ProfileRepositoryCrudTest` (7 cases, MockWebServer) —
+  create POST body + parse, update partial body + `clearPin` flag, 409
+  SLOT_FULL, delete 204 happy path, 409 VALIDATION_ERROR on last-
+  profile delete, verify-pin result parse.
+- `ui/parental/PinGateViewModelTest` (7 cases, MockK) — initial state,
+  onPinChange filter/cap, short-PIN guard, successful verify → Unlocked,
+  mismatch clears PIN + increments counter, locked carries
+  lockedUntilIso, no_pin defensive Unlocked.
+- `ui/parental/DeviceManagementViewModelTest` (5 cases, MockK) — init
+  loads, init Error on 401, requestRevoke + confirmRevoke updates list,
+  confirmRevoke without request is a no-op, revoke error surfaces
+  errorMessage.
+
 ## Build + run
 
 > **Tooling required (cannot be run in this repo's CI sandbox — Android

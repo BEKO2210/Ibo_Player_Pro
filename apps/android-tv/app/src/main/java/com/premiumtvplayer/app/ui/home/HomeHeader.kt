@@ -34,6 +34,8 @@ import com.premiumtvplayer.app.ui.theme.PremiumType
 fun HomeHeader(
     profile: ProfileDto?,
     modifier: Modifier = Modifier,
+    onProfileSettings: (() -> Unit)? = null,
+    onDeviceSettings: (() -> Unit)? = null,
 ) {
     val spacing = LocalPremiumSpacing.current
     Row(
@@ -41,9 +43,24 @@ fun HomeHeader(
             .fillMaxWidth()
             .padding(horizontal = spacing.pageGutter, vertical = spacing.l),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(spacing.m),
     ) {
         BrandLogo(size = BrandLogoSize.Inline)
         androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight(1f))
+        if (onProfileSettings != null) {
+            com.premiumtvplayer.app.ui.components.PremiumButton(
+                text = "Profiles",
+                onClick = onProfileSettings,
+                variant = com.premiumtvplayer.app.ui.components.ButtonVariant.Ghost,
+            )
+        }
+        if (onDeviceSettings != null) {
+            com.premiumtvplayer.app.ui.components.PremiumButton(
+                text = "Devices",
+                onClick = onDeviceSettings,
+                variant = com.premiumtvplayer.app.ui.components.ButtonVariant.Ghost,
+            )
+        }
         if (profile != null) {
             ProfileIndicator(profile = profile)
         }

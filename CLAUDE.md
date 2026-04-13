@@ -6,8 +6,8 @@
 
 ## 🎯 Current State
 
-- **Phase:** C — Android TV Client
-- **Last completed run:** Run 16 — Playback + heartbeat + EPG worker
+- **Phase:** C — Android TV Client (complete)
+- **Last completed run:** Run 18 — Parental controls
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
@@ -15,35 +15,33 @@
 
 ---
 
-## ▶️ Next Run (Run 17): Billing flow in the app
+## ▶️ Next Run (Run 19): i18n Finalization + Error States + Diagnostics
 
 ### Goal
-Wire the Google Play Billing Client into the Android TV app so users can actually purchase Lifetime Single / Family, trigger server verification through the Run 9 billing-worker path, and surface entitlement UI states (trial / active / expired / revoked) across the home + paywall surfaces.
+Ship-ready polish for Phase D. Every user-visible string moves into resource catalogues (English baseline + stub `values-de/` for German + a loader); every error path has a premium surface; a diagnostic screen exposes build / env / backend-connectivity info for support use.
 
 ### Deliverables
-- [ ] Add `com.android.billingclient:billing-ktx` + wire `BillingClientWrapper` (lifecycle-aware, Hilt-injected)
-- [ ] `BillingRepository` with:
-  - `querySkuDetails()` — fetches the two one-time products
-  - `launchPurchase(activity, productId)` — kicks off the Play Billing flow
-  - `acknowledgeAndVerify(purchaseToken, productId)` — POST `/v1/billing/verify` + local state refresh
-  - `restore()` — POST `/v1/billing/restore`
-- [ ] `PaywallScreen` that opens when the user lands on a gated surface with `entitlement.state ∈ {none, expired, revoked}`. Premium look: two-plan comparison (Single vs Family), CTAs, restore link
-- [ ] Entitlement-aware gating: Home hero swaps between "Start trial" (for `none` + trial-not-consumed), "Upgrade" (for `expired`), or nothing (when active). Source create and playback start already 402 on the server — the client should route the 402 into `PaywallScreen` instead of an error banner
-- [ ] Unit tests for `BillingRepository.acknowledgeAndVerify` (MockWebServer) and `PaywallViewModel` state transitions
-- [ ] Update `apps/android-tv/README.md` with "Billing flow (Run 17)"
+- [ ] Move all hard-coded English user copy out of composables into `res/values/strings.xml` + referenced via `stringResource(R.string.*)`. Remaining `Text(text = "…")` literals become a PR-review smell.
+- [ ] Add `res/values-de/strings.xml` with German translations (machine-translated seed is OK; mark each string with a TODO for human review)
+- [ ] Replace `ApiErrorCopy.forCode(...)` with a `stringResource`-backed helper so the error-envelope mapping is locale-aware
+- [ ] Premium error states for every loading surface (Home, Sources, EPG, Player, Paywall, Parental). Shared `PremiumErrorBanner` component (`DangerRed` tinted backplate + icon + retry button)
+- [ ] `DiagnosticsScreen` — routed from a long-press on the build pill. Surfaces: Firebase project id, API base URL, entitlement state, device id, last heartbeat, health-check response from `GET /health`, recent error log (in-memory ring buffer sized 50)
+- [ ] `DiagnosticsViewModel` pulling the health endpoint + reading build config
+- [ ] Unit test for `DiagnosticsViewModel` (mocked health check + OK / unreachable paths)
+- [ ] Update `apps/android-tv/README.md` with "i18n & diagnostics (Run 19)"
 
 ### Acceptance criteria
-- User can open the paywall from a gated action, pick Family, complete the Play Billing purchase sheet, and see the home flip to the active state within a few seconds (backend verify + local refresh)
-- Restore flow works end-to-end for an account with a known-good purchase
-- 402 ENTITLEMENT_REQUIRED from any server action automatically surfaces the paywall — never a raw error
-- Existing Run 9 billing-worker behaviour unchanged (refund-handling and replay idempotency still pass their tests)
+- Changing the device locale to German (Settings → Language) swaps every visible string into `values-de/strings.xml` — including error banners
+- Every screen's error state is a styled banner, not a raw Text
+- DiagnosticsScreen shows up-to-date health status and is only reachable via the build-pill long-press (never via normal nav flow)
+- Existing 50+ unit tests remain green; i18n helper has at least one test covering a known code → resource-id mapping
+- No remaining `"..."` Compose text literals visible to the user (grep audit in the test suite)
 
 ### After this run — update CLAUDE.md
-1. Tick Run 17 in the roadmap
-2. Set "Last completed run" to `Run 17 — Billing flow in app`
-3. Write the new "Next Run" block for **Run 18: Parental controls (PIN gate + age filter + device list)**
-4. Append entry to **Run Log**
-5. Commit: `tv: add Play Billing purchase + restore + paywall (Run 17)` and push
+1. Tick Run 19 in the roadmap, set Last completed run
+2. Write the new "Next Run" block for **Run 20: E2E smoke test + release-build config + store-listing checklist**
+3. Append entry to **Run Log**
+4. Commit: `tv: i18n finalization + premium error states + diagnostics (Run 19)` and push
 
 ---
 
@@ -173,8 +171,8 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 - [x] **Run 14** — Home screen: Hero carousel, rows, Continue Watching, Favorites. Logo wired in if not already
 - [x] **Run 15** — Source management UI + EPG browse view
 - [x] **Run 16** — Playback (Media3/ExoPlayer): Live, VOD, Resume, subtitles, audio-track picker, heartbeat sync
-- [ ] **Run 17** — Billing flow in app: Play Billing Client, purchase trigger, Restore Purchase, entitlement UI states
-- [ ] **Run 18** — Parental controls: PIN gate, age filter, device list / logout / unpair
+- [x] **Run 17** — Billing flow in app: Play Billing Client, purchase trigger, Restore Purchase, entitlement UI states
+- [x] **Run 18** — Parental controls: PIN gate, age filter, device list / logout / unpair
 
 ### Phase D — Polish & Ship-Ready
 - [ ] **Run 19** — i18n finalization (all strings keyed, en default, fallback), error states, diagnostics screen
@@ -284,6 +282,53 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
 - Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 18 — 2026-04-13 — Parental controls
+- API: extended `PremiumPlayerApi` with full profile CRUD (`POST/PUT/DELETE /v1/profiles`), `POST /v1/profiles/{id}/verify-pin`, plus the Run 8 device endpoints (`GET /v1/devices`, `POST /v1/devices/{id}/revoke`). New DTOs: `CreateProfileRequest`, `UpdateProfileRequest` (`clearPin` flag supported), `SingleProfileResponse`, `VerifyPinRequest/Response`, `DeviceDto`, `DeviceListResponse`, `RevokeDeviceResponse`
+- `data/profiles/ProfileRepository` extended with `create`, `update`, `delete`, `verifyPin` — all via `ApiErrorMapper`. `delete` treats non-2xx as `HttpException` so ErrorEnvelope path stays uniform
+- New `data/devices/DevicesRepository` with `list` + `revoke`
+- New `data/parental/AgeFilter` — pure helper, handles MPAA (G/PG/PG-13/R/NC-17), US TV (TV-Y/TV-Y7/TV-G/TV-PG/TV-14/TV-MA), BBFC (U/PG/12/12A/15/18), FSK (0/6/12/16/18), and bare numeric ratings. Unknown ratings default to allowed. 7 unit tests
+- `ui/parental/PinGateViewModel` — wraps `verifyPin`. `PinGateUiState.Editing(pin, submitting, errorMessage, failedAttemptCount, lockedUntilIso)` → `Unlocked` on success. Handles 4 server outcomes: `ok` → Unlocked; `mismatch` → clear PIN + bump counter; `locked` → set `lockedUntilIso`; `no_pin` → defensive Unlocked. 7 unit tests
+- `ui/parental/PinGateScreen` — full-screen PIN entry with live countdown chip (`MM:SS` format, driven by a per-second `LaunchedEffect`). Numeric-only `PremiumTextField`. PIN is digits-only, capped at 10
+- `ui/parental/ProfileManagementViewModel` — `Ready(profiles, busyId, confirmingDeleteId, errorMessage)`. Tracks per-row busy id so simultaneous mutations can't race. Operations: `createProfile`, `rename`, `setAgeLimit`, `setPin`, `clearPin`, `makeDefault`, `requestDelete` → `confirmDelete`. After every mutation `refresh()` pulls the list again
+- `ui/parental/ProfileManagementScreen` — per-profile row editor with inline rename / age-cap / PIN / default / delete. Add-profile form with Kids/Adult toggle. Delete goes through full-screen `ConfirmDeleteOverlay`
+- `ui/parental/DeviceManagementViewModel` — `Ready(devices, busyId, confirmingRevokeId, errorMessage)`. Optimistically updates the row on revoke success. 5 unit tests
+- `ui/parental/DeviceManagementScreen` — list of devices with platform chip, "This device" indicator, last-seen timestamp, "Revoke"/"Sign Out This Device" button. Confirmation overlay explains the consequence (current vs other device wording)
+- `ui/home/HomeHeader` — added optional `onProfileSettings` + `onDeviceSettings` ghost buttons between brand-logo and profile indicator. `HomeScreen` wires them through `onOpenProfileSettings` + `onOpenDeviceSettings` callbacks; NavHost maps to `Routes.ProfileManagement` / `Routes.DeviceManagement`
+- Nav: `Routes.ProfileManagement = "profiles/manage"`, `Routes.DeviceManagement = "devices/manage"`, `Routes.PinGatePattern = "profiles/{profileId}/pin-gate?profileName={name}"` with `Routes.pinGate(profileId, profileName)` URL-encoding helper. NavHost registers all three (PinGate composable URL-decodes `profileName`)
+- Tests (JVM, via `./gradlew :app:testDebugUnitTest`):
+  - `AgeFilterTest` — 7 cases covering the full rating-vocabulary matrix
+  - `ProfileRepositoryCrudTest` — 7 cases (MockWebServer) covering create POST body + parse, partial update PUT, clearPin flag, 409 SLOT_FULL, 204 delete, 409 last-profile VALIDATION_ERROR, verifyPin result parsing
+  - `PinGateViewModelTest` — 7 cases covering initial state, onPinChange filter/cap, short-PIN guard, successful verify → Unlocked, mismatch clears pin + counter, locked carries `lockedUntilIso`, `no_pin` defensive Unlocked
+  - `DeviceManagementViewModelTest` — 5 cases covering init loads, init Error on 401, requestRevoke → confirmRevoke updates list, confirmRevoke no-op without request, revoke error surfaces errorMessage
+- Docs: `apps/android-tv/README.md` gained a "Parental controls (Run 18)" section with feature breakdown, nav routes table, full test matrix
+- Token discipline verified (grep-clean): zero `Color(0x...)` literals in `ui/parental/`, `data/devices/`, `data/parental/`
+- **Static verification done:** Kotlin sources conform to Compose / tv-foundation / tv-material / Retrofit / Hilt / Navigation-Compose API surfaces; internal imports resolve
+- **Cannot verify in this session:** `./gradlew :app:assembleDebug` / `:app:testDebugUnitTest` — no Android SDK in the sandbox. **Verify locally** with backend up + real Firebase; flow: create a Kids profile with a 4-digit PIN → HomeHeader → Profiles → delete one → DeviceManagement → Revoke → PinGate countdown surfaces after 5 misses
+
+### Run 17 — 2026-04-13 — Play Billing flow in the app
+- Added `billing-ktx 7.1.1` to the Android version catalog + `app/build.gradle.kts`
+- `data/billing/ProductCatalog.kt` — `PremiumProduct.Single` / `Family` enum mirrors backend `BILLING_PRODUCT_ID_{SINGLE,FAMILY}` with display copy (tagline + 4 marketing bullets each). Single = 1 device / 1 profile; Family = 5 devices / 5 profiles; both lifetime one-time
+- `data/billing/BillingClientWrapper.kt` — Hilt `@Singleton` coroutine wrapper around Google's `BillingClient`:
+  - `ensureReady()` suspends until `onBillingSetupFinished` (returns true/false instead of throwing)
+  - `queryProducts(ids)` via `queryProductDetails` suspend extension
+  - `launchPurchase(activity, details)` kicks off the Play Billing sheet
+  - `queryExistingPurchases()` for Restore
+  - `purchaseFlow: Flow<PurchaseResult>` — `Success(Purchase)` / `UserCanceled` / `Error(code, message)` — fed from the `PurchasesUpdatedListener`
+  - `BillingConnection` `StateFlow` exposes Idle / Connecting / Ready / Failed for the UI
+- `data/billing/BillingRepository.kt` — facade used by `PaywallViewModel`. `querySkus()` pairs Play-side `ProductDetails` with the catalog entries (Single-first ordering). `launchPurchase()` delegates to the wrapper. `acknowledgeAndVerify(token, productId)` POSTs `/v1/billing/verify` (Run 9 server path) and returns the resulting `EntitlementDto`. `restore()` POSTs `/v1/billing/restore`. All error paths routed through `ApiErrorMapper`
+- `PaywallViewModel` (`ui/billing/`) — `Loading` / `Ready(skus, submitting, errorMessage)` / `PurchaseSucceeded(ent)` / `Error`. Init loads SKUs + subscribes to `purchaseFlow`. On `Success` → `acknowledgeAndVerify` → `PurchaseSucceeded`. On `UserCanceled` → quietly clear `submitting` (no error banner — premium detail). On `Error` → set user-friendly message. `restore()` flips to `Ready(submitting=true)` then `PurchaseSucceeded` on success
+- `PaywallScreen` — two `PlanCard`s side-by-side, Family highlighted with 2dp `AccentCyan` border + "Recommended" chip. Header with outline chips "One-time" + "No subscription", `DisplayLarge` title, editorial body. Restore + "Not Now" bottom row. Auto-dismisses on `PurchaseSucceeded` via `LaunchedEffect(state) -> onPurchased()`
+- **Entitlement-aware gating:** `HomeUiState.Error` gained `isEntitlementGated: Boolean` — `true` when `ApiException.Server.code == "ENTITLEMENT_REQUIRED"`. `HomeScreen` `LaunchedEffect` watches state and auto-routes to `onOpenPaywall()` — users never see a raw "requires active entitlement" banner, they see the paywall
+- Nav: `Routes.Paywall = "paywall"`, registered in `PremiumTvApp.NavHost`. Paywall pops on purchase/restore success or explicit "Not Now". `HomeScreen` now takes `onOpenPaywall` parameter, wired by the NavHost to `navController.navigate(Routes.Paywall)`
+- Tests (JVM, via `./gradlew :app:testDebugUnitTest`):
+  - `BillingRepositoryTest` (MockWebServer, 4 cases) — `acknowledgeAndVerify` POST body shape + parse, 402 ENTITLEMENT_REQUIRED mapping, `restore` POST, 401 UNAUTHORIZED mapping
+  - `PaywallViewModelTest` (MockK + Turbine + UnconfinedTestDispatcher, 6 cases) — init loads SKUs, init Error on querySkus failure, purchase success flow verify+PurchaseSucceeded, user cancel clears submitting without banner, restore success → PurchaseSucceeded, restore failure surfaces friendly copy
+- Docs:
+  - `apps/android-tv/README.md` — new "Billing flow (Run 17)" section: product-id table, layer map, entitlement-gating note, nav route, test matrix, note about the BillingClient paths that need a Play-Services-equipped device
+  - `CLAUDE.md` — Run 17 ticked, Run 18 (Parental controls) queued, Run 17 entry appended to Run Log
+- **Static verification done:** Kotlin sources conform to Compose / tv-foundation / tv-material / Billing / Hilt / Retrofit API surfaces. Internal imports resolve. Grep-clean: zero `Color(0x…)` literals in `ui/billing/` or `data/billing/`
+- **Cannot verify in this session:** `./gradlew :app:assembleDebug` / `:app:testDebugUnitTest`. Verify locally with a Play-Store-equipped emulator + test-track products in the Play Console matching `premium_player_{single,family}`. Expected: open paywall from a 402 gated action, pick Family, complete the purchase sheet, Home flips to `lifetime_family` within a few seconds
 
 ### Run 16 — 2026-04-13 — Playback + heartbeat + EPG worker
 - Backend `src/playback/` — `PlaybackService` is the single writer of playback lifecycle + continue-watching state. `start` checks `allowsPlayback()` entitlement + profile/source ownership (404 on foreign rows) and inserts into `playback_sessions`. `heartbeat` updates position + state in a tx and upserts `continue_watching` (unique on `profileId_itemId`) for non-live items. `stop` records a `watch_history` row, and either upserts (non-completed) or deletes (completed) the CW row. `listContinueWatching` serves the Home rail

@@ -147,6 +147,9 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth.ktx)
 
+    // Google Play Billing (Run 17)
+    implementation(libs.androidx.billing.ktx)
+
     // Tests
     testImplementation(libs.junit)
     testImplementation(libs.okhttp.mockwebserver)
