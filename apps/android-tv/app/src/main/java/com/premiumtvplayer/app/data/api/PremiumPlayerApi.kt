@@ -115,4 +115,11 @@ interface PremiumPlayerApi {
 
     @POST("billing/restore")
     suspend fun restorePurchases(): EntitlementStatusResponse
+
+    // ── Diagnostics (Run 19) ───────────────────────────────────────────
+    /**
+     * Note: `/health` is hosted at the service root (no `/v1` prefix), so
+     * callers must use a dedicated baseUrl or absolute URL. The
+     * DiagnosticsViewModel uses OkHttp directly for this.
+     */
 }

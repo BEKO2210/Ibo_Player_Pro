@@ -6,6 +6,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -76,11 +78,14 @@ fun PremiumTvApp(navController: NavHostController = rememberNavController()) {
         popExitTransition = { ExitTransition.None },
     ) {
         composable(Routes.Boot) {
-            BootScreen(onReady = {
-                navController.navigate(Routes.Welcome) {
-                    popUpTo(Routes.Boot) { inclusive = true }
-                }
-            })
+            BootScreen(
+                onReady = {
+                    navController.navigate(Routes.Welcome) {
+                        popUpTo(Routes.Boot) { inclusive = true }
+                    }
+                },
+                onLongPressBuildPill = { navController.navigate(Routes.Diagnostics) },
+            )
         }
         composable(Routes.Welcome) {
             WelcomeScreen(
@@ -239,6 +244,11 @@ fun PremiumTvApp(navController: NavHostController = rememberNavController()) {
                 onBack = { navController.popBackStack() },
             )
         }
+        composable(Routes.Diagnostics) {
+            com.premiumtvplayer.app.ui.diagnostics.DiagnosticsScreen(
+                onBack = { navController.popBackStack() },
+            )
+        }
         composable(
             route = Routes.PlayerPattern,
             arguments = listOf(
@@ -322,7 +332,10 @@ private const val DEMO_VOD_MP4 =
     "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
 
 @Composable
-private fun BootScreen(onReady: () -> Unit) {
+private fun BootScreen(
+    onReady: () -> Unit,
+    onLongPressBuildPill: (() -> Unit)? = null,
+) {
     val spacing = LocalPremiumSpacing.current
 
     LaunchedEffect(Unit) {
@@ -374,7 +387,14 @@ private fun BootScreen(onReady: () -> Unit) {
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(spacing.xxl),
+                .padding(spacing.xxl)
+                .then(
+                    if (onLongPressBuildPill != null)
+                        Modifier.pointerInput(Unit) {
+                            detectTapGestures(onLongPress = { onLongPressBuildPill() })
+                        }
+                    else Modifier,
+                ),
         ) {
             Text(
                 text = "v0.1.0 · build 1",

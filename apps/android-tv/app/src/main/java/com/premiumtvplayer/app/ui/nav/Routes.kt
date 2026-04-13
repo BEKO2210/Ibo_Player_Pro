@@ -47,6 +47,9 @@ object Routes {
     // ── Paywall (Run 17) ───────────────────────────────────────────
     const val Paywall = "paywall"
 
+    // ── Diagnostics (Run 19) ───────────────────────────────────────
+    const val Diagnostics = "diagnostics"
+
     // ── Parental controls (Run 18) ─────────────────────────────────
     const val ProfileManagement = "profiles/manage"
     const val DeviceManagement = "devices/manage"
