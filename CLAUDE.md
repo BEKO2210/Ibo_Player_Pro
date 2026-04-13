@@ -7,7 +7,7 @@
 ## 🎯 Current State
 
 - **Phase:** C — Android TV Client
-- **Last completed run:** Run 11 — Android TV bootstrap
+- **Last completed run:** Run 12 — Design system in Compose
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
@@ -15,37 +15,40 @@
 
 ---
 
-## ▶️ Next Run (Run 12): Design System in Compose
+## ▶️ Next Run (Run 13): Onboarding + Auth Screens
 
 ### Goal
-Build out the premium component library (atoms + molecules) on top of the Run 11 token foundation, and replace the splash placeholder with a real `BootProgress` + `BrandLogo` consuming the actual `assets/logo/logo-no_background.png`. Goal quality bar: Sony Bravia / Apple TV / Samsung Tizen Premium.
+Wire the first interactive flows on top of the Run 12 design system: Welcome → Sign up / Log in → Trial activation → Profile picker. Talks to Firebase Auth (client SDK) for email/password and to the V1 backend for account sync, trial start, and profile listing. End-to-end the user can install the APK, sign up, start a 14-day trial, and pick a profile — without ever leaving the premium dark UI language.
 
 ### Deliverables
-- [ ] `BrandLogo` composable rendering the real PNG (with optional SVG follow-up); responsive scale variants for hero / splash / launcher overlays
-- [ ] `PremiumCard` — focusable card primitive: rounded `radii.poster`, premium hover/focus scale (`PremiumFocusScale`), `PremiumTransitions.FocusScale` + `FocusElevation` animations, glow ring on focus, dim veil on unfocused siblings
-- [ ] `PremiumButton` (primary / secondary / ghost variants) — focus + press states, leading/trailing icon slots
-- [ ] `PremiumTextField` — TV-friendly D-pad input, large hit area, focus border using `PremiumColors.FocusAccent`
-- [ ] `PremiumChip` — for filter rows / metadata badges, `LabelSmall` typography with all-caps tracking
-- [ ] `HeroSection` molecule — full-bleed hero placeholder: backdrop image slot, gradient scrim from `BackgroundBase` (bottom) to transparent (top 60%), title/subtitle stack, CTA row
-- [ ] `RowOfTiles` molecule — Compose-TV `TvLazyRow` with the focus veil pattern (focused tile bright + scaled, others dimmed by `UnfocusedVeil`)
-- [ ] `BootProgress` — replace the inline three-bar pulse in `PremiumTvApp.kt`
-- [ ] Compose `@Preview` for every component, dark surface backdrop
-- [ ] Optional: brand font load via `Font(R.font.…)` if a font file is added; otherwise leave the system default (Roboto-derived) and TODO note
-- [ ] Update `apps/android-tv/README.md` with a "Component catalog" section
+- [ ] `NavHost` / `NavController` rooted in `PremiumTvApp` with routes: `welcome`, `signup`, `login`, `trialActivation`, `profilePicker`. Smooth transitions using `PremiumTransitions.DrawerSlide`.
+- [ ] Firebase Auth wiring (Hilt-provided `FirebaseAuth`). `google-services.json` placeholder + README note for the user to drop in the real one.
+- [ ] HTTP client module (Hilt-provided Retrofit + OkHttp + kotlinx.serialization). Base URL from `BuildConfig` (debug points at `http://10.0.2.2:3000` for the local API).
+- [ ] `AuthRepository` with `register(email, password, locale)`, `login(email, password)`, `refresh()` — under the hood: Firebase ID token → `POST /v1/auth/{register,login,refresh}`.
+- [ ] `EntitlementRepository` with `status()` and `startTrial()` → wraps `GET /v1/entitlement/status` + `POST /v1/entitlement/trial/start`.
+- [ ] Screens (Compose):
+  - `WelcomeScreen` — `HeroSection` placeholder + "Sign In" + "Create account" `PremiumButton`s
+  - `SignupScreen` / `LoginScreen` — `PremiumTextField` for email + password, validation, error envelope mapping
+  - `TrialActivationScreen` — explains 14-day trial, primary CTA → `entitlement/trial/start`, handles `TRIAL_ALREADY_CONSUMED`
+  - `ProfilePickerScreen` — calls `GET /v1/profiles`, renders each profile as a `PremiumCard` in a centered grid; "Add profile" tile when under cap
+- [ ] State holders: `WelcomeViewModel`, `SignupViewModel`, etc — Hilt-injected; expose `uiState` `StateFlow<...>`. Keep ViewModels thin; repos do the work.
+- [ ] Stable error mapping: `ErrorEnvelope.error.code` → user-facing strings (English defaults, i18n hooks ready for Run 19).
+- [ ] Unit tests for `AuthRepository` + `EntitlementRepository` (Mock OkHttp interceptor) and at least one ViewModel happy-path test.
+- [ ] Update `apps/android-tv/README.md` with a "Onboarding flow" section and a `BuildConfig.API_BASE_URL` override note.
 
 ### Acceptance criteria
-- The splash now uses `BrandLogo` (real logo PNG), `BootProgress`, and reads ALL spacing/colors/type from theme tokens (no hard-coded `dp` / `Color(...)` literals in `PremiumTvApp.kt` outside of the gradient backdrop spec)
-- A focus traversal across a `RowOfTiles` of `PremiumCard`s shows the premium scale + glow + dim veil — visible in Compose Preview screenshots
-- Every new component has a `@Preview` exercising it
-- `./gradlew :app:assembleDebug` still succeeds (or Studio import remains clean)
-- Token values in `apps/android-tv/.../theme/*.kt` continue to mirror `packages/ui-tokens/src/index.ts` 1:1
+- Fresh install → Welcome → Sign Up → enter email/password → trial activation → profile picker, all in the premium UI language with focus-veil scrolling.
+- Backend live verification: API logs show successful `POST /v1/auth/register` followed by `POST /v1/entitlement/trial/start` with the same Firebase ID token.
+- Replaying trial activation returns `402 ENTITLEMENT_REQUIRED` and the screen shows a friendly "Trial already used on this account" state without crashing.
+- Network failure surfaces a banner using `PremiumColors.DangerRed` + `PremiumChip`, never a blank screen.
+- All Run 12 component contracts still hold (no new hard-coded literals leak into screens).
 
 ### After this run — update CLAUDE.md
-1. Tick Run 12 in the roadmap
-2. Set "Last completed run" to `Run 12 — Design system in Compose`
-3. Write the new "Next Run" block for **Run 13: Onboarding + Auth screens**
+1. Tick Run 13 in the roadmap
+2. Set "Last completed run" to `Run 13 — Onboarding + Auth screens`
+3. Write the new "Next Run" block for **Run 14: Home screen (hero + rows + Continue Watching)**
 4. Append entry to **Run Log**
-5. Commit: `tv: build premium design-system components (Run 12)` and push
+5. Commit: `tv: add onboarding + auth flow (Welcome/Signup/Login/Trial/Profiles) (Run 13)` and push
 
 ---
 
@@ -170,7 +173,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 
 ### Phase C — Android TV Client
 - [x] **Run 11** — `apps/android-tv/` Gradle/Compose/Compose-TV bootstrap. **applicationId locked: `com.premiumtvplayer.app`.** Leanback intent, TV manifest, Hilt, Navigation-Compose, ui-tokens wiring
-- [ ] **Run 12** — Design system in Compose: dark theme, typography, colors, focus states, motion, reusable Card/Row/Hero
+- [x] **Run 12** — Design system in Compose: dark theme, typography, colors, focus states, motion, reusable Card/Row/Hero
 - [ ] **Run 13** — Onboarding/Auth screens: Welcome → Signup/Login → Trial activation → Profile picker. Firebase Auth + API client
 - [ ] **Run 14** — Home screen: Hero carousel, rows, Continue Watching, Favorites. Logo wired in if not already
 - [ ] **Run 15** — Source management UI + EPG browse view
@@ -284,6 +287,24 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
 - Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 12 — 2026-04-13 — Design system in Compose (premium component library)
+- Copied `assets/logo/logo-no_background.png` → `apps/android-tv/app/src/main/res/drawable/brand_logo.png` so Compose can resolve it via `R.drawable.brand_logo`
+- New components package `apps/android-tv/app/src/main/java/com/premiumtvplayer/app/ui/components/`:
+  - **`BrandLogo.kt`** — renders the real PNG; three canonical sizes via `BrandLogoSize` enum (`Splash` 160dp, `Hero` 96dp, `Inline` 48dp); accepts a `ColorFilter` for theming
+  - **`BootProgress.kt`** — three-bar accent-cyan pulse on a 1.2s linear loop; brightness wraps around the row giving a smooth "boot heartbeat"
+  - **`PremiumChip.kt`** — `Filled` + `Outline` variants; `LabelSmall` (12sp SemiBold tracked) all-caps editorial feel
+  - **`PremiumButton.kt`** — `Primary` / `Secondary` / `Ghost` variants. Focus → 1.04× scale + accent border, press → 0.97× scale, all via `PremiumEasing.Premium` over `LocalPremiumDurations.current.short`. Leading/trailing icon slots
+  - **`PremiumTextField.kt`** — TV-friendly `BasicTextField`; large hit area (56dp min); border switches to `PremiumColors.FocusAccent` on focus, to `DangerRed` on error; placeholder + label + optional errorText; ready for password and number-password keyboards
+  - **`PremiumCard.kt`** — focusable card primitive. 1.06× scale on focus (`PremiumFocusScale`), 2dp accent glow ring, animated dim veil hook (`unfocusedDim` parameter) for the focus-veil pattern. Default 16:9 aspect, configurable. Optional inline title/subtitle stack with bottom-up scrim for readability over artwork
+  - **`RowOfTiles.kt`** — generic `<T>` `TvLazyRow` of `PremiumCard`s implementing the **focus-veil pattern**: tracks `focusedIndex` in state and passes `unfocusedDim = 0.4f` to every non-focused tile so siblings dim fluidly as focus moves
+  - **`HeroSection.kt`** — full-bleed cinematic hero. Backdrop slot (any composable), bottom-up scrim from `BackgroundBase` → transparent at 60% height, content stack (chips + `DisplayHero` title + subtitle + CTA row) anchored bottom-left in the canonical premium TV composition
+- Every component ships with a Compose `@Preview` over `PremiumTvTheme {}` against the brand `BackgroundBase` so designers can review without running the app
+- Updated `PremiumTvApp.kt` splash to be **fully token-driven**: replaced the inline play-button glyph with `BrandLogo(size = BrandLogoSize.Splash)` (real PNG) and the inline 3-bar pulse with `BootProgress()`. The cinematic radial gradient now uses `PremiumColors.AccentBlueDeep.copy(alpha=0.18f)` (no hard-coded hex)
+- Token usage rules locked: no `Color(...)` / `dp` / `TextStyle(...)` literals in component bodies; no standalone `tween(...)` — animations always go through `PremiumTransitions` / `PremiumEasing` / `LocalPremiumDurations.current`
+- Updated `apps/android-tv/README.md` with a full "Component catalog (Run 12)" section: atoms table, molecules table, focus-veil pattern explanation, token usage rules, `@Preview` convention
+- **Static verification done in this session:** Kotlin sources conform to the Compose / `tv-foundation` / `tv-material` API surface; manifest references intact; resource (`R.drawable.brand_logo`) wired
+- **Cannot verify in this session:** `./gradlew :app:assembleDebug` and `@Preview` rendering — both require Android Studio + JDK 17 (no Android SDK in the CI sandbox). **Verify locally** by importing in Android Studio Hedgehog+, opening any component file, and switching to "Split" / "Design" view
 
 ### Run 11 — 2026-04-13 — Android TV bootstrap (Phase C kickoff)
 - Created `apps/android-tv/` Gradle project (Kotlin DSL, AGP 8.7, Kotlin 2.0, Compose Compiler plugin 2.0, version catalog at `gradle/libs.versions.toml`)
