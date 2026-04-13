@@ -7,7 +7,7 @@
 ## 🎯 Current State
 
 - **Phase:** B — Backend V1
-- **Last completed run:** Run 8 — Entitlement + Device module
+- **Last completed run:** Run 9 — Billing worker
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
@@ -15,43 +15,49 @@
 
 ---
 
-## ▶️ Next Run (Run 9): Billing Worker
+## ▶️ Next Run (Run 10): Profile + Source Modules
 
 ### Goal
-Stand up the `services/billing-worker` process that verifies Google Play purchases, acknowledges them, and drives entitlement transitions end-to-end. This is the first worker alongside the NestJS API and is the single writer for billing events per the state machine doc.
+Implement the household profile model (5 profiles per account, kids flag, Argon2id PIN hash, age filter) and the user-managed source catalog (M3U / XMLTV / M3U+EPG with per-source encrypted credentials and parser stubs). Both modules sit on top of the entitlement caps from Run 8.
 
 ### Deliverables
-- [ ] Scaffold `services/billing-worker/` as a standalone Node.js worker (TypeScript strict, shared Prisma client, shared Redis, shared env validation approach)
-- [ ] Add a provider-verification client abstraction with a `GooglePlayProvider` implementation (validate purchase token via Play Developer API; treat as stubbable interface so tests don't hit Google)
-- [ ] Persist a `purchases` row per purchase token (idempotent on `provider + purchase_token`), including `raw_payload`
-- [ ] Acknowledge purchases back to Google (respect grace window + retries)
-- [ ] Drive `EntitlementService.applyEvent(...)` with the correct event:
-  - valid new SKU → `PURCHASE_VERIFIED_SINGLE` / `PURCHASE_VERIFIED_FAMILY`
-  - refund/voided notification → `REFUND_OR_REVOKE_ACTIVE_PURCHASE`
-  - duplicate event → `DUPLICATE_OR_REPLAY_EVENT` (no-op)
-- [ ] Implement single-writer concurrency: row-level `SELECT ... FOR UPDATE` on the target entitlement before state mutation
-- [ ] Add API endpoint `POST /v1/billing/verify` that enqueues + synchronously forwards to the worker's verification path (so the Android TV client can use the same code path as the worker for on-device restore/verify)
-- [ ] Add API endpoint `POST /v1/billing/restore` that triggers the worker's restore logic for the caller's account
-- [ ] Add unit tests for:
-  - provider adapter (mocked Google API responses: valid / refunded / voided)
-  - idempotency on duplicate `(provider, purchase_token, provider_event_id)`
-  - entitlement-transition wiring (purchase succeeds → state moves correctly; replay stays no-op)
-- [ ] Document the new service in a `services/billing-worker/README.md` and extend `services/api/README.md` with the `/v1/billing/*` section
-- [ ] Extend `.env.example` (and billing-worker env) with Google Play service-account credentials
+- [ ] `ProfileService` enforcing the 5-profile cap (1 for `trial`/`lifetime_single`, 5 for `lifetime_family`), kids flag + age limit (0-21), single default profile per account
+- [ ] PIN flow with Argon2id hashing (`profile_pins` table, lockout after 5 failed attempts, `lock_until` honored)
+- [ ] Endpoints (per OpenAPI):
+  - `GET    /v1/profiles`
+  - `POST   /v1/profiles`              (`409` when cap reached)
+  - `PUT    /v1/profiles/{id}`         (rename, age limit, PIN replace)
+  - `DELETE /v1/profiles/{id}`         (soft delete; 404 on miss; refuses to delete the last default)
+  - `POST   /v1/profiles/{id}/verify-pin`
+- [ ] `SourceService` covering M3U / XMLTV / M3U+EPG kinds + AES-256-GCM envelope encryption for URL/username/password/headers (`source_credentials` table; KMS key id stored, plaintext never persisted)
+- [ ] Endpoints:
+  - `GET    /v1/sources`               (list account or profile-scoped)
+  - `POST   /v1/sources`               (creates, returns row with `validation_status='pending'`)
+  - `PUT    /v1/sources/{id}`          (rename, toggle isActive)
+  - `DELETE /v1/sources/{id}`          (soft delete)
+- [ ] `packages/parsers/` stubs for M3U + XMLTV — pure functions that take a string and return normalized rows; real network fetch is parked for Run 15 (EPG worker / source-management UI)
+- [ ] Unit tests:
+  - profile cap enforcement under each entitlement state
+  - PIN hash + verify (Argon2id) including the lockout window
+  - kids flag + age limit validation
+  - source create/update with encryption round-trip (encrypt → persist → decrypt)
+  - parser stubs accept fixture inputs and return expected normalized rows
+- [ ] Update `services/api/README.md` profile + source sections; extend `.env.example` with `SOURCE_ENCRYPTION_KEY` (32-byte hex)
 
 ### Acceptance criteria
-- A purchase acknowledged by Google Play flips the caller's entitlement to `lifetime_single` or `lifetime_family` exactly once, even under duplicated webhook delivery
-- A refund on an active lifetime purchase transitions entitlement to `expired` (or `none` when trial was never consumed) and records `revoke_reason`
-- Replay of the same Google event id is a no-op that returns the current entitlement
-- `/v1/billing/verify` and `/v1/billing/restore` both respond with the stable `ErrorEnvelope` on failures and the current `EntitlementStatusResponse` on success
-- All Jest unit tests pass; CI builds the worker project
+- Creating a 6th profile on `lifetime_family` returns `409` with `SLOT_FULL` (or a profile-specific code; document choice)
+- Creating a 2nd profile on `trial`/`lifetime_single` returns `409`
+- Wrong PIN 5× locks the profile for the configured window; `verify-pin` returns `423`/`409` with `PIN_INVALID` afterwards
+- Source credentials never appear in plaintext in `pg_dump` of the schema
+- M3U + XMLTV parser stubs round-trip a small fixture file
+- All Jest unit tests pass; existing 89 tests still green
 
 ### After this run — update CLAUDE.md
-1. Tick Run 9 in the roadmap
-2. Set "Last completed run" to `Run 9 — Billing worker`
-3. Write the new "Next Run" block for **Run 10: Profile + Source modules**
+1. Tick Run 10 in the roadmap
+2. Set "Last completed run" to `Run 10 — Profile + Source modules`
+3. Write the new "Next Run" block for **Run 11: Android TV bootstrap (Compose / Compose-TV / applicationId decision)**
 4. Append entry to **Run Log**
-5. Commit: `api+worker: add billing worker with Play verify, refund, and restore (Run 9)` and push
+5. Commit: `api: add profile + source modules with PIN, kids, encryption (Run 10)` and push
 
 ---
 
@@ -170,7 +176,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 - [x] **Run 6** — NestJS bootstrap (`services/api/`): Prisma, Postgres, Redis, docker-compose, health endpoint, env setup. **→ Claude asks user for logo upload into `assets/logo/` here.**
 - [x] **Run 7** — Auth module: Firebase Admin token verify, user sync, register/login/refresh
 - [x] **Run 8** — Entitlement module: trial start, status, device register/list/revoke
-- [ ] **Run 9** — Billing worker: Play Billing verification, ack, lifetime flip, refund handler
+- [x] **Run 9** — Billing worker: Play Billing verification, ack, lifetime flip, refund handler
 - [ ] **Run 10** — Profile + Source modules: 5-profile cap, PIN hash, kids flag; source CRUD + parser stubs
 
 ### Phase C — Android TV Client
@@ -289,6 +295,18 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
 - Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 9 — 2026-04-13 — Billing worker (Google Play verify + ack + restore)
+- Added `services/api/src/billing/` — provider interface, `GooglePlayProvider` (uses `google-auth-library` to sign service-account JWTs against the `androidpublisher` scope, calls `purchases.products.get` + `:acknowledge`), `BillingService` as the single writer of purchase/entitlement transitions
+- `verifyAndApply` → `applyVerified`: idempotent purchase upsert (unique on `provider+purchase_token`), `SELECT ... FOR UPDATE` row-lock on entitlement before mutation, then state-machine driven `EntitlementService.applyEvent` equivalent inline; acknowledge happens AFTER DB write (worker retries within Google's 3-day grace)
+- SKU mapping: `BILLING_PRODUCT_ID_SINGLE` → `PURCHASE_VERIFIED_SINGLE`, `BILLING_PRODUCT_ID_FAMILY` → `PURCHASE_VERIFIED_FAMILY`, refunded/voided → `REFUND_OR_REVOKE_ACTIVE_PURCHASE`, pending/unknown SKU → `DUPLICATE_OR_REPLAY_EVENT` (no-op)
+- Replay detection: same purchase token + same persisted state + entitlement already reflects target ⇒ skip mutation (defends against duplicate webhook delivery)
+- Endpoints (`AuthGuard`-protected): `POST /v1/billing/verify`, `POST /v1/billing/restore` — restore re-verifies all non-refunded `purchases` rows for the account
+- New service: `services/billing-worker/` — standalone Node process; `createApplicationContext` (no HTTP), reuses the API's modules via `@api/*` TS path alias so worker and `/v1/billing/verify` go through the exact same `BillingService.applyVerified`. Polls `purchases` for `acknowledgedAt IS NULL && state='purchased'` or `state='pending'`, processes batches of 50, per-row failure isolation, graceful shutdown via `OnApplicationShutdown`
+- Worker config: `BILLING_WORKER_POLL_INTERVAL_MS` (default 15s), `WORKER_RUN_ONCE=true` for one-shot runs (CI / on-demand reconciliation)
+- Env: `BILLING_ANDROID_PACKAGE_NAME`, `BILLING_PRODUCT_ID_SINGLE/FAMILY`, `BILLING_WORKER_POLL_INTERVAL_MS` added to `.env.example`
+- 17 new unit tests (89 total): 13 for BillingService (SKU mapping, replay idempotency, ack on first verify / not on already-acked / not on refunded / ack-failure tolerance, restore with 0/N purchases) + 4 for BillingWorker (run-once, empty batch, per-purchase failure isolation, shutdown)
+- **Verified end-to-end live:** API boots with `/v1/billing/verify` and `/v1/billing/restore` mapped under `/v1/billing`; both protected (401 stable ErrorEnvelope without Bearer); worker boots against real Postgres 16 + Redis 7, polls `purchases` table, finds no work, exits cleanly under `WORKER_RUN_ONCE=true`
 
 ### Run 8 — 2026-04-13 — Entitlement + Device module
 - Added `entitlement.state-machine.ts` — pure, deterministic transition function mirroring `docs/architecture/entitlement-state-machine.md` exactly: `TRIAL_STARTED` (guards R-1/R-3), `TRIAL_EXPIRED` (guards `now >= trial_ends_at`), `PURCHASE_VERIFIED_SINGLE/FAMILY` (supports upgrade path), `REFUND_OR_REVOKE_ACTIVE_PURCHASE` (R-7 fallback to `expired` or `none`), `ADMIN_REVOKE`, `DUPLICATE_OR_REPLAY_EVENT` no-op; derived helpers `deviceCapFor()` and `allowsPlayback()`
