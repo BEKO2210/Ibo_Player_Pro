@@ -1,0 +1,500 @@
+openapi: 3.1.0
+info:
+  title: Premium TV Player API — Part 1 (Identity)
+  version: 0.1.0
+  summary: Auth, account, profiles (+PIN), and devices.
+  description: |
+    V1 identity surface. Paired with:
+      - part-2-commerce-sources.yaml
+      - part-3-epg-activity.yaml
+    Each part is an independently valid OpenAPI 3.1 doc; Run 6 bundles them.
+servers:
+  - url: https://api.premium-player.example.com
+    description: Production (placeholder)
+  - url: http://localhost:3000
+    description: Local dev (NestJS, Run 6)
+
+security:
+  - BearerFirebase: []
+
+tags:
+  - name: auth
+    description: Firebase-backed authentication + session tokens
+  - name: account
+    description: The signed-in account (/me)
+  - name: profiles
+    description: Viewing profiles (max 5 / account; PIN for kids)
+  - name: devices
+    description: Server-managed device slots (max 5 active / account)
+
+paths:
+  /v1/auth/register:
+    post:
+      tags: [auth]
+      summary: Create a new account (after Firebase signup)
+      operationId: authRegister
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AuthRegister' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthTokens' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /v1/auth/login:
+    post:
+      tags: [auth]
+      summary: Exchange a Firebase ID token for API session tokens
+      operationId: authLogin
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AuthLogin' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthTokens' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /v1/auth/refresh:
+    post:
+      tags: [auth]
+      summary: Refresh access token
+      operationId: authRefresh
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AuthRefresh' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthTokens' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /v1/auth/logout:
+    post:
+      tags: [auth]
+      summary: Revoke the current device slot and invalidate refresh token
+      operationId: authLogout
+      responses:
+        '204': { description: No Content }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /v1/me:
+    get:
+      tags: [account]
+      summary: Get the signed-in account
+      operationId: accountGet
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    patch:
+      tags: [account]
+      summary: Update the signed-in account (display name, locale, country, marketing flag)
+      operationId: accountUpdate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AccountUpdate' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    delete:
+      tags: [account]
+      summary: Delete the signed-in account (GDPR right-to-be-forgotten)
+      operationId: accountDelete
+      responses:
+        '202': { description: Accepted — async deletion pipeline enqueued }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /v1/profiles:
+    get:
+      tags: [profiles]
+      summary: List profiles on this account
+      operationId: profilesList
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Profile' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [profiles]
+      summary: Create a new profile (enforces entitlement.max_profiles cap)
+      operationId: profileCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProfileCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Profile' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '402': { $ref: '#/components/responses/PaymentRequired' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /v1/profiles/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ProfileId'
+    patch:
+      tags: [profiles]
+      summary: Update a profile
+      operationId: profileUpdate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProfileUpdate' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Profile' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [profiles]
+      summary: Soft-delete a profile
+      operationId: profileDelete
+      responses:
+        '204': { description: No Content }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/profiles/{id}/pin:
+    parameters:
+      - $ref: '#/components/parameters/ProfileId'
+    post:
+      tags: [profiles]
+      summary: Set or rotate the PIN on a profile (argon2id on the server)
+      operationId: profilePinSet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PinSet' }
+      responses:
+        '204': { description: No Content }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/profiles/{id}/pin/verify:
+    parameters:
+      - $ref: '#/components/parameters/ProfileId'
+    post:
+      tags: [profiles]
+      summary: Verify a PIN (kids gate)
+      operationId: profilePinVerify
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PinVerify' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PinResult' }
+        '423': { $ref: '#/components/responses/Locked' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/devices:
+    get:
+      tags: [devices]
+      summary: List registered devices for this account
+      operationId: devicesList
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Device' }
+    post:
+      tags: [devices]
+      summary: Register the current device in a slot (enforces entitlement.max_devices)
+      operationId: deviceRegister
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeviceRegister' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Device' }
+        '402': { $ref: '#/components/responses/PaymentRequired' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /v1/devices/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    delete:
+      tags: [devices]
+      summary: Revoke a device slot (logout / unpair)
+      operationId: deviceRevoke
+      responses:
+        '204': { description: No Content }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+
+  securitySchemes:
+    BearerFirebase:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Firebase ID token issued by the Auth SDK; verified by Firebase Admin on the server.
+
+  parameters:
+    ProfileId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    BadRequest:
+      description: Validation failed
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    Unauthorized:
+      description: Missing or invalid Bearer token
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    PaymentRequired:
+      description: Entitlement does not permit the operation (caps reached or not active)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    NotFound:
+      description: Resource not found or not owned by the caller
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    Conflict:
+      description: Resource conflict (duplicate name, duplicate install, etc.)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    Locked:
+      description: PIN locked due to too many failed attempts
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+  schemas:
+
+    ProblemDetails:
+      description: RFC 9457 problem details object used for every error response.
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type: { type: string, format: uri, default: 'about:blank' }
+        title: { type: string }
+        status: { type: integer, minimum: 100, maximum: 599 }
+        detail: { type: string }
+        instance: { type: string, format: uri }
+        code:
+          type: string
+          description: Stable machine-readable error code (see README error code table).
+          examples: [validation_failed, unauthorized, entitlement_required, device_cap_reached, profile_name_taken, pin_locked]
+        errors:
+          type: array
+          description: Field-level validation errors (for `validation_failed`).
+          items:
+            type: object
+            required: [path, message]
+            properties:
+              path: { type: string }
+              message: { type: string }
+
+    AuthRegister:
+      type: object
+      required: [firebase_id_token]
+      properties:
+        firebase_id_token: { type: string }
+        display_name: { type: string, maxLength: 80 }
+        locale: { type: string, default: en }
+        country_code: { type: string, minLength: 2, maxLength: 2 }
+        marketing_opt_in: { type: boolean, default: false }
+
+    AuthLogin:
+      type: object
+      required: [firebase_id_token, install_id, platform]
+      properties:
+        firebase_id_token: { type: string }
+        install_id: { type: string, description: App-generated UUID, persisted across launches. NEVER MAC. }
+        platform:
+          type: string
+          enum: [android_tv, android_mobile, tvos, ios, tizen, webos, web]
+
+    AuthRefresh:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token: { type: string }
+
+    AuthTokens:
+      type: object
+      required: [access_token, refresh_token, expires_in]
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+        expires_in: { type: integer, description: Access-token TTL in seconds }
+        account: { $ref: '#/components/schemas/Account' }
+
+    Account:
+      type: object
+      required: [id, email, locale, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        display_name: { type: string, nullable: true }
+        locale: { type: string }
+        country_code: { type: string, minLength: 2, maxLength: 2, nullable: true }
+        marketing_opt_in: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    AccountUpdate:
+      type: object
+      properties:
+        display_name: { type: string, maxLength: 80 }
+        locale: { type: string }
+        country_code: { type: string, minLength: 2, maxLength: 2 }
+        marketing_opt_in: { type: boolean }
+
+    Profile:
+      type: object
+      required: [id, account_id, name, is_kids, language, position, has_pin, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        account_id: { type: string, format: uuid }
+        name: { type: string, maxLength: 40 }
+        avatar_key: { type: string, nullable: true }
+        is_kids: { type: boolean }
+        max_age_rating:
+          type: integer
+          nullable: true
+          description: 6 / 12 / 16 / 18, or null for no filter
+        language: { type: string }
+        position: { type: integer, minimum: 0 }
+        has_pin:
+          type: boolean
+          description: Derived — true iff a profile_pins row exists. PIN hash is never returned.
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ProfileCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 40 }
+        avatar_key: { type: string }
+        is_kids: { type: boolean, default: false }
+        max_age_rating: { type: integer, enum: [6, 12, 16, 18] }
+        language: { type: string, default: en }
+
+    ProfileUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 40 }
+        avatar_key: { type: string }
+        is_kids: { type: boolean }
+        max_age_rating: { type: integer, enum: [6, 12, 16, 18], nullable: true }
+        language: { type: string }
+        position: { type: integer, minimum: 0 }
+
+    PinSet:
+      type: object
+      required: [pin]
+      properties:
+        pin:
+          type: string
+          pattern: '^[0-9]{4,6}$'
+          description: 4-6 digit numeric PIN. Server hashes with argon2id.
+
+    PinVerify:
+      type: object
+      required: [pin]
+      properties:
+        pin: { type: string, pattern: '^[0-9]{4,6}$' }
+
+    PinResult:
+      type: object
+      required: [verified]
+      properties:
+        verified: { type: boolean }
+        remaining_attempts: { type: integer, minimum: 0 }
+
+    Device:
+      type: object
+      required: [id, device_label, platform, install_id, last_seen_at, registered_at, revoked]
+      properties:
+        id: { type: string, format: uuid }
+        device_label: { type: string }
+        platform:
+          type: string
+          enum: [android_tv, android_mobile, tvos, ios, tizen, webos, web]
+        app_version: { type: string, nullable: true }
+        os_version: { type: string, nullable: true }
+        model: { type: string, nullable: true }
+        install_id: { type: string }
+        last_seen_at: { type: string, format: date-time }
+        registered_at: { type: string, format: date-time }
+        revoked: { type: boolean }
+
+    DeviceRegister:
+      type: object
+      required: [device_label, platform, install_id]
+      properties:
+        device_label: { type: string, maxLength: 60 }
+        platform:
+          type: string
+          enum: [android_tv, android_mobile, tvos, ios, tizen, webos, web]
+        install_id: { type: string, description: Same value passed to /v1/auth/login. }
+        app_version: { type: string }
+        os_version: { type: string }
+        model: { type: string }

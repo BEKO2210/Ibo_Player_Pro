@@ -7,7 +7,7 @@
 ## 🎯 Current State
 
 - **Phase:** A — Foundation & Specs
-- **Last completed run:** Run 3 — Data model (split into 3 parts)
+- **Last completed run:** Run 4 — API contracts (OpenAPI 3.1 + Zod, split into 3 parts)
 - **Current branch:** `claude/split-aber-three-parts-jBX8l`
 - **Push target:** same branch (`-u origin claude/split-aber-three-parts-jBX8l`)
 - **Logo status:** ⏳ pending — Claude will ask the user in **Run 6**
@@ -15,45 +15,37 @@
 
 ---
 
-## ▶️ Next Run (Run 4): API Contracts (OpenAPI + Zod)
+## ▶️ Next Run (Run 5): Entitlement state machine + billing event handling
 
 ### Goal
-Produce the V1 REST API contract as a single OpenAPI 3.1 document plus runtime-validated Zod schemas that both the NestJS backend (Run 6+) and the Android TV client (Run 11+) will generate types from. Pure contract — no implementation, no server code.
+Formalize the 6-state entitlement machine (`none → trial → lifetime_single | lifetime_family | expired | revoked`) as a living specification that Run 8 (entitlement module) and Run 9 (billing worker) implement verbatim. Define every transition, its trigger, its side effects, its idempotency guarantees, and how Google Play lifecycle events (purchase, acknowledgement, refund, chargeback, subscription-revocation) drive those transitions.
 
 ### Deliverables
-- [ ] `packages/api-contracts/package.json` minimal (name, private, no deps yet — Run 6 wires them)
-- [ ] `packages/api-contracts/openapi.yaml` — OpenAPI 3.1 covering V1 surface:
-  - Auth: `POST /v1/auth/register`, `POST /v1/auth/login`, `POST /v1/auth/refresh`, `POST /v1/auth/logout`
-  - Account: `GET /v1/me`, `PATCH /v1/me`, `DELETE /v1/me`
-  - Entitlement: `GET /v1/entitlement`, `POST /v1/entitlement/trial`
-  - Devices: `GET /v1/devices`, `POST /v1/devices`, `DELETE /v1/devices/:id`
-  - Profiles: `GET /v1/profiles`, `POST /v1/profiles`, `PATCH /v1/profiles/:id`, `DELETE /v1/profiles/:id`, `POST /v1/profiles/:id/pin`, `POST /v1/profiles/:id/pin/verify`
-  - Sources: `GET /v1/sources`, `POST /v1/sources`, `PATCH /v1/sources/:id`, `DELETE /v1/sources/:id`, `POST /v1/sources/:id/refresh`
-  - EPG: `GET /v1/epg/channels`, `GET /v1/epg/programs?channel_id&from&to`
-  - Activity: `GET /v1/continue-watching`, `PUT /v1/continue-watching`, `GET /v1/favorites`, `PUT /v1/favorites/:asset_ref`, `DELETE /v1/favorites/:asset_ref`, `POST /v1/watch-history`
-  - Playback: `POST /v1/playback/sessions`, `POST /v1/playback/sessions/:id/heartbeat`, `POST /v1/playback/sessions/:id/end`
-  - Billing: `POST /v1/billing/google-play/verify`, `POST /v1/billing/restore`
-- [ ] Reusable schema components mirroring the data model (Account, Profile, Device, Entitlement, Purchase, Source, EpgChannel, EpgProgram, ContinueWatchingItem, FavoriteItem, PlaybackSession, ProblemDetails)
-- [ ] RFC-9457 `application/problem+json` error envelope; standard error codes table
-- [ ] Bearer auth (Firebase ID token) as the global security scheme
-- [ ] `packages/api-contracts/zod/*.ts` — Zod schemas matching every component (no generation yet, hand-written; Run 6 can swap to `openapi-zod-client` later)
-- [ ] `packages/api-contracts/README.md` — how to consume (server validate, client types)
+- [ ] `docs/architecture/entitlement-state-machine.md` containing:
+  - [ ] Mermaid `stateDiagram-v2` covering all 6 states and every edge
+  - [ ] Transition table: (from, to, trigger, preconditions, side effects on `entitlements` + `purchases` + `audit_log`, idempotency key)
+  - [ ] Trial mechanics: 14 days, server-clock authoritative, one-per-account, nightly expiry sweeper job
+  - [ ] Google Play event mapping: `ONE_TIME_PRODUCT_PURCHASED`, `ONE_TIME_PRODUCT_CANCELED`, `refund` webhook, `purchases.products.get` reconciliation
+  - [ ] Restore-purchase flow: client lists tokens → server `purchases.products.get` → reconcile entitlement
+  - [ ] Revocation reasons (refund, chargeback, admin, ToS) with corresponding `revoked_reason` strings
+  - [ ] Cap rules per state (max_profiles / max_devices) — source of truth for Run 8
+  - [ ] Error codes crosswalk with `packages/api-contracts/README.md` (e.g. `entitlement_required`, `trial_already_used`, `billing_verification_failed`)
+- [ ] `docs/architecture/billing-events.md` (or an appended section) covering queueing, retries, DLQ, and the `billing-worker` job shape
 
 ### Acceptance criteria
-- Every write path from `docs/product/user-flows.md` has a matching endpoint
-- Every table in `docs/architecture/data-model*.md` that users touch has at least one read path
-- All 6 entitlement states are representable in the `Entitlement` schema
-- Error envelope is consistent across all endpoints (RFC 9457)
-- `openapi.yaml` validates against the OpenAPI 3.1 JSON Schema (no linter errors)
-- Zod schemas compile as standalone TS (tsc `--noEmit` would pass in isolation)
-- A frontend dev can build the onboarding + home + playback flows against this contract alone
+- Every transition has a single authoritative trigger (no ambiguity)
+- Every transition has a well-defined idempotency key (purchase_token, trial_start_idempotency_key, refund_id, ...)
+- Family (5/5) vs Single (1/1) cap differences are explicit
+- The state machine diagram renders on GitHub
+- Run 8 can build the entitlement module and Run 9 can build the billing worker with zero additional design decisions
+- Cross-referenced with `docs/product/user-flows.md` (trial, purchase, restore, expired/revoked, refund)
 
 ### After this run — update CLAUDE.md
-1. Tick Run 4 in the roadmap
-2. Set "Last completed run" to `Run 4 — API contracts`
-3. Write the new "Next Run" block for **Run 5: Entitlement state machine + billing event handling**
+1. Tick Run 5 in the roadmap
+2. Set "Last completed run" to `Run 5 — Entitlement state machine`
+3. Write the new "Next Run" block for **Run 6: NestJS bootstrap** (and remember to ask user for the logo upload)
 4. Append entry to **Run Log**
-5. Commit: `contracts: add OpenAPI 3.1 + Zod (Run 4)` and push to the same branch
+5. Commit: `docs: add entitlement state machine + billing events (Run 5)` and push to the same branch
 
 ---
 
@@ -165,7 +157,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 - [x] **Run 1** — Repo skeleton + CLAUDE.md + LICENSE + .gitignore + .editorconfig + README
 - [x] **Run 2** — PRD + user flows (`docs/product/`)
 - [x] **Run 3** — Data model: SQL schemas + ER diagram (`docs/architecture/data-model.md`, split into 3 parts)
-- [ ] **Run 4** — API contracts: OpenAPI 3.1 + Zod (`packages/api-contracts/`)
+- [x] **Run 4** — API contracts: OpenAPI 3.1 + Zod (`packages/api-contracts/`, split into 3 parts)
 - [ ] **Run 5** — Entitlement state machine + billing event handling (`docs/architecture/entitlement-state-machine.md`)
 
 ### Phase B — Backend V1
@@ -262,3 +254,10 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Wrote `docs/architecture/data-model-part-2-commerce-sources.md`: `entitlement_state` + `source_kind` enums, DDL + indexes + flow mapping for `entitlements`, `purchases`, `sources`, `source_credentials`
 - Wrote `docs/architecture/data-model-part-3-epg-activity.md`: DDL + indexes + flow mapping for `epg_channels`, `epg_programs`, `watch_history`, `continue_watching`, `favorites`, `playback_sessions`, `audit_log` plus cross-cutting notes (AES-256-GCM encryption at rest, argon2id PINs, soft-delete, UUID/bigserial PKs, Family cap enforcement, Prisma handoff)
 - Split performed on user request; `data-model.md` remains the canonical entry point referenced by later runs
+
+### Run 4 — 2026-04-13 — API contracts (OpenAPI 3.1 + Zod, split into 3 parts)
+- Bootstrapped `packages/api-contracts/` with minimal `package.json` and a README that documents layout, auth model, error codes, and the bundle recipe for Run 6
+- Wrote three independently valid OpenAPI 3.1 docs: `openapi/part-1-identity.yaml` (auth + account + profiles + PIN + devices), `openapi/part-2-commerce-sources.yaml` (entitlement + billing + sources), `openapi/part-3-epg-activity.yaml` (EPG + continue-watching + favorites + watch-history + playback)
+- Hand-wrote matching Zod modules in `zod/common.ts` + `zod/part-{1,2,3}-*.ts` + `zod/index.ts` (barrel) mirroring every component; `ErrorCode` enum pinned to the README's stable error-code table
+- All errors use RFC-9457 `application/problem+json`; `BearerFirebase` (Firebase ID token) is the global security scheme; activity/playback endpoints require `X-Profile-Id`
+- Split performed on user request, mirroring the Run 3 data-model split; all three YAML files pass `yaml.safe_load`

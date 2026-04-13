@@ -1,0 +1,341 @@
+openapi: 3.1.0
+info:
+  title: Premium TV Player API — Part 2 (Commerce & Sources)
+  version: 0.1.0
+  summary: Entitlement, Google Play billing, and user-provided sources.
+  description: |
+    V1 commerce + sources surface. Paired with:
+      - part-1-identity.yaml
+      - part-3-epg-activity.yaml
+servers:
+  - url: https://api.premium-player.example.com
+  - url: http://localhost:3000
+
+security:
+  - BearerFirebase: []
+
+tags:
+  - name: entitlement
+    description: Trial + lifetime state; 6-state machine (see Run 5)
+  - name: billing
+    description: Google Play Billing verification + restore
+  - name: sources
+    description: User-added M3U / M3U8 / XMLTV sources (URL + creds encrypted at rest)
+
+paths:
+
+  /v1/entitlement:
+    get:
+      tags: [entitlement]
+      summary: Read the current entitlement (server-authoritative)
+      operationId: entitlementGet
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Entitlement' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /v1/entitlement/trial:
+    post:
+      tags: [entitlement]
+      summary: Start the 14-day trial (idempotent; fails if already used)
+      operationId: entitlementStartTrial
+      responses:
+        '200':
+          description: OK — trial active
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Entitlement' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /v1/billing/google-play/verify:
+    post:
+      tags: [billing]
+      summary: Verify a Google Play purchase token; flips entitlement to lifetime_*
+      operationId: billingVerifyGooglePlay
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GooglePlayVerify' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [purchase, entitlement]
+                properties:
+                  purchase: { $ref: '#/components/schemas/Purchase' }
+                  entitlement: { $ref: '#/components/schemas/Entitlement' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /v1/billing/restore:
+    post:
+      tags: [billing]
+      summary: Re-check Play Billing inventory and reconcile entitlement
+      operationId: billingRestore
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RestoreRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [purchases, entitlement]
+                properties:
+                  purchases:
+                    type: array
+                    items: { $ref: '#/components/schemas/Purchase' }
+                  entitlement: { $ref: '#/components/schemas/Entitlement' }
+
+  /v1/sources:
+    get:
+      tags: [sources]
+      summary: List sources on this account
+      operationId: sourcesList
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Source' }
+    post:
+      tags: [sources]
+      summary: Add a new source (URL encrypted server-side before persistence)
+      operationId: sourceCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SourceCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Source' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /v1/sources/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      tags: [sources]
+      summary: Update a source (label, refresh interval, URL, credentials)
+      operationId: sourceUpdate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SourceUpdate' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Source' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [sources]
+      summary: Soft-delete a source (cascades EPG cache rows)
+      operationId: sourceDelete
+      responses:
+        '204': { description: No Content }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/sources/{id}/refresh:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [sources]
+      summary: Force-refresh a source (enqueue an epg-worker job)
+      operationId: sourceRefresh
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [job_id]
+                properties:
+                  job_id: { type: string }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+
+  securitySchemes:
+    BearerFirebase:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Validation failed
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    Unauthorized:
+      description: Missing or invalid Bearer token
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    NotFound:
+      description: Resource not found or not owned by the caller
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    Conflict:
+      description: Resource conflict (trial already used, duplicate token, etc.)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+  schemas:
+
+    ProblemDetails:
+      description: RFC 9457 problem details object.
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type: { type: string, format: uri, default: 'about:blank' }
+        title: { type: string }
+        status: { type: integer, minimum: 100, maximum: 599 }
+        detail: { type: string }
+        instance: { type: string, format: uri }
+        code: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            required: [path, message]
+            properties:
+              path: { type: string }
+              message: { type: string }
+
+    EntitlementState:
+      type: string
+      enum: [none, trial, lifetime_single, lifetime_family, expired, revoked]
+
+    Entitlement:
+      type: object
+      required: [account_id, state, max_profiles, max_devices, updated_at]
+      properties:
+        account_id: { type: string, format: uuid }
+        state: { $ref: '#/components/schemas/EntitlementState' }
+        trial_started_at: { type: string, format: date-time, nullable: true }
+        trial_expires_at: { type: string, format: date-time, nullable: true }
+        lifetime_activated_at: { type: string, format: date-time, nullable: true }
+        max_profiles: { type: integer, minimum: 1, maximum: 5 }
+        max_devices: { type: integer, minimum: 1, maximum: 5 }
+        revoked_reason: { type: string, nullable: true }
+        source_purchase_id: { type: string, format: uuid, nullable: true }
+        updated_at: { type: string, format: date-time }
+
+    Purchase:
+      type: object
+      required: [id, rail, product_id, state, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        rail: { type: string, enum: [google_play, apple_iap, stripe] }
+        product_id: { type: string, examples: [lifetime_single, lifetime_family] }
+        order_id: { type: string, nullable: true }
+        state: { type: string, enum: [pending, verified, acknowledged, refunded, revoked, failed] }
+        amount_cents: { type: integer, nullable: true }
+        currency: { type: string, minLength: 3, maxLength: 3, nullable: true }
+        country_code: { type: string, minLength: 2, maxLength: 2, nullable: true }
+        verified_at: { type: string, format: date-time, nullable: true }
+        acknowledged_at: { type: string, format: date-time, nullable: true }
+        refunded_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    GooglePlayVerify:
+      type: object
+      required: [product_id, purchase_token]
+      properties:
+        product_id: { type: string, examples: [lifetime_single, lifetime_family] }
+        purchase_token: { type: string }
+        order_id: { type: string }
+
+    RestoreRequest:
+      type: object
+      properties:
+        purchase_tokens:
+          type: array
+          description: Optional — client-observed Play Billing tokens to reconcile.
+          items: { type: string }
+
+    SourceKind:
+      type: string
+      enum: [m3u, m3u8, xmltv]
+
+    Source:
+      type: object
+      required: [id, account_id, label, kind, refresh_interval_seconds, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        account_id: { type: string, format: uuid }
+        label: { type: string }
+        kind: { $ref: '#/components/schemas/SourceKind' }
+        url_masked:
+          type: string
+          description: Redacted URL for UI display. The raw URL is never returned after creation.
+          examples: ['https://●●●.example.com/pl●●●?user=●●●']
+        user_agent: { type: string, nullable: true }
+        refresh_interval_seconds: { type: integer, minimum: 900 }
+        last_fetched_at: { type: string, format: date-time, nullable: true }
+        last_fetch_status: { type: string, nullable: true }
+        last_fetch_error: { type: string, nullable: true }
+        has_credentials: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    SourceCreate:
+      type: object
+      required: [label, kind, url]
+      properties:
+        label: { type: string, maxLength: 80 }
+        kind: { $ref: '#/components/schemas/SourceKind' }
+        url: { type: string, format: uri }
+        user_agent: { type: string }
+        refresh_interval_seconds: { type: integer, minimum: 900, default: 21600 }
+        credentials:
+          type: object
+          nullable: true
+          properties:
+            username: { type: string }
+            password: { type: string, format: password }
+
+    SourceUpdate:
+      type: object
+      properties:
+        label: { type: string, maxLength: 80 }
+        url: { type: string, format: uri }
+        user_agent: { type: string }
+        refresh_interval_seconds: { type: integer, minimum: 900 }
+        credentials:
+          type: object
+          nullable: true
+          properties:
+            username: { type: string }
+            password: { type: string, format: password }

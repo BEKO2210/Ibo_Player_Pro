@@ -1,0 +1,442 @@
+openapi: 3.1.0
+info:
+  title: Premium TV Player API — Part 3 (EPG & Activity)
+  version: 0.1.0
+  summary: EPG browse, continue-watching, favorites, watch-history, playback sessions.
+  description: |
+    V1 read + activity surface. Paired with:
+      - part-1-identity.yaml
+      - part-2-commerce-sources.yaml
+servers:
+  - url: https://api.premium-player.example.com
+  - url: http://localhost:3000
+
+security:
+  - BearerFirebase: []
+
+tags:
+  - name: epg
+    description: Server-cached EPG (channels + programs) sourced from user's XMLTV feeds
+  - name: activity
+    description: Continue-watching, favorites, watch-history (all profile-scoped)
+  - name: playback
+    description: Live playback session tracking (start / heartbeat / end)
+
+paths:
+
+  /v1/epg/channels:
+    get:
+      tags: [epg]
+      summary: List EPG channels visible to the caller
+      operationId: epgChannelsList
+      parameters:
+        - name: source_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: profile_id
+          in: query
+          description: If set, server applies the profile's kids/age filter.
+          schema: { type: string, format: uuid }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 1000, default: 200 }
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/EpgChannel' }
+                  next_cursor: { type: string, nullable: true }
+
+  /v1/epg/programs:
+    get:
+      tags: [epg]
+      summary: Get EPG programs for a channel in a time window
+      operationId: epgProgramsList
+      parameters:
+        - name: channel_id
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/EpgProgram' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /v1/continue-watching:
+    get:
+      tags: [activity]
+      summary: List the current profile's continue-watching row
+      operationId: continueWatchingList
+      parameters:
+        - $ref: '#/components/parameters/ProfileIdHeader'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ContinueWatchingItem' }
+    put:
+      tags: [activity]
+      summary: Upsert a continue-watching entry (called from heartbeat and on stop)
+      operationId: continueWatchingUpsert
+      parameters:
+        - $ref: '#/components/parameters/ProfileIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContinueWatchingUpsert' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContinueWatchingItem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /v1/favorites:
+    get:
+      tags: [activity]
+      summary: List favorites for the current profile
+      operationId: favoritesList
+      parameters:
+        - $ref: '#/components/parameters/ProfileIdHeader'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/FavoriteItem' }
+
+  /v1/favorites/{asset_ref}:
+    parameters:
+      - $ref: '#/components/parameters/ProfileIdHeader'
+      - name: asset_ref
+        in: path
+        required: true
+        schema: { type: string }
+    put:
+      tags: [activity]
+      summary: Add or update a favorite
+      operationId: favoriteUpsert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FavoriteUpsert' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FavoriteItem' }
+    delete:
+      tags: [activity]
+      summary: Remove a favorite
+      operationId: favoriteDelete
+      responses:
+        '204': { description: No Content }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/watch-history:
+    post:
+      tags: [activity]
+      summary: Append a watch-history entry (fire-and-forget from client)
+      operationId: watchHistoryAppend
+      parameters:
+        - $ref: '#/components/parameters/ProfileIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WatchHistoryAppend' }
+      responses:
+        '202': { description: Accepted }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /v1/playback/sessions:
+    post:
+      tags: [playback]
+      summary: Start a new playback session
+      operationId: playbackStart
+      parameters:
+        - $ref: '#/components/parameters/ProfileIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PlaybackSessionStart' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PlaybackSession' }
+        '402': { $ref: '#/components/responses/PaymentRequired' }
+
+  /v1/playback/sessions/{id}/heartbeat:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [playback]
+      summary: Heartbeat update — position, bitrate, state
+      operationId: playbackHeartbeat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PlaybackHeartbeat' }
+      responses:
+        '204': { description: No Content }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Session already ended
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+  /v1/playback/sessions/{id}/end:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [playback]
+      summary: End a playback session
+      operationId: playbackEnd
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PlaybackEnd' }
+      responses:
+        '204': { description: No Content }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+
+  securitySchemes:
+    BearerFirebase:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ProfileIdHeader:
+      name: X-Profile-Id
+      in: header
+      required: true
+      description: The active profile for this request (selected from /v1/profiles after login).
+      schema: { type: string, format: uuid }
+
+  responses:
+    BadRequest:
+      description: Validation failed
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    Unauthorized:
+      description: Missing or invalid Bearer token
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    PaymentRequired:
+      description: Entitlement does not permit playback (no active plan / concurrent stream cap)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    NotFound:
+      description: Resource not found or not owned by the caller
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+  schemas:
+
+    ProblemDetails:
+      description: RFC 9457 problem details object.
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type: { type: string, format: uri, default: 'about:blank' }
+        title: { type: string }
+        status: { type: integer, minimum: 100, maximum: 599 }
+        detail: { type: string }
+        instance: { type: string, format: uri }
+        code: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            required: [path, message]
+            properties:
+              path: { type: string }
+              message: { type: string }
+
+    AssetType:
+      type: string
+      enum: [live, vod, recording]
+
+    EpgChannel:
+      type: object
+      required: [id, source_id, external_id, display_name]
+      properties:
+        id: { type: string, format: uuid }
+        source_id: { type: string, format: uuid }
+        external_id: { type: string, description: tvg-id from the source XMLTV }
+        display_name: { type: string }
+        icon_url: { type: string, nullable: true }
+        language: { type: string, nullable: true }
+        category: { type: string, nullable: true }
+        position: { type: integer, nullable: true }
+
+    EpgProgram:
+      type: object
+      required: [id, channel_id, start_at, end_at, title]
+      properties:
+        id: { type: string, format: uuid }
+        channel_id: { type: string, format: uuid }
+        start_at: { type: string, format: date-time }
+        end_at: { type: string, format: date-time }
+        title: { type: string }
+        subtitle: { type: string, nullable: true }
+        description: { type: string, nullable: true }
+        category: { type: string, nullable: true }
+        age_rating: { type: integer, nullable: true }
+        episode_num: { type: string, nullable: true }
+        season_num: { type: string, nullable: true }
+        icon_url: { type: string, nullable: true }
+
+    ContinueWatchingItem:
+      type: object
+      required: [profile_id, asset_ref, asset_type, position_seconds, updated_at]
+      properties:
+        profile_id: { type: string, format: uuid }
+        asset_ref: { type: string }
+        asset_type: { $ref: '#/components/schemas/AssetType' }
+        channel_id: { type: string, format: uuid, nullable: true }
+        position_seconds: { type: integer, minimum: 0 }
+        duration_seconds: { type: integer, minimum: 0, nullable: true }
+        updated_at: { type: string, format: date-time }
+
+    ContinueWatchingUpsert:
+      type: object
+      required: [asset_ref, asset_type, position_seconds]
+      properties:
+        asset_ref: { type: string }
+        asset_type: { $ref: '#/components/schemas/AssetType' }
+        channel_id: { type: string, format: uuid }
+        position_seconds: { type: integer, minimum: 0 }
+        duration_seconds: { type: integer, minimum: 0 }
+
+    FavoriteItem:
+      type: object
+      required: [profile_id, asset_ref, asset_type, created_at]
+      properties:
+        profile_id: { type: string, format: uuid }
+        asset_ref: { type: string }
+        asset_type: { $ref: '#/components/schemas/AssetType' }
+        channel_id: { type: string, format: uuid, nullable: true }
+        label: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    FavoriteUpsert:
+      type: object
+      required: [asset_type]
+      properties:
+        asset_type: { $ref: '#/components/schemas/AssetType' }
+        channel_id: { type: string, format: uuid }
+        label: { type: string, maxLength: 120 }
+
+    WatchHistoryAppend:
+      type: object
+      required: [asset_type, asset_ref, watched_seconds, started_at]
+      properties:
+        asset_type: { $ref: '#/components/schemas/AssetType' }
+        asset_ref: { type: string }
+        channel_id: { type: string, format: uuid }
+        program_id: { type: string, format: uuid }
+        device_id: { type: string, format: uuid }
+        watched_seconds: { type: integer, minimum: 0 }
+        started_at: { type: string, format: date-time }
+        ended_at: { type: string, format: date-time }
+
+    PlaybackSession:
+      type: object
+      required: [id, profile_id, device_id, asset_type, asset_ref, started_at, last_heartbeat_at]
+      properties:
+        id: { type: string, format: uuid }
+        profile_id: { type: string, format: uuid }
+        device_id: { type: string, format: uuid }
+        asset_type: { $ref: '#/components/schemas/AssetType' }
+        asset_ref: { type: string }
+        channel_id: { type: string, format: uuid, nullable: true }
+        started_at: { type: string, format: date-time }
+        last_heartbeat_at: { type: string, format: date-time }
+        ended_at: { type: string, format: date-time, nullable: true }
+        bitrate_bps: { type: integer, nullable: true }
+        player_state:
+          type: string
+          nullable: true
+          enum: [buffering, playing, paused, error]
+
+    PlaybackSessionStart:
+      type: object
+      required: [device_id, asset_type, asset_ref]
+      properties:
+        device_id: { type: string, format: uuid }
+        asset_type: { $ref: '#/components/schemas/AssetType' }
+        asset_ref: { type: string }
+        channel_id: { type: string, format: uuid }
+
+    PlaybackHeartbeat:
+      type: object
+      required: [position_seconds]
+      properties:
+        position_seconds: { type: integer, minimum: 0 }
+        duration_seconds: { type: integer, minimum: 0 }
+        bitrate_bps: { type: integer, minimum: 0 }
+        player_state:
+          type: string
+          enum: [buffering, playing, paused, error]
+
+    PlaybackEnd:
+      type: object
+      required: [position_seconds]
+      properties:
+        position_seconds: { type: integer, minimum: 0 }
+        duration_seconds: { type: integer, minimum: 0 }
+        reason:
+          type: string
+          enum: [user, eof, error, entitlement_lost]
