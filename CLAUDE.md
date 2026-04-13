@@ -7,7 +7,7 @@
 ## 🎯 Current State
 
 - **Phase:** B — Backend V1
-- **Last completed run:** Run 6 — NestJS bootstrap
+- **Last completed run:** Run 7 — Auth module
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
@@ -15,36 +15,38 @@
 
 ---
 
-## ▶️ Next Run (Run 7): Auth Module
+## ▶️ Next Run (Run 8): Entitlement + Device Module
 
 ### Goal
-Implement the Firebase-backed auth module in `services/api`: verify Firebase ID tokens, sync the caller's account row, and expose register/login/refresh endpoints aligned with `packages/api-contracts/openapi.yaml`.
+Implement the account-scoped entitlement lifecycle and server-managed device slots in `services/api`, enforcing the caps and transitions defined in `docs/architecture/entitlement-state-machine.md` and the data model from Run 3.
 
 ### Deliverables
-- [ ] Add Firebase Admin SDK integration (service-account config via env, lazy init)
-- [ ] Add `AuthGuard` that verifies `Authorization: Bearer <firebase_id_token>` and exposes the caller account on the request
-- [ ] Add `AccountsService` that upserts an `accounts` row on first successful token verify (firebase_uid, email, email_verified, locale)
-- [ ] Add REST endpoints per `packages/api-contracts/openapi.yaml`:
-  - `POST /v1/auth/register` (sync after Firebase signup, create local account + empty entitlement)
-  - `POST /v1/auth/login`   (token verify + account sync, return account snapshot)
-  - `POST /v1/auth/refresh` (token re-verify; return fresh account snapshot)
-- [ ] Generate the first Prisma migration covering all V1 tables (matches `schema.prisma`)
-- [ ] Add unit tests for `AccountsService` upsert logic and the guard's token handling (mock Firebase Admin)
-- [ ] Extend `.env.example` with `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (or `FIREBASE_SERVICE_ACCOUNT_JSON`)
-- [ ] Update `services/api/README.md` auth section and env table
+- [ ] Add `EntitlementService` implementing the Run 5 state machine (trial start / active / expired / revoked) with deterministic transitions + idempotency keys
+- [ ] Add `GET /v1/entitlement/status` endpoint returning the current `Entitlement` for the caller
+- [ ] Add `POST /v1/entitlement/trial/start` — starts a 14-day server-side trial; rejects if `trial_consumed=true` (returns `ENTITLEMENT_REQUIRED`)
+- [ ] Add `DevicesService` + endpoints per OpenAPI:
+  - `POST /v1/devices/register` — registers caller's device slot, returns `deviceToken` (hashed server-side); enforces per-entitlement slot cap (1 single/trial, 5 family) → `409 SLOT_FULL` when exceeded
+  - `GET  /v1/devices`          — list account's devices with `isCurrent`/`isRevoked`
+  - `POST /v1/devices/{id}/revoke` — revoke a device slot (soft-revoke via `revoked_at`)
+- [ ] Reconcile `packages/api-contracts/openapi.yaml` auth response shape with what Run 7 actually returns — decide: keep Firebase-ID-token-only auth (preferred for V1 simplicity) OR add custom access/refresh/device tokens. Update the contract accordingly.
+- [ ] Extend `AuthGuard` to also enforce "active device required" on protected endpoints that need it (via a new `@RequiresDevice()` decorator, or a second guard)
+- [ ] Add unit tests for `EntitlementService` transition table and `DevicesService` slot-cap enforcement
+- [ ] Update `services/api/README.md` entitlement + devices sections
 
 ### Acceptance criteria
-- Hitting a protected endpoint without a valid Firebase ID token returns `401` with the stable error envelope from Run 4
-- Valid token → account row exists/updated in Postgres, response matches OpenAPI `AccountSnapshot`
-- Prisma migration runs cleanly on the docker-compose Postgres and matches `schema.prisma`
-- Jest unit tests pass for the new module
+- Starting a trial twice on the same account returns `ENTITLEMENT_REQUIRED` (trial is consume-once)
+- Registering a 6th device on a `lifetime_family` account returns `409 SLOT_FULL`
+- Registering a 2nd device on a `lifetime_single`/`trial` account returns `409 SLOT_FULL`
+- Revoking a device clears its `deviceToken`; re-using the revoked token returns `401 UNAUTHORIZED`
+- The OpenAPI auth-response shape matches what the API actually returns
+- Jest unit tests cover all deterministic transitions and slot-cap branches
 
 ### After this run — update CLAUDE.md
-1. Tick Run 7 in the roadmap
-2. Set "Last completed run" to `Run 7 — Auth module`
-3. Write the new "Next Run" block for **Run 8: Entitlement module**
+1. Tick Run 8 in the roadmap
+2. Set "Last completed run" to `Run 8 — Entitlement + Device module`
+3. Write the new "Next Run" block for **Run 9: Billing worker**
 4. Append entry to **Run Log**
-5. Commit: `api: add auth module with Firebase token verify + account sync (Run 7)` and push
+5. Commit: `api: add entitlement + device modules with slot-cap enforcement (Run 8)` and push
 
 ---
 
@@ -161,7 +163,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 
 ### Phase B — Backend V1
 - [x] **Run 6** — NestJS bootstrap (`services/api/`): Prisma, Postgres, Redis, docker-compose, health endpoint, env setup. **→ Claude asks user for logo upload into `assets/logo/` here.**
-- [ ] **Run 7** — Auth module: Firebase Admin token verify, user sync, register/login/refresh
+- [x] **Run 7** — Auth module: Firebase Admin token verify, user sync, register/login/refresh
 - [ ] **Run 8** — Entitlement module: trial start, status, device register/list/revoke
 - [ ] **Run 9** — Billing worker: Play Billing verification, ack, lifetime flip, refund handler
 - [ ] **Run 10** — Profile + Source modules: 5-profile cap, PIN hash, kids flag; source CRUD + parser stubs
@@ -231,7 +233,8 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 
 (Ideas or deferred items captured during any run that are NOT in the current scope. Claude adds here instead of acting on them.)
 
-- _(empty)_
+- **OpenAPI auth-response reconciliation (from Run 7):** Run 7 `POST /v1/auth/{register,login,refresh}` return an `AccountSnapshot` (`{ account, entitlement }`). The current OpenAPI contract in `packages/api-contracts/openapi.yaml` still declares `AuthResponse` with `accessToken`/`refreshToken`/`deviceToken`. Reconcile in **Run 8**: either (a) keep Firebase-ID-token-only auth for V1 and drop the custom token fields from the contract, or (b) add a custom JWT + refresh token layer alongside Firebase. Decision should factor in Android TV client simplicity + server-side revocation needs.
+- **Logo variants (from Run 6):** SVG vector version and explicit dark/light PNG variants would help for the Android TV splash / launcher and light-theme surfaces. Not blocking Run 12/14 but nice to have.
 
 ---
 
@@ -278,4 +281,16 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added V1 Prisma schema at `services/api/prisma/schema.prisma` mirroring Run 3 data model (15 tables, enums, indexes, soft deletes)
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
-- Requested logo upload from user into `assets/logo/` (pending)
+- Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 7 — 2026-04-13 — Auth module (Firebase verify + account sync)
+- Added `FirebaseModule`/`FirebaseService` — lazy `firebase-admin` init, credentials via `FIREBASE_SERVICE_ACCOUNT_JSON` blob or discrete `FIREBASE_PROJECT_ID`/`CLIENT_EMAIL`/`PRIVATE_KEY` trio; PEM `\n` sequences auto-decoded; credential requirement enforced in non-test envs via Zod `superRefine`
+- Added `AuthGuard` — verifies `Authorization: Bearer <firebase_id_token>`, attaches `request.firebaseToken` + `request.account`; returns stable `UNAUTHORIZED` `ErrorEnvelope` on any failure (missing header, non-Bearer scheme, empty/expired/invalid token)
+- Added `AccountsService` — idempotent upsert keyed on `firebase_uid`; creates empty `entitlement` (state=`none`) on first verify; locale only updated when caller explicitly provides one; emails lowercased; clamp to 16 chars / fallback `en`
+- Added `AuthService` + `AuthController` with `POST /v1/auth/{register,login,refresh}` — all return `AccountSnapshot` (account + entitlement); `refresh` uses `checkRevoked=true`
+- Added `AllExceptionsFilter` — normalizes thrown errors into the OpenAPI `ErrorEnvelope` shape (`{ error: { code, message, details?, requestId? } }`); recognizes existing envelopes and passes them through
+- Added global `/v1` prefix (with `/health` excluded for infra probes)
+- Added first Prisma migration `20260413120000_init` covering all 15 V1 tables (enums, FKs, unique constraints, check constraints, indexes) — matches `schema.prisma` and Run 3 DDL; pgcrypto + citext `CREATE EXTENSION IF NOT EXISTS` emitted for safety
+- Added unit tests for `AccountsService` (5 cases) and `AuthGuard` (6 cases), both with Firebase + Prisma mocked
+- Extended `.env.example` with both Firebase credential options; updated `services/api/README.md` with auth + env + migration sections
+- **Deviation logged in Parking Lot:** auth endpoints return `AccountSnapshot`, not the OpenAPI `AuthResponse` — reconciliation deferred to Run 8 when device slots + token issuance land
