@@ -1,0 +1,195 @@
+# ─────────────────────────────────────────────────────────────────────────
+#  Premium TV Player — debug APK builder
+#
+#  Manual trigger only. Produces a sideload-ready debug APK as a workflow
+#  artifact you can download and install on a Chromecast with Google TV
+#  (4K), Google TV emulator, or any Android TV device on API 26+.
+#
+#  How to run it
+#  ─────────────
+#  1. GitHub → repo → Actions tab → "Build debug APK (Android TV)"
+#  2. Click "Run workflow" (top-right)
+#  3. Optionally override the API base URL for this build
+#  4. After ~5-8 minutes, click into the run and grab the APK from the
+#     "Artifacts" section at the bottom
+#
+#  Optional secrets (Repo → Settings → Secrets and variables → Actions)
+#  ──────────────────────────────────────────────────────────────────
+#  If these are unset, the build still succeeds — but Firebase Auth
+#  won't work at runtime (the app will boot, you can browse the splash,
+#  sign-in will fail). Set them before doing real device testing.
+#
+#    FIREBASE_API_KEY         (your Firebase Web API key)
+#    FIREBASE_PROJECT_ID      (e.g. premium-player-prod)
+#    FIREBASE_APPLICATION_ID  (e.g. 1:1234567890:android:abcdef…)
+#
+#  Sideload to Chromecast 4K
+#  ─────────────────────────
+#  See the workflow run's "Summary" panel — the install commands are
+#  printed there with your exact build's filename pre-filled.
+# ─────────────────────────────────────────────────────────────────────────
+
+name: Build debug APK (Android TV)
+
+on:
+  workflow_dispatch:
+    inputs:
+      apiBaseUrl:
+        description: 'Backend API base URL (must end with /v1/)'
+        required: false
+        default: 'http://10.0.2.2:3000/v1/'
+      note:
+        description: 'Optional note (shown in the build summary)'
+        required: false
+        default: ''
+
+jobs:
+  build:
+    name: Assemble :app:assembleDebug
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: apps/android-tv
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-34 build-tools;34.0.0 platform-tools'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            apps/android-tv/.gradle
+          key: gradle-${{ runner.os }}-${{ hashFiles('apps/android-tv/**/*.gradle.kts', 'apps/android-tv/gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Bootstrap Gradle wrapper
+        # The wrapper jar is intentionally not checked into the repo
+        # (Android Studio generates it on first import). The CI runner
+        # ships a system Gradle, so we use it once to materialize the
+        # wrapper at the version pinned in gradle-wrapper.properties.
+        run: gradle wrapper --gradle-version 8.11 --no-daemon
+
+      - name: Assemble debug APK
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_APPLICATION_ID: ${{ secrets.FIREBASE_APPLICATION_ID }}
+          API_BASE_URL: ${{ inputs.apiBaseUrl }}
+        run: |
+          ./gradlew :app:assembleDebug \
+            -PapiBaseUrl="${API_BASE_URL}" \
+            -PfirebaseApiKey="${FIREBASE_API_KEY:-REPLACE_ME_FIREBASE_WEB_API_KEY}" \
+            -PfirebaseProjectId="${FIREBASE_PROJECT_ID:-REPLACE_ME_FIREBASE_PROJECT_ID}" \
+            -PfirebaseApplicationId="${FIREBASE_APPLICATION_ID:-1:000000000000:android:0000000000000000000000}" \
+            --no-daemon --stacktrace
+
+      - name: Verify Leanback registration
+        run: |
+          # Sanity-check that the APK actually advertises itself as a
+          # Leanback (TV) app — without this, the Chromecast launcher
+          # won't show it.
+          AAPT=$(find $ANDROID_SDK_ROOT/build-tools -name aapt -print -quit)
+          OUT=$("$AAPT" dump badging app/build/outputs/apk/debug/app-debug.apk)
+          echo "$OUT" | grep -q "name='android.software.leanback'"          \
+            && echo "✓ Leanback feature declared" \
+            || (echo "✗ Leanback feature MISSING — would not appear on Google TV launcher" && exit 1)
+
+      - name: Rename APK with run number + short SHA
+        id: rename
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          FNAME="premium-tv-player-debug-v0.1.0-run${{ github.run_number }}-${SHORT_SHA}.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/${FNAME}"
+          echo "filename=${FNAME}" >> "$GITHUB_OUTPUT"
+          ls -lh "$GITHUB_WORKSPACE/${FNAME}"
+
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.rename.outputs.filename }}
+          path: ${{ github.workspace }}/${{ steps.rename.outputs.filename }}
+          retention-days: 30
+          if-no-files-found: error
+          compression-level: 0   # APKs are already compressed
+
+      - name: Build summary (Chromecast install instructions)
+        if: always()
+        env:
+          FNAME: ${{ steps.rename.outputs.filename }}
+          NOTE: ${{ inputs.note }}
+          API: ${{ inputs.apiBaseUrl }}
+        run: |
+          {
+            echo "## Premium TV Player — debug APK ready"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| **APK** | \`${FNAME}\` |"
+            echo "| **API base URL** | \`${API}\` |"
+            echo "| **Branch** | \`${GITHUB_REF_NAME}\` |"
+            echo "| **Commit** | \`${GITHUB_SHA::12}\` |"
+            echo "| **Run** | #${GITHUB_RUN_NUMBER} |"
+            if [[ -n "$NOTE" ]]; then
+              echo "| **Note** | ${NOTE} |"
+            fi
+            echo ""
+            echo "Download the APK from the **Artifacts** section at the bottom of this run page."
+            echo ""
+            echo "---"
+            echo ""
+            echo "### Sideload to Chromecast with Google TV (4K)"
+            echo ""
+            echo "**One-time setup on the Chromecast**"
+            echo ""
+            echo "1. Settings → System → About → press *Android TV OS build* **7 times** (enables Developer options)"
+            echo "2. Settings → System → Developer options → enable **ADB debugging**"
+            echo "3. Settings → Network → your network → note the Chromecast's **IP address**"
+            echo ""
+            echo "**Install (every build)**"
+            echo ""
+            echo '```bash'
+            echo "# Replace <chromecast-ip> with the IP from step 3"
+            echo "adb connect <chromecast-ip>:5555"
+            echo ""
+            echo "# First time only: a confirmation dialog appears ON THE TV — accept it."
+            echo "# Then re-run 'adb connect' if it timed out."
+            echo ""
+            echo "adb install -r ${FNAME}"
+            echo "adb shell am start -n com.premiumtvplayer.app/.MainActivity"
+            echo '```'
+            echo ""
+            echo "**To uninstall** (e.g. before a clean re-test):"
+            echo ""
+            echo '```bash'
+            echo "adb uninstall com.premiumtvplayer.app"
+            echo '```'
+            echo ""
+            echo "---"
+            echo ""
+            if [[ -z "${{ secrets.FIREBASE_API_KEY }}" ]]; then
+              echo "> ⚠ **Firebase secrets are not configured.** The app will boot, but"
+              echo "> sign-in / register will fail at runtime because the Firebase API"
+              echo "> key is a placeholder. Add the three \`FIREBASE_*\` secrets in"
+              echo "> *Repo → Settings → Secrets and variables → Actions* and re-run."
+            else
+              echo "> ✓ Firebase secrets configured — sign-in will work against project"
+              echo "> \`${{ secrets.FIREBASE_PROJECT_ID }}\`."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
