@@ -148,6 +148,10 @@ See `.env.example`. All values are validated at boot by
 | `BILLING_PRODUCT_ID_SINGLE`     | no              | `premium_player_single` | SKU mapping for `lifetime_single` |
 | `BILLING_PRODUCT_ID_FAMILY`     | no              | `premium_player_family` | SKU mapping for `lifetime_family` |
 | `BILLING_WORKER_POLL_INTERVAL_MS` | no            | `15000`                 | Worker poll interval (1s..5min)   |
+| `SOURCE_ENCRYPTION_KEY`         | yes (for source create) | — | 64 hex chars (32 raw bytes) for AES-256-GCM |
+| `SOURCE_ENCRYPTION_KMS_KEY_ID`  | no              | `local-dev-v1`          | Audit metadata for key rotation     |
+| `PIN_MAX_FAILED_ATTEMPTS`       | no              | `5`                     | Consecutive misses before lockout (1-20) |
+| `PIN_LOCKOUT_DURATION_MS`       | no              | `900000`                | Lockout window after threshold (60s..24h) |
 
 In test environments (`NODE_ENV=test`) Firebase credentials are optional —
 the auth module is expected to be mocked.
@@ -207,6 +211,85 @@ table; the pure TypeScript implementation is in
 | `lifetime_family` | 5       | 5        | yes      |
 | `expired`         | 0 new   | 0 new    | no       |
 | `revoked`         | 0 new   | 0 new    | no       |
+
+## Profile module (Run 10)
+
+Account-scoped profiles with kids flag, age limit, and Argon2id PIN gate.
+
+### Endpoints (`AuthGuard`-protected)
+
+| Method | Path                              | Status codes                                                   |
+|--------|-----------------------------------|----------------------------------------------------------------|
+| GET    | `/v1/profiles`                    | `200`                                                          |
+| POST   | `/v1/profiles`                    | `201`, `402 ENTITLEMENT_REQUIRED`, `409 SLOT_FULL`             |
+| PUT    | `/v1/profiles/:id`                | `200`, `404`                                                   |
+| DELETE | `/v1/profiles/:id`                | `204`, `409` (last profile), `404`                             |
+| POST   | `/v1/profiles/:id/verify-pin`     | `200` with `{ ok, reason?, failedAttemptCount?, lockedUntil? }` |
+
+### Caps
+
+| Entitlement       | Profiles |
+|-------------------|----------|
+| `none`            | 0        |
+| `trial`           | 1        |
+| `lifetime_single` | 1        |
+| `lifetime_family` | 5        |
+| `expired`         | 0 new    |
+| `revoked`         | 0 new    |
+
+### PIN
+
+- Hashed with **Argon2id** (`argon2` package, default params).
+- `PIN_MAX_FAILED_ATTEMPTS` consecutive misses → lock for
+  `PIN_LOCKOUT_DURATION_MS`. Defaults: 5 attempts, 15-minute lock.
+- A successful verify resets counter + lockout. PIN replacement also
+  resets state.
+
+## Source module (Run 10)
+
+User-managed M3U / XMLTV / M3U+EPG sources with **AES-256-GCM envelope
+encryption** for URL, username, password, and headers JSON.
+
+### Endpoints (`AuthGuard`-protected)
+
+| Method | Path                  | Notes                                                       |
+|--------|-----------------------|-------------------------------------------------------------|
+| GET    | `/v1/sources?profileId=` | List account or profile-scoped sources (excluding deleted) |
+| POST   | `/v1/sources`         | Encrypts credentials on write; returns `validation_status='pending'` |
+| PUT    | `/v1/sources/:id`     | Rename / toggle isActive                                    |
+| DELETE | `/v1/sources/:id`     | Soft delete (sets `deleted_at` + `is_active=false`)         |
+
+### Encryption format
+
+```
+[ version: u8 ][ iv: 12 bytes ][ tag: 16 bytes ][ ciphertext ]
+```
+
+- `version=1` today; bump on key/format rotation.
+- IV is fresh per blob.
+- GCM auth tag (16 bytes) — tampering with any byte fails decryption.
+- `kms_key_id` column stores metadata for future audit / rotation.
+- Plaintext credentials are never persisted; even Prisma Studio shows
+  binary `encrypted_*` columns.
+
+### Generating a key
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Set the result as `SOURCE_ENCRYPTION_KEY`.
+
+## Parsers package (Run 10)
+
+`packages/parsers` exposes pure-TS stubs:
+
+- `parseM3U(input)` → `{ channels: M3UChannel[], ignoredLines, malformedEntries }`
+- `parseXmltv(input)` → `{ channels, programmes, malformed* }`
+- `parseXmltvTime(raw)` — XMLTV `YYYYMMDDHHmmss [±HHMM]` → ISO UTC string
+
+Used at source-create time for an item-count estimate; full network
+fetch + heavy parsing is the EPG worker's job (Run 15+).
 
 ## Billing module (Run 9)
 

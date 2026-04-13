@@ -11,6 +11,8 @@ import { AuthModule } from './auth/auth.module';
 import { EntitlementModule } from './entitlement/entitlement.module';
 import { DevicesModule } from './devices/devices.module';
 import { BillingModule } from './billing/billing.module';
+import { ProfilesModule } from './profiles/profiles.module';
+import { SourcesModule } from './sources/sources.module';
 import { AllExceptionsFilter } from './common/http-exception.filter';
 
 @Module({
@@ -30,6 +32,8 @@ import { AllExceptionsFilter } from './common/http-exception.filter';
     EntitlementModule,
     DevicesModule,
     BillingModule,
+    ProfilesModule,
+    SourcesModule,
   ],
   providers: [
     {

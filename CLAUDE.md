@@ -6,8 +6,8 @@
 
 ## 🎯 Current State
 
-- **Phase:** B — Backend V1
-- **Last completed run:** Run 9 — Billing worker
+- **Phase:** B — Backend V1 (complete)
+- **Last completed run:** Run 10 — Profile + Source modules
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
@@ -15,49 +15,44 @@
 
 ---
 
-## ▶️ Next Run (Run 10): Profile + Source Modules
+## ▶️ Next Run (Run 11): Android TV Bootstrap
 
 ### Goal
-Implement the household profile model (5 profiles per account, kids flag, Argon2id PIN hash, age filter) and the user-managed source catalog (M3U / XMLTV / M3U+EPG with per-source encrypted credentials and parser stubs). Both modules sit on top of the entitlement caps from Run 8.
+Bootstrap the Android TV client app at `apps/android-tv/`: Gradle + Kotlin DSL + Jetpack Compose + Compose for TV + Hilt + Navigation-Compose, with the `applicationId` decision finalized **in this run**. Wire the design tokens and Hilt graph but do NOT build any feature screens yet — those land in Runs 12-18.
+
+### applicationId decision (must happen this run)
+- **Decide:** `com.premiumtvplayer.app` (default proposal) vs. an alternate the user prefers.
+- Constraints to honor: must match the Google Play package id used in `BILLING_ANDROID_PACKAGE_NAME` (Run 9). If the user picks a different applicationId, update `services/api/.env.example` and CLAUDE.md to match.
 
 ### Deliverables
-- [ ] `ProfileService` enforcing the 5-profile cap (1 for `trial`/`lifetime_single`, 5 for `lifetime_family`), kids flag + age limit (0-21), single default profile per account
-- [ ] PIN flow with Argon2id hashing (`profile_pins` table, lockout after 5 failed attempts, `lock_until` honored)
-- [ ] Endpoints (per OpenAPI):
-  - `GET    /v1/profiles`
-  - `POST   /v1/profiles`              (`409` when cap reached)
-  - `PUT    /v1/profiles/{id}`         (rename, age limit, PIN replace)
-  - `DELETE /v1/profiles/{id}`         (soft delete; 404 on miss; refuses to delete the last default)
-  - `POST   /v1/profiles/{id}/verify-pin`
-- [ ] `SourceService` covering M3U / XMLTV / M3U+EPG kinds + AES-256-GCM envelope encryption for URL/username/password/headers (`source_credentials` table; KMS key id stored, plaintext never persisted)
-- [ ] Endpoints:
-  - `GET    /v1/sources`               (list account or profile-scoped)
-  - `POST   /v1/sources`               (creates, returns row with `validation_status='pending'`)
-  - `PUT    /v1/sources/{id}`          (rename, toggle isActive)
-  - `DELETE /v1/sources/{id}`          (soft delete)
-- [ ] `packages/parsers/` stubs for M3U + XMLTV — pure functions that take a string and return normalized rows; real network fetch is parked for Run 15 (EPG worker / source-management UI)
-- [ ] Unit tests:
-  - profile cap enforcement under each entitlement state
-  - PIN hash + verify (Argon2id) including the lockout window
-  - kids flag + age limit validation
-  - source create/update with encryption round-trip (encrypt → persist → decrypt)
-  - parser stubs accept fixture inputs and return expected normalized rows
-- [ ] Update `services/api/README.md` profile + source sections; extend `.env.example` with `SOURCE_ENCRYPTION_KEY` (32-byte hex)
+- [ ] `apps/android-tv/` Gradle project (Kotlin DSL build scripts; AGP 8.x; Kotlin 2.x; Compose Compiler plugin)
+- [ ] `app/build.gradle.kts` with locked `applicationId`, min SDK 24, target SDK 34, leanback-aware
+- [ ] `AndroidManifest.xml`:
+  - `<uses-feature android:name="android.software.leanback" required="true"/>`
+  - `<uses-feature android:name="android.hardware.touchscreen" required="false"/>`
+  - Banner asset placeholder (drawable) referenced under `<application android:banner="@drawable/banner">`
+  - Launcher activity with `<category android:name="android.intent.category.LEANBACK_LAUNCHER"/>`
+- [ ] Dependencies: `androidx.compose.bom`, `androidx.tv:tv-foundation`, `androidx.tv:tv-material`, `androidx.activity:activity-compose`, `androidx.navigation:navigation-compose`, `androidx.hilt:hilt-navigation-compose`, `dagger.hilt.android`, `androidx.media3.exoplayer`, Retrofit/Ktor + kotlinx.serialization
+- [ ] Hilt setup: `@HiltAndroidApp` Application class + bare `MainActivity` rendering an empty Compose scaffold
+- [ ] `packages/ui-tokens/` minimal Kotlin/Compose-side wiring (consumed by the app): colors, typography, spacing, motion as TS-mirrored Kotlin objects (to be filled in Run 12)
+- [ ] `apps/android-tv/README.md` with: prerequisites (Android Studio Hedgehog+, JDK 17), how to build (`./gradlew :app:assembleDebug`), how to install on a TV emulator, applicationId note
+- [ ] Update `CLAUDE.md`:
+  - Tick Run 11 in the roadmap, set "Last completed run" to Run 11
+  - Record the chosen applicationId in **Locked Product Decisions** (new row)
 
 ### Acceptance criteria
-- Creating a 6th profile on `lifetime_family` returns `409` with `SLOT_FULL` (or a profile-specific code; document choice)
-- Creating a 2nd profile on `trial`/`lifetime_single` returns `409`
-- Wrong PIN 5× locks the profile for the configured window; `verify-pin` returns `423`/`409` with `PIN_INVALID` afterwards
-- Source credentials never appear in plaintext in `pg_dump` of the schema
-- M3U + XMLTV parser stubs round-trip a small fixture file
-- All Jest unit tests pass; existing 89 tests still green
+- `./gradlew :app:assembleDebug` succeeds (or, if the user's environment can't run Android tooling, the project layout, Gradle scripts, manifest, and Kotlin source compile cleanly inside Android Studio)
+- App is recognized as a Leanback (TV) app — `aapt dump badging app-debug.apk` shows the leanback feature
+- Launching it on a Google TV / Android TV emulator shows a blank Compose-TV scaffold without crash
+- `applicationId` matches `BILLING_ANDROID_PACKAGE_NAME` in `services/api/.env.example`
 
 ### After this run — update CLAUDE.md
-1. Tick Run 10 in the roadmap
-2. Set "Last completed run" to `Run 10 — Profile + Source modules`
-3. Write the new "Next Run" block for **Run 11: Android TV bootstrap (Compose / Compose-TV / applicationId decision)**
-4. Append entry to **Run Log**
-5. Commit: `api: add profile + source modules with PIN, kids, encryption (Run 10)` and push
+1. Tick Run 11 in the roadmap
+2. Set "Last completed run" to `Run 11 — Android TV bootstrap`
+3. Write the new "Next Run" block for **Run 12: Design system in Compose**
+4. Record the locked applicationId in **Locked Product Decisions**
+5. Append entry to **Run Log**
+6. Commit: `tv: bootstrap android-tv app with Compose-TV + Hilt (Run 11)` and push
 
 ---
 
@@ -177,7 +172,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 - [x] **Run 7** — Auth module: Firebase Admin token verify, user sync, register/login/refresh
 - [x] **Run 8** — Entitlement module: trial start, status, device register/list/revoke
 - [x] **Run 9** — Billing worker: Play Billing verification, ack, lifetime flip, refund handler
-- [ ] **Run 10** — Profile + Source modules: 5-profile cap, PIN hash, kids flag; source CRUD + parser stubs
+- [x] **Run 10** — Profile + Source modules: 5-profile cap, PIN hash, kids flag; source CRUD + parser stubs
 
 ### Phase C — Android TV Client
 - [ ] **Run 11** — `apps/android-tv/` Gradle/Compose/Compose-TV bootstrap. **→ applicationId is decided in this run.** Leanback intent, TV manifest, Hilt, Navigation-Compose, ui-tokens wiring
@@ -295,6 +290,21 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
 - Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 10 — 2026-04-13 — Profile + Source modules
+- Added `profileCapFor()` helper to the entitlement state machine (parallels `deviceCapFor()`): 1 trial/single, 5 family, 0 none/expired/revoked
+- Added `PinService` with **Argon2id** hashing (`profile_pins.pin_algo='argon2id'`); upsert-on-set resets failed-attempt counter + lockout; `verify` increments counter on miss and locks for `PIN_LOCKOUT_DURATION_MS` after `PIN_MAX_FAILED_ATTEMPTS` consecutive failures (default 5/15min, both env-configurable); `clearPin` + `hasPin` helpers
+- Added `ProfileService` enforcing the 5-profile cap derived from entitlement, kids profiles default to `ageLimit=12` when caller omits one, atomic single-default invariant (`updateMany` clears prior default in same tx as new create), refuses to soft-delete the LAST remaining profile, auto-promotes oldest remaining profile when default is deleted
+- Endpoints (`AuthGuard`-protected): `GET /v1/profiles`, `POST /v1/profiles` (`409 SLOT_FULL` / `402 ENTITLEMENT_REQUIRED`), `PUT /v1/profiles/:id`, `DELETE /v1/profiles/:id` (`409` when last), `POST /v1/profiles/:id/verify-pin`
+- Added `SourceCryptoService` — **AES-256-GCM envelope encryption**. Wire format: `[ version: u8 ][ iv: 12 bytes ][ tag: 16 bytes ][ ct: ... ]` per blob; fresh IV per encrypt; GCM auth-tag tampering rejected; version byte locks rotation path; `kms_key_id` stored as metadata. `SOURCE_ENCRYPTION_KEY` is 64 hex chars (32 raw bytes), validated by Zod
+- Added `SourceService` with `m3u`/`xmltv`/`m3u_plus_epg` kinds, gates on `allowsPlayback()` entitlement, encrypts URL/username/password/headers (JSON-stringified) via `SourceCryptoService`, soft-delete on remove, `decryptCredentials()` exposed for the future EPG worker / source UI
+- Endpoints (`AuthGuard`-protected): `GET /v1/sources?profileId=`, `POST /v1/sources` (encrypts on write), `PUT /v1/sources/:id`, `DELETE /v1/sources/:id`
+- Added `packages/parsers/` (own `package.json` + `tsconfig`) — pure-TS stubs:
+  - `parseM3U(input)` → `{ channels[], ignoredLines, malformedEntries }`, extracts `#EXTINF` attributes (`tvg-id`, `tvg-name`, `tvg-logo`, `group-title`) + name + duration + URL; tolerates missing `#EXTM3U`, counts malformed entries
+  - `parseXmltv(input)` → `{ channels[], programmes[], malformed* }`, walks `<channel>` + `<programme>` (incl. self-closing), extracts title/sub-title/desc/category, decodes XML entities, `parseXmltvTime()` handles `YYYYMMDDHHmmss [±HHMM]` → ISO UTC
+- Env: `SOURCE_ENCRYPTION_KEY`, `SOURCE_ENCRYPTION_KMS_KEY_ID`, `PIN_MAX_FAILED_ATTEMPTS`, `PIN_LOCKOUT_DURATION_MS` added to `.env.example`
+- Added 28 new tests (131 total): PinService 6, ProfileService 8, SourceCryptoService 7, SourceService 7, plus profileCapFor in state-machine.spec; parsers package 10 tests (M3U 4 + XMLTV 4 + parseXmltvTime 3) — all green
+- **Verified end-to-end live:** API boots with all 4 profile endpoints + 4 source endpoints mapped under `/v1`; protected endpoints return stable `UNAUTHORIZED` ErrorEnvelope; **encrypted-at-rest verified** by seeding a real source row + reading the BYTEA back from Postgres — `convert_from(encrypted_url, 'UTF8')` errors with `invalid byte sequence`, `decryptCredentials()` recovers the originals exactly
 
 ### Run 9 — 2026-04-13 — Billing worker (Google Play verify + ack + restore)
 - Added `services/api/src/billing/` — provider interface, `GooglePlayProvider` (uses `google-auth-library` to sign service-account JWTs against the `androidpublisher` scope, calls `purchases.products.get` + `:acknowledge`), `BillingService` as the single writer of purchase/entitlement transitions

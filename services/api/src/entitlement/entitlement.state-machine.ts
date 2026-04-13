@@ -248,6 +248,27 @@ export function deviceCapFor(state: EntitlementState): number {
   }
 }
 
+/**
+ * Maximum active profiles per entitlement state. Enforced by ProfileService.
+ *
+ * Per spec: existing profiles are preserved when entitlement drops to
+ * expired/revoked — only NEW creation is blocked. Cap of 0 here means
+ * "no new profiles", not "delete existing".
+ */
+export function profileCapFor(state: EntitlementState): number {
+  switch (state) {
+    case 'trial':
+    case 'lifetime_single':
+      return 1;
+    case 'lifetime_family':
+      return 5;
+    case 'none':
+    case 'expired':
+    case 'revoked':
+      return 0;
+  }
+}
+
 /** True if the state currently allows playback / protected resource access. */
 export function allowsPlayback(state: EntitlementState): boolean {
   return state === 'trial' || state === 'lifetime_single' || state === 'lifetime_family';
