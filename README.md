@@ -1,5 +1,6 @@
 <div align="center">
-  <img src="./assets/logo/logo-no_background.png" alt="Premium TV Player Logo" width="150" />
+  <img src="https://raw.githubusercontent.com/BEKO2210/Ibo_Player_Pro/main/assets/logo/Logo_ani.gif" alt="Premium TV Player Animated Logo" width="220" />
+</div>
 
 # Premium TV Player
 
