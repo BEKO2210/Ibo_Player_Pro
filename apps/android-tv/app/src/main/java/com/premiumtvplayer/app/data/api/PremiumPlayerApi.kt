@@ -83,4 +83,11 @@ interface PremiumPlayerApi {
         @Query("from") from: String? = null,
         @Query("to") to: String? = null,
     ): EpgProgrammesResponse
+
+    // ── Billing (Run 17) ───────────────────────────────────────────────
+    @POST("billing/verify")
+    suspend fun verifyPurchase(@Body body: BillingVerifyRequest): EntitlementStatusResponse
+
+    @POST("billing/restore")
+    suspend fun restorePurchases(): EntitlementStatusResponse
 }

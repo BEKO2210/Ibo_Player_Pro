@@ -430,6 +430,74 @@ Continue-Watching rail on the home screen is also live now: the row is
 served by `GET /v1/continue-watching?profileId=` and populated by
 playback heartbeats + the stop event.
 
+## Billing flow (Run 17)
+
+Google Play Billing wired into a bespoke premium paywall. Two one-time
+products:
+
+| Catalog | Product id                |
+|---------|---------------------------|
+| Single  | `premium_player_single`   |
+| Family  | `premium_player_family`   |
+
+These MUST match `BILLING_PRODUCT_ID_{SINGLE,FAMILY}` in
+`services/api/.env.example`.
+
+### Layer map
+
+```
+data/billing/
+  ProductCatalog.kt       # PremiumProduct.Single / Family + display copy
+  BillingClientWrapper.kt # Hilt @Singleton wrapper around BillingClient:
+                          #   ensureReady(), queryProducts(),
+                          #   launchPurchase(), queryExistingPurchases(),
+                          #   purchaseFlow (Channel of success/cancel/error)
+  BillingRepository.kt    # Facade used by PaywallViewModel:
+                          #   querySkus, launchPurchase, acknowledgeAndVerify,
+                          #   restore → /v1/billing/{verify,restore}
+ui/billing/
+  PaywallScreen.kt        # side-by-side plan cards; Family highlighted;
+                          # Restore + Not Now bottom row
+  PaywallViewModel.kt     # loads SKUs on init, collects BillingClient
+                          # purchase results, routes success through
+                          # acknowledgeAndVerify → PurchaseSucceeded
+```
+
+### Entitlement-aware gating
+
+`HomeUiState.Error.isEntitlementGated` is `true` when the server
+returned `code = "ENTITLEMENT_REQUIRED"`. `HomeScreen` watches the
+state in a `LaunchedEffect` and calls `onOpenPaywall()` — users never
+see a raw "requires active entitlement" banner, they see the paywall.
+
+### Nav route
+
+`Routes.Paywall = "paywall"` — registered in `PremiumTvApp`. The
+paywall pops itself when the user completes a purchase, when restore
+succeeds, or when the user explicitly presses "Not Now".
+
+### Tests
+
+- `BillingRepositoryTest` (MockWebServer, 4 cases): `acknowledgeAndVerify`
+  POST body + parse, 402 ENTITLEMENT_REQUIRED mapping, `restore` POST,
+  401 UNAUTHORIZED mapping.
+- `PaywallViewModelTest` (MockK + UnconfinedTestDispatcher, 6 cases):
+  init loads SKUs, init Error on failure, full purchase flow
+  (BillingClient emit → verify → PurchaseSucceeded), user cancel
+  clears submitting, restore success, restore failure surfaces
+  friendly copy.
+
+### Not unit-tested (requires Play-Store-equipped device)
+
+- `BillingClient.launchBillingFlow(...)` — run manually on an
+  emulator with Google Play Services + a signed test account linked to
+  Play Console's test-track offers
+- `BillingClientStateListener.onBillingSetupFinished` handshake
+
+The server-side verification path (`BillingService.verifyAndApply`)
+already has full test coverage in `services/api/src/billing/` from
+Run 9, so the only untested layer on-device is the Play-Store handshake.
+
 ## Build + run
 
 > **Tooling required (cannot be run in this repo's CI sandbox — Android

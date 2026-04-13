@@ -44,6 +44,9 @@ object Routes {
         "play/{$SourceIdArg}/{$ItemIdArg}/{$ItemTypeArg}?" +
             "$ProfileIdArg={$ProfileIdArg}&$MediaUrlArg={$MediaUrlArg}&$ItemTitleArg={$ItemTitleArg}"
 
+    // ── Paywall (Run 17) ───────────────────────────────────────────
+    const val Paywall = "paywall"
+
     fun play(
         profileId: String,
         sourceId: String,

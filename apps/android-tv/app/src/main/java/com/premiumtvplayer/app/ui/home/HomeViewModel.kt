@@ -31,7 +31,7 @@ sealed interface HomeUiState {
         val snapshot: HomeSnapshot,
     ) : HomeUiState
 
-    data class Error(val message: String) : HomeUiState
+    data class Error(val message: String, val isEntitlementGated: Boolean = false) : HomeUiState
 }
 
 @HiltViewModel
@@ -63,10 +63,13 @@ class HomeViewModel @Inject constructor(
                     HomeUiState.Populated(profile, snap)
                 }
             } catch (t: Throwable) {
-                val msg = (t as? ApiException.Server)?.let {
-                    ApiErrorCopy.forCode(it.code, it.message)
-                } ?: t.message ?: "Could not load your home."
-                _uiState.value = HomeUiState.Error(msg)
+                val server = t as? ApiException.Server
+                val msg = server?.let { ApiErrorCopy.forCode(it.code, it.message) }
+                    ?: t.message ?: "Could not load your home."
+                _uiState.value = HomeUiState.Error(
+                    message = msg,
+                    isEntitlementGated = server?.code == "ENTITLEMENT_REQUIRED",
+                )
             }
         }
     }

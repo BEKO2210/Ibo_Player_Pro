@@ -7,7 +7,7 @@
 ## 🎯 Current State
 
 - **Phase:** C — Android TV Client
-- **Last completed run:** Run 16 — Playback + heartbeat + EPG worker
+- **Last completed run:** Run 17 — Play Billing flow in app
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
@@ -15,35 +15,34 @@
 
 ---
 
-## ▶️ Next Run (Run 17): Billing flow in the app
+## ▶️ Next Run (Run 18): Parental Controls
 
 ### Goal
-Wire the Google Play Billing Client into the Android TV app so users can actually purchase Lifetime Single / Family, trigger server verification through the Run 9 billing-worker path, and surface entitlement UI states (trial / active / expired / revoked) across the home + paywall surfaces.
+Complete Phase C polish with parental-control surfaces on top of the existing backend: profile-level PIN gate, kids-profile age filter, and a device-management screen to rename / unpair devices. This is the last run that adds end-user-visible features before Phase D (i18n + E2E + release).
 
 ### Deliverables
-- [ ] Add `com.android.billingclient:billing-ktx` + wire `BillingClientWrapper` (lifecycle-aware, Hilt-injected)
-- [ ] `BillingRepository` with:
-  - `querySkuDetails()` — fetches the two one-time products
-  - `launchPurchase(activity, productId)` — kicks off the Play Billing flow
-  - `acknowledgeAndVerify(purchaseToken, productId)` — POST `/v1/billing/verify` + local state refresh
-  - `restore()` — POST `/v1/billing/restore`
-- [ ] `PaywallScreen` that opens when the user lands on a gated surface with `entitlement.state ∈ {none, expired, revoked}`. Premium look: two-plan comparison (Single vs Family), CTAs, restore link
-- [ ] Entitlement-aware gating: Home hero swaps between "Start trial" (for `none` + trial-not-consumed), "Upgrade" (for `expired`), or nothing (when active). Source create and playback start already 402 on the server — the client should route the 402 into `PaywallScreen` instead of an error banner
-- [ ] Unit tests for `BillingRepository.acknowledgeAndVerify` (MockWebServer) and `PaywallViewModel` state transitions
-- [ ] Update `apps/android-tv/README.md` with "Billing flow (Run 17)"
+- [ ] `PinGateScreen` — full-screen PIN entry invoked before switching into a PIN-protected profile or before surfacing kids-hostile content on an adult profile
+- [ ] `PinGateViewModel` — wraps the Run 10 `POST /v1/profiles/{id}/verify-pin` endpoint; surfaces lockout state with a countdown chip
+- [ ] Profile management: `POST/PUT/DELETE /v1/profiles` on `PremiumPlayerApi` + `ProfileRepository` (CRUD beyond Run 13's `list`). Screen: `ProfileManagementScreen` with rename / set age cap / set or clear PIN / mark default / delete (with confirmation overlay)
+- [ ] Age-filter gating: new `AgeFilter` helper that compares the caller's profile `ageLimit` against an item's rating chip; any item rated above the cap is visually locked with a PIN chip overlay
+- [ ] Device management: `DevicesRepository` + `DeviceManagementScreen` wired to Run 8 endpoints (`GET /v1/devices`, `POST /v1/devices/{id}/revoke`). Rename path is Parking Lot — backend add in Run 18, UI here if it lands
+- [ ] Wire the new screens into the home's profile indicator overflow: clicking the avatar opens a drawer with "Switch Profile", "Profile Settings", "Devices", "Sign Out"
+- [ ] Unit tests: `PinGateViewModelTest`, `ProfileRepositoryTest` (full CRUD), `DeviceManagementViewModelTest`
+- [ ] Update `apps/android-tv/README.md` with "Parental controls (Run 18)"
 
 ### Acceptance criteria
-- User can open the paywall from a gated action, pick Family, complete the Play Billing purchase sheet, and see the home flip to the active state within a few seconds (backend verify + local refresh)
-- Restore flow works end-to-end for an account with a known-good purchase
-- 402 ENTITLEMENT_REQUIRED from any server action automatically surfaces the paywall — never a raw error
-- Existing Run 9 billing-worker behaviour unchanged (refund-handling and replay idempotency still pass their tests)
+- Creating / resuming a PIN-protected profile forces the user through `PinGateScreen`; 5 misses lock the profile for the configured window
+- Kids profiles only see content rated ≤ their `ageLimit`; locked items surface a PIN prompt
+- Revoking a device from the management screen immediately invalidates playback sessions on that device
+- All Run 13-17 tests remain green
+- No new hard-coded color / dp / TextStyle literals
 
 ### After this run — update CLAUDE.md
-1. Tick Run 17 in the roadmap
-2. Set "Last completed run" to `Run 17 — Billing flow in app`
-3. Write the new "Next Run" block for **Run 18: Parental controls (PIN gate + age filter + device list)**
+1. Tick Run 18 in the roadmap
+2. Set "Last completed run" to `Run 18 — Parental controls`
+3. Write the new "Next Run" block for **Run 19: i18n finalization + error states + diagnostics**
 4. Append entry to **Run Log**
-5. Commit: `tv: add Play Billing purchase + restore + paywall (Run 17)` and push
+5. Commit: `tv: add parental controls (PIN gate + age filter + device mgmt) (Run 18)` and push
 
 ---
 
@@ -173,7 +172,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 - [x] **Run 14** — Home screen: Hero carousel, rows, Continue Watching, Favorites. Logo wired in if not already
 - [x] **Run 15** — Source management UI + EPG browse view
 - [x] **Run 16** — Playback (Media3/ExoPlayer): Live, VOD, Resume, subtitles, audio-track picker, heartbeat sync
-- [ ] **Run 17** — Billing flow in app: Play Billing Client, purchase trigger, Restore Purchase, entitlement UI states
+- [x] **Run 17** — Billing flow in app: Play Billing Client, purchase trigger, Restore Purchase, entitlement UI states
 - [ ] **Run 18** — Parental controls: PIN gate, age filter, device list / logout / unpair
 
 ### Phase D — Polish & Ship-Ready
@@ -284,6 +283,30 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
 - Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 17 — 2026-04-13 — Play Billing flow in the app
+- Added `billing-ktx 7.1.1` to the Android version catalog + `app/build.gradle.kts`
+- `data/billing/ProductCatalog.kt` — `PremiumProduct.Single` / `Family` enum mirrors backend `BILLING_PRODUCT_ID_{SINGLE,FAMILY}` with display copy (tagline + 4 marketing bullets each). Single = 1 device / 1 profile; Family = 5 devices / 5 profiles; both lifetime one-time
+- `data/billing/BillingClientWrapper.kt` — Hilt `@Singleton` coroutine wrapper around Google's `BillingClient`:
+  - `ensureReady()` suspends until `onBillingSetupFinished` (returns true/false instead of throwing)
+  - `queryProducts(ids)` via `queryProductDetails` suspend extension
+  - `launchPurchase(activity, details)` kicks off the Play Billing sheet
+  - `queryExistingPurchases()` for Restore
+  - `purchaseFlow: Flow<PurchaseResult>` — `Success(Purchase)` / `UserCanceled` / `Error(code, message)` — fed from the `PurchasesUpdatedListener`
+  - `BillingConnection` `StateFlow` exposes Idle / Connecting / Ready / Failed for the UI
+- `data/billing/BillingRepository.kt` — facade used by `PaywallViewModel`. `querySkus()` pairs Play-side `ProductDetails` with the catalog entries (Single-first ordering). `launchPurchase()` delegates to the wrapper. `acknowledgeAndVerify(token, productId)` POSTs `/v1/billing/verify` (Run 9 server path) and returns the resulting `EntitlementDto`. `restore()` POSTs `/v1/billing/restore`. All error paths routed through `ApiErrorMapper`
+- `PaywallViewModel` (`ui/billing/`) — `Loading` / `Ready(skus, submitting, errorMessage)` / `PurchaseSucceeded(ent)` / `Error`. Init loads SKUs + subscribes to `purchaseFlow`. On `Success` → `acknowledgeAndVerify` → `PurchaseSucceeded`. On `UserCanceled` → quietly clear `submitting` (no error banner — premium detail). On `Error` → set user-friendly message. `restore()` flips to `Ready(submitting=true)` then `PurchaseSucceeded` on success
+- `PaywallScreen` — two `PlanCard`s side-by-side, Family highlighted with 2dp `AccentCyan` border + "Recommended" chip. Header with outline chips "One-time" + "No subscription", `DisplayLarge` title, editorial body. Restore + "Not Now" bottom row. Auto-dismisses on `PurchaseSucceeded` via `LaunchedEffect(state) -> onPurchased()`
+- **Entitlement-aware gating:** `HomeUiState.Error` gained `isEntitlementGated: Boolean` — `true` when `ApiException.Server.code == "ENTITLEMENT_REQUIRED"`. `HomeScreen` `LaunchedEffect` watches state and auto-routes to `onOpenPaywall()` — users never see a raw "requires active entitlement" banner, they see the paywall
+- Nav: `Routes.Paywall = "paywall"`, registered in `PremiumTvApp.NavHost`. Paywall pops on purchase/restore success or explicit "Not Now". `HomeScreen` now takes `onOpenPaywall` parameter, wired by the NavHost to `navController.navigate(Routes.Paywall)`
+- Tests (JVM, via `./gradlew :app:testDebugUnitTest`):
+  - `BillingRepositoryTest` (MockWebServer, 4 cases) — `acknowledgeAndVerify` POST body shape + parse, 402 ENTITLEMENT_REQUIRED mapping, `restore` POST, 401 UNAUTHORIZED mapping
+  - `PaywallViewModelTest` (MockK + Turbine + UnconfinedTestDispatcher, 6 cases) — init loads SKUs, init Error on querySkus failure, purchase success flow verify+PurchaseSucceeded, user cancel clears submitting without banner, restore success → PurchaseSucceeded, restore failure surfaces friendly copy
+- Docs:
+  - `apps/android-tv/README.md` — new "Billing flow (Run 17)" section: product-id table, layer map, entitlement-gating note, nav route, test matrix, note about the BillingClient paths that need a Play-Services-equipped device
+  - `CLAUDE.md` — Run 17 ticked, Run 18 (Parental controls) queued, Run 17 entry appended to Run Log
+- **Static verification done:** Kotlin sources conform to Compose / tv-foundation / tv-material / Billing / Hilt / Retrofit API surfaces. Internal imports resolve. Grep-clean: zero `Color(0x…)` literals in `ui/billing/` or `data/billing/`
+- **Cannot verify in this session:** `./gradlew :app:assembleDebug` / `:app:testDebugUnitTest`. Verify locally with a Play-Store-equipped emulator + test-track products in the Play Console matching `premium_player_{single,family}`. Expected: open paywall from a 402 gated action, pick Family, complete the purchase sheet, Home flips to `lifetime_family` within a few seconds
 
 ### Run 16 — 2026-04-13 — Playback + heartbeat + EPG worker
 - Backend `src/playback/` — `PlaybackService` is the single writer of playback lifecycle + continue-watching state. `start` checks `allowsPlayback()` entitlement + profile/source ownership (404 on foreign rows) and inserts into `playback_sessions`. `heartbeat` updates position + state in a tx and upserts `continue_watching` (unique on `profileId_itemId`) for non-live items. `stop` records a `watch_history` row, and either upserts (non-completed) or deletes (completed) the CW row. `listContinueWatching` serves the Home rail

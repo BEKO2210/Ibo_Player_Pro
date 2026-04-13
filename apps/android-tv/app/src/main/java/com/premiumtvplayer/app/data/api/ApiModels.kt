@@ -152,6 +152,16 @@ data class PlaybackSessionResponse(
     val session: PlaybackSessionDto,
 )
 
+// ── Billing (Run 17) ───────────────────────────────────────────────────
+
+@Serializable
+data class BillingVerifyRequest(
+    val purchaseToken: String,
+    val productId: String,
+)
+
+// Backend /v1/billing/verify + /restore both return EntitlementStatusResponse.
+
 // ── Continue watching ──────────────────────────────────────────────────
 
 @Serializable

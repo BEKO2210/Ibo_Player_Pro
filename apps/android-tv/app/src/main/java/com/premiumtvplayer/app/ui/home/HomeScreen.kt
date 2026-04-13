@@ -78,9 +78,19 @@ fun HomeScreen(
     onOpenDeeplink: (HomeDeeplink) -> Unit,
     onAddSource: () -> Unit,
     onSignOut: () -> Unit,
+    onOpenPaywall: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Auto-route entitlement-gated errors straight into the paywall so
+    // users never see a raw "requires active entitlement" banner.
+    androidx.compose.runtime.LaunchedEffect(state) {
+        val err = state as? HomeUiState.Error
+        if (err?.isEntitlementGated == true) {
+            onOpenPaywall()
+        }
+    }
 
     Box(
         modifier = Modifier

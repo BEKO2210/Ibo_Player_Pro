@@ -31,6 +31,7 @@ import com.premiumtvplayer.app.ui.components.BrandLogo
 import com.premiumtvplayer.app.ui.components.BrandLogoSize
 import com.premiumtvplayer.app.data.home.HomeDeeplink
 import com.premiumtvplayer.app.ui.home.HomeScreen
+import com.premiumtvplayer.app.ui.billing.PaywallScreen
 import com.premiumtvplayer.app.ui.nav.Routes
 import com.premiumtvplayer.app.ui.onboarding.LoginScreen
 import com.premiumtvplayer.app.ui.onboarding.ProfilePickerScreen
@@ -197,6 +198,7 @@ fun PremiumTvApp(navController: NavHostController = rememberNavController()) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
+                onOpenPaywall = { navController.navigate(Routes.Paywall) },
             )
         }
         composable(Routes.Sources) {
@@ -226,6 +228,12 @@ fun PremiumTvApp(navController: NavHostController = rememberNavController()) {
             ),
         ) {
             EpgBrowseScreen(
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(Routes.Paywall) {
+            PaywallScreen(
+                onPurchased = { navController.popBackStack() },
                 onBack = { navController.popBackStack() },
             )
         }
