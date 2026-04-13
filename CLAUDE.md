@@ -7,7 +7,7 @@
 ## 🎯 Current State
 
 - **Phase:** C — Android TV Client
-- **Last completed run:** Run 12 — Design system in Compose
+- **Last completed run:** Run 15 — Source management UI + EPG browse
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
@@ -15,40 +15,41 @@
 
 ---
 
-## ▶️ Next Run (Run 13): Onboarding + Auth Screens
+## ▶️ Next Run (Run 16): Playback (Media3 / ExoPlayer) + Heartbeat Sync
 
 ### Goal
-Wire the first interactive flows on top of the Run 12 design system: Welcome → Sign up / Log in → Trial activation → Profile picker. Talks to Firebase Auth (client SDK) for email/password and to the V1 backend for account sync, trial start, and profile listing. End-to-end the user can install the APK, sign up, start a 14-day trial, and pick a profile — without ever leaving the premium dark UI language.
+Wire Media3 / ExoPlayer into the Android TV client so live channels and VOD items actually play, with server-side heartbeat sync so Continue Watching and Watch History become real instead of stubbed. Also stand up the `epg-worker` backend process so EPG browse graduates from fixture data to real `/v1/epg/*` responses.
 
 ### Deliverables
-- [ ] `NavHost` / `NavController` rooted in `PremiumTvApp` with routes: `welcome`, `signup`, `login`, `trialActivation`, `profilePicker`. Smooth transitions using `PremiumTransitions.DrawerSlide`.
-- [ ] Firebase Auth wiring (Hilt-provided `FirebaseAuth`). `google-services.json` placeholder + README note for the user to drop in the real one.
-- [ ] HTTP client module (Hilt-provided Retrofit + OkHttp + kotlinx.serialization). Base URL from `BuildConfig` (debug points at `http://10.0.2.2:3000` for the local API).
-- [ ] `AuthRepository` with `register(email, password, locale)`, `login(email, password)`, `refresh()` — under the hood: Firebase ID token → `POST /v1/auth/{register,login,refresh}`.
-- [ ] `EntitlementRepository` with `status()` and `startTrial()` → wraps `GET /v1/entitlement/status` + `POST /v1/entitlement/trial/start`.
-- [ ] Screens (Compose):
-  - `WelcomeScreen` — `HeroSection` placeholder + "Sign In" + "Create account" `PremiumButton`s
-  - `SignupScreen` / `LoginScreen` — `PremiumTextField` for email + password, validation, error envelope mapping
-  - `TrialActivationScreen` — explains 14-day trial, primary CTA → `entitlement/trial/start`, handles `TRIAL_ALREADY_CONSUMED`
-  - `ProfilePickerScreen` — calls `GET /v1/profiles`, renders each profile as a `PremiumCard` in a centered grid; "Add profile" tile when under cap
-- [ ] State holders: `WelcomeViewModel`, `SignupViewModel`, etc — Hilt-injected; expose `uiState` `StateFlow<...>`. Keep ViewModels thin; repos do the work.
-- [ ] Stable error mapping: `ErrorEnvelope.error.code` → user-facing strings (English defaults, i18n hooks ready for Run 19).
-- [ ] Unit tests for `AuthRepository` + `EntitlementRepository` (Mock OkHttp interceptor) and at least one ViewModel happy-path test.
-- [ ] Update `apps/android-tv/README.md` with a "Onboarding flow" section and a `BuildConfig.API_BASE_URL` override note.
+- [ ] `PlayerScreen` composable (full-bleed) hosting a Media3 `ExoPlayer` with TV-friendly controls (seek bar, play/pause, audio-track picker, subtitle picker) built on Run 12 components (`PremiumButton`, `PremiumChip`).
+- [ ] Playback deep-links resolved from `HomeDeeplink.LiveChannel` + `HomeDeeplink.VodItem` + EPG programme blocks → `Routes.play(sourceId, itemId, itemType)`.
+- [ ] `PlaybackRepository` against these new backend endpoints:
+  - `POST /v1/playback/start { profileId, sourceId, itemId, itemType }` → returns `{ sessionId }`
+  - `POST /v1/playback/heartbeat { sessionId, positionSeconds, state }` (every 10 s while playing)
+  - `POST /v1/playback/stop { sessionId, finalPositionSeconds }`
+- [ ] API side — new `PlaybackModule` + controllers + `playback_sessions` writes + `continue_watching` upsert at the same time (`continue_watching` is updated on every heartbeat + on stop).
+- [ ] `GET /v1/continue-watching?profileId=` endpoint returning the latest N rows for the caller; wire into `HomeRepository` to replace the stub data.
+- [ ] `services/epg-worker/` — standalone Node process (mirroring the Run 9 billing-worker pattern) that fetches XMLTV from registered sources, runs it through `packages/parsers`, and persists `epg_channels` + `epg_programs`. Expose the data via `GET /v1/epg/channels?sourceId=` + `GET /v1/epg/programmes?channelId=&from=&to=` on the API; swap `EpgRepository.browse` from fixture to live calls.
+- [ ] Unit tests:
+  - `PlaybackRepositoryTest` (MockWebServer) — start / heartbeat / stop
+  - `PlayerViewModelTest` — state machine (buffering → playing → paused → stopped) + heartbeat scheduling
+  - API side: `PlaybackService.spec.ts` — session lifecycle, continue_watching upsert, error paths
+  - EPG worker: fetch + parse + persist round-trip with a fake HTTP server
+- [ ] Update both READMEs with a "Playback (Run 16)" + "EPG worker" section
 
 ### Acceptance criteria
-- Fresh install → Welcome → Sign Up → enter email/password → trial activation → profile picker, all in the premium UI language with focus-veil scrolling.
-- Backend live verification: API logs show successful `POST /v1/auth/register` followed by `POST /v1/entitlement/trial/start` with the same Firebase ID token.
-- Replaying trial activation returns `402 ENTITLEMENT_REQUIRED` and the screen shows a friendly "Trial already used on this account" state without crashing.
-- Network failure surfaces a banner using `PremiumColors.DangerRed` + `PremiumChip`, never a blank screen.
-- All Run 12 component contracts still hold (no new hard-coded literals leak into screens).
+- Selecting a live channel or VOD item from Home / Sources / EPG starts playback within < 2 s on an emulator (HLS + MP4)
+- Server-side `playback_sessions` row is created, heartbeat updates `latest_position_seconds`, and `continue_watching` row is upserted at 10 s cadence
+- Home Continue Watching row reflects the real user history (not the stub)
+- `EpgBrowseScreen` renders real programmes served by the EPG worker for an M3U+EPG source
+- Every new Kotlin test + Jest test + worker test passes; existing suites stay green
 
 ### After this run — update CLAUDE.md
-1. Tick Run 13 in the roadmap
-2. Set "Last completed run" to `Run 13 — Onboarding + Auth screens`
-3. Write the new "Next Run" block for **Run 14: Home screen (hero + rows + Continue Watching)**
+1. Tick Run 16 in the roadmap
+2. Set "Last completed run" to `Run 16 — Playback + heartbeat + EPG worker`
+3. Write the new "Next Run" block for **Run 17: Billing flow in app (Play Billing Client, purchase, restore)**
 4. Append entry to **Run Log**
-5. Commit: `tv: add onboarding + auth flow (Welcome/Signup/Login/Trial/Profiles) (Run 13)` and push
+5. Commit: `tv+api: add playback + heartbeat + epg worker (Run 16)` and push
 
 ---
 
@@ -174,9 +175,9 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 ### Phase C — Android TV Client
 - [x] **Run 11** — `apps/android-tv/` Gradle/Compose/Compose-TV bootstrap. **applicationId locked: `com.premiumtvplayer.app`.** Leanback intent, TV manifest, Hilt, Navigation-Compose, ui-tokens wiring
 - [x] **Run 12** — Design system in Compose: dark theme, typography, colors, focus states, motion, reusable Card/Row/Hero
-- [ ] **Run 13** — Onboarding/Auth screens: Welcome → Signup/Login → Trial activation → Profile picker. Firebase Auth + API client
-- [ ] **Run 14** — Home screen: Hero carousel, rows, Continue Watching, Favorites. Logo wired in if not already
-- [ ] **Run 15** — Source management UI + EPG browse view
+- [x] **Run 13** — Onboarding/Auth screens: Welcome → Signup/Login → Trial activation → Profile picker. Firebase Auth + API client
+- [x] **Run 14** — Home screen: Hero carousel, rows, Continue Watching, Favorites. Logo wired in if not already
+- [x] **Run 15** — Source management UI + EPG browse view
 - [ ] **Run 16** — Playback (Media3/ExoPlayer): Live, VOD, Resume, subtitles, audio-track picker, heartbeat sync
 - [ ] **Run 17** — Billing flow in app: Play Billing Client, purchase trigger, Restore Purchase, entitlement UI states
 - [ ] **Run 18** — Parental controls: PIN gate, age filter, device list / logout / unpair
@@ -287,6 +288,71 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
 - Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 15 — 2026-04-13 — Source management UI + EPG browse view
+- Extended `PremiumPlayerApi` with `POST /v1/sources`, `PUT /v1/sources/{id}`, `DELETE /v1/sources/{id}`. Added matching DTOs (`CreateSourceRequest`, `UpdateSourceRequest`, `SingleSourceResponse`). `SourceRepository` grew `create`, `rename`, `setActive`, `delete` — all routed through `ApiErrorMapper` and a non-2xx DELETE response is re-thrown as `HttpException` so the stable ErrorEnvelope path stays uniform
+- Introduced `SourceKind` enum mirroring the backend's `source_kind` and `CreateSourceInput` normalized-input DTO
+- New `data/epg/` package (`EpgModels.kt` + `EpgRepository.kt`). Run 15 returns deterministic fixture channels (6 per source) × programmes (12 × 30-minute blocks) so `EpgBrowseScreen` is exercisable end-to-end without the Run 16 EPG worker. `EpgBrowseSnapshot` shape is locked in — Run 16 swaps the repo implementation; the UI doesn't change
+- `ui/sources/` package with 3 ViewModels + 3 screens:
+  - **`AddSourceWizardViewModel`** — explicit 4-step state machine (`Kind` / `Endpoint` / `Preview` / `Confirm`) with guards on each transition. `WizardUiState.Editing` carries the draft + preview + submitting/error; `Done(source)` terminals on success. Deterministic URL-hash-based preview estimates (channels + programmes, zero-programmes for plain M3U) so the screen reads "premium" without a network round-trip
+  - **`AddSourceWizardScreen`** — step indicator chips, 3 focusable `KindRadioCard`s, shared `PremiumTextField`-based endpoint form, preview + confirm review cards, error banner on `DangerRed` translucent backplate, footer with `Continue` / `Back` / `Cancel`
+  - **`SourceManagementViewModel`** — `Loading` / `Ready` / `Error` plus per-row `busyId` and `confirmingDeleteId` state so destructive ops can't race
+  - **`SourceManagementScreen`** — list of sources as premium rows with EPG / Pause-or-Resume / Delete actions. Delete flows through the full-screen `ConfirmDeleteOverlay` (translucent scrim + SurfaceFloating card)
+  - **`EpgBrowseViewModel`** + **`EpgBrowseScreen`** — 30-minute timeline grid. Left gutter pins channel names; right side is horizontal `TvLazyRow` of programme blocks with a fixed 3dp-per-minute width so rows align visually. Focusing any block updates a Bravia-style `FocusedProgrammeOverlay` at the top with title + chips + time range + description
+- Nav routes (`Routes.kt`): `Sources` = `sources`, `AddSource` = `sources/add`, `EpgBrowsePattern` = `sources/{sourceId}/epg`, `Routes.epgBrowse(id)` builder, `SourceIdArg` non-nullable nav argument. NavHost in `PremiumTvApp` registers all three routes. `HomeScreen.onAddSource` now navigates into `AddSource`; `HomeDeeplink.AddSource` and `Source` both route properly; `LiveChannel` / `VodItem` deep-links are held for Run 16 (playback)
+- Tests (JVM, via `./gradlew :app:testDebugUnitTest` locally):
+  - **`SourceRepositoryTest`** (MockWebServer) — 7 cases: create POST body shape + parse, 402 ENTITLEMENT_REQUIRED mapping, rename via PUT, setActive via PUT, delete 204 happy path, 404 mapping, 409 SLOT_FULL mapping
+  - **`AddSourceWizardViewModelTest`** (Turbine + MockK) — 10 cases: initial state, pick-kind guard, Kind→Endpoint advance, Endpoint URL guard, Preview generation for M3U+EPG vs. plain M3U, Confirm happy path → Done, Confirm ENTITLEMENT_REQUIRED surfaces friendly error, back from Endpoint → Kind, cancel resets draft
+- Docs:
+  - `apps/android-tv/README.md` — new "Source management (Run 15)" section: 4-step wizard breakdown, data table, nav-route table, test summary
+  - `CLAUDE.md` — Run 15 ticked, Run 16 (Playback + heartbeat + EPG worker) queued with new `PlayerScreen`, `PlaybackRepository`, API-side `/v1/playback/*`, `/v1/continue-watching`, standalone `services/epg-worker/`, and 4 test matrices
+- Token discipline verified (grep-clean): zero `Color(0x...)` literals in `ui/sources/`, all internal imports resolve
+- **Static verification done in this session:** Kotlin sources conform to Compose / tv-foundation / tv-material / Retrofit / Hilt / Navigation-Compose API surfaces. Routes.SourceIdArg / HomePattern references all resolve. No hardcoded color / dp / TextStyle literals in any screen body (grep-clean)
+- **Cannot verify in this session:** `./gradlew :app:assembleDebug` / `:app:testDebugUnitTest` — Android SDK absent. Verify locally with backend up (`docker compose` + `npm run start:dev`), real Firebase, emulator. End-to-end expectation: Home empty-state → Add Source → 4-step wizard → `POST /v1/sources` with encrypted credentials → back to sources list → source appears; EPG button opens the grid; Pause / Resume flips `is_active`; Delete goes through confirmation and actually removes the row
+
+### Run 14 — 2026-04-13 — Home screen (hero + rows + empty-state)
+- Extended the API client with `SourceDto` / `SourceListResponse` and a `GET /v1/sources?profileId=` endpoint on `PremiumPlayerApi`. Added `SourceRepository.list(profileId)` wrapping the call through `ApiErrorMapper`
+- New domain package `data/home/` with stable, platform-free models (`HomeTile`, `HomeRow`, `HomeHero`, `HomeDeeplink`, `HomeSnapshot`)
+- `HomeRepository.snapshot(profileId)` aggregates the live source list with stub Continue Watching / Favorites / Suggested rows. Stub rows are derived deterministically from the source list so the populated state always has meaningful content while the real endpoints (Run 15 favorites, Run 16 continue-watching) land in later runs
+- `HomeViewModel` (`ui/home/`) reads `profileId` from `SavedStateHandle` and exposes `StateFlow<HomeUiState>` with four states: `Loading`, `EmptySource(profile)`, `Populated(profile, snapshot)`, `Error(message)`. Error path pipes through `ApiErrorCopy.forCode(...)` for user-facing strings
+- `Routes.HomePattern = "home?profileId={profileId}"` with `Routes.home(profileId)` builder and `Routes.ProfileIdArg` constant. `PremiumTvApp` NavHost registers the pattern with a nullable string `navArgument`. `ProfilePickerScreen` now navigates with the selected profile's id
+- UI components:
+  - `HomeHeader` — inline `BrandLogo` + right-aligned profile indicator (initial-avatar gradient + name + adult/kids label)
+  - `SourcePickerRail` — premium empty-state hero: outline chips ("Step 1 of 1", "M3U · XMLTV · M3U+EPG"), `DisplayHero` title, editorial body copy, Add Source + Sign Out CTAs
+  - `HomeScreen` — full populated layout: header + hero carousel (21:9 `PremiumCard`s with brand-accent gradient backdrops and a `HeroCaption` column below each) + stacked `RowOfTiles` sections for Continue Watching / Favorites / Suggested / Your Sources. Every row implements the Run 12 focus-veil pattern independently. First hero auto-focuses on composition so the user lands "inside" the page
+- Compose `@Preview`s for the populated home (with fixture profile + 2 sources), the empty-source variant, `HomeHeader`, `SourcePickerRail`
+- Unit tests (`test/.../ui/home/HomeViewModelTest.kt`) — MockK + Turbine with `UnconfinedTestDispatcher`. Three cases: Populated with profile resolved from nav arg; EmptySource when sources list is empty; Error with mapped UNAUTHORIZED message. Tolerates the init-Loading race by accepting Loading followed by the terminal state
+- Verified Run 11-13 content bar still holds: grep-clean — zero hardcoded `Color(0x…)` in `ui/home/`, zero `Routes.Home` stale references, imports all resolve
+- Updated `apps/android-tv/README.md` with a full "Home screen (Run 14)" section: ASCII layout diagrams for populated + empty, data-flow diagram (ProfilePicker → HomeViewModel → HomeRepository → SourceRepository → `/v1/sources`), nav-pattern notes, state-model table
+- **Static verification done in this session:** Kotlin sources align with Compose / tv-foundation / tv-material / Hilt / Navigation-Compose API surfaces. Internal imports resolve. No hardcoded dp/Color/TextStyle literals in any screen body
+- **Cannot verify in this session:** `./gradlew :app:assembleDebug` / `:app:testDebugUnitTest` — Android SDK absent. **Verify locally** with backend up (`docker compose up -d` + `npm run start:dev`), real Firebase credentials in `local.properties`, then sign in, pick profile, observe Home hitting `GET /v1/sources?profileId=…` with the Bearer token attached. Expected: empty-state rail for fresh account, hero + rows stack after a source is added
+
+### Run 13 — 2026-04-13 — Onboarding + Auth screens
+- Added `BuildConfig` fields (`API_BASE_URL`, `FIREBASE_API_KEY`, `FIREBASE_PROJECT_ID`, `FIREBASE_APPLICATION_ID`) fed from `local.properties` / Gradle properties. Debug default points at `http://10.0.2.2:3000/v1/` for the emulator-to-host API loop.
+- **Firebase is initialized programmatically** via `FirebaseModule` (`FirebaseOptions.Builder() + FirebaseApp.initializeApp(...)`). NO `google-services.json` plugin — the project imports without secrets and real values slot into `local.properties`.
+- `NetworkModule` provides Retrofit + OkHttp + kotlinx.serialization with an `AuthInterceptor` that attaches `Authorization: Bearer <firebaseIdToken>` on every non-`/auth/*` call. Logging interceptor gated on `BuildConfig.DEBUG`.
+- API layer under `data/api/`:
+  - `ApiModels.kt` — `AccountSnapshotResponse`, `EntitlementDto`, `ProfileDto`, `FirebaseTokenRequest`, `ApiErrorEnvelope`
+  - `PremiumPlayerApi.kt` — Retrofit interface matching `packages/api-contracts/openapi.yaml` for `/auth/{register,login,refresh}`, `/entitlement/{status,trial/start}`, `/profiles`
+  - `ApiError.kt` — `ApiException.{Server, Network, Unknown}` hierarchy + `ApiErrorMapper` that decodes the stable ErrorEnvelope from any HTTP error body. `ApiErrorCopy.forCode(...)` maps every known `ErrorCode` to English user copy (i18n hook in Run 19)
+- Repositories (`data/{auth,entitlement,profiles}/`):
+  - `AuthRepository` — Firebase `createUserWithEmailAndPassword` / `signInWithEmailAndPassword` → fetch ID token → `POST /v1/auth/{register,login}`. `refresh()` forces a fresh token and calls `/refresh` with `checkRevoked=true`
+  - `EntitlementRepository` — `status()` + `startTrial()`
+  - `ProfileRepository` — `list()`
+- 5 Screens + 4 ViewModels (Hilt-injected, `StateFlow<UiState>` with explicit `Editing/Submitting/Done/Error` states):
+  - `WelcomeScreen` — brand logo + display copy + two primary CTAs
+  - `AuthFormScaffold` (shared) + `SignupScreen` + `LoginScreen` — premium email/password form, inline validation, error banner using `PremiumColors.DangerRed` on a translucent backplate
+  - `TrialActivationScreen` — outline chips for "14-day trial" + "No payment", handles `ENTITLEMENT_REQUIRED` by fetching live status and showing the `AlreadyConsumed` variant without crashing
+  - `ProfilePickerScreen` — `TvLazyRow` of square `PremiumCard`s with the focus-veil pattern; "Add profile" tile when under the cap; PIN chip when a profile has a PIN set
+- `PremiumTvApp` now owns a `NavHost` with the full graph: `Boot → Welcome → Signup/Login → TrialActivation → ProfilePicker → Home` (Home is a Run 14 stub). Transitions use premium fade via `PremiumEasing.Premium` over `durations.short`. The Boot screen reuses the splash content with a 1.2s deliberate pause (reads as "premium product settling", not as a spinner)
+- Tests:
+  - `EntitlementRepositoryTest` (MockWebServer) — success + `402 ENTITLEMENT_REQUIRED` → `ApiException.Server` mapping + happy-path trial start
+  - `ProfileRepositoryTest` (MockWebServer) — list parse + 401 UNAUTHORIZED mapping
+  - `TrialActivationViewModelTest` (Turbine + MockK) — happy-path `Idle → Submitting → Activated` and `ENTITLEMENT_REQUIRED → AlreadyConsumed` (with live-status fallback)
+  - `TestApiFactory` — reusable MockWebServer ↔ Retrofit wiring helper for future repo tests
+- `apps/android-tv/README.md` extended with an "Onboarding flow (Run 13)" section: flow diagram, `BuildConfig` / `local.properties` override guide (including the "no `google-services.json` plugin" design choice), layer map, error-copy mapping, and an end-to-end local-run walkthrough
+- **Static verification done in this session:** Kotlin sources conform to Compose / tv-foundation / tv-material / Retrofit / Hilt API surfaces; internal imports resolve; no hardcoded `Color(0x…)` / `dp` / `TextStyle(...)` literals in any screen body
+- **Cannot verify in this session:** `./gradlew :app:assembleDebug` and `./gradlew :app:testDebugUnitTest` — both require Android Studio / Android SDK (unavailable in this sandbox). **Verify locally** by importing `apps/android-tv/` in Android Studio Hedgehog+, dropping real Firebase values into `local.properties`, bringing up the Run 10 backend (`docker compose up -d` + `npm run start:dev`), and running on a Google TV emulator. End-to-end expectation: Welcome → Sign-Up → Trial Activation → Profile Picker, with the API log showing the two auth+trial POSTs under one Firebase token.
 
 ### Run 12 — 2026-04-13 — Design system in Compose (premium component library)
 - Copied `assets/logo/logo-no_background.png` → `apps/android-tv/app/src/main/res/drawable/brand_logo.png` so Compose can resolve it via `R.drawable.brand_logo`
