@@ -54,25 +54,40 @@ brings the M3U / XMLTV sources.
 
 ## Architecture in 30 seconds
 
-```
-                              ┌────────────────────────┐
-                              │   Google Play Billing  │
-                              └─────────┬──────────────┘
-                                        │ purchase token
-   ┌─────────────────────┐              ▼
-   │   Android TV app    │      ┌───────────────────┐         ┌──────────────┐
-   │  Compose + Media3   │◀────▶│   NestJS  /v1     │◀───────▶│ Postgres 16  │
-   │  Hilt · TV-Material │      │  Auth · Entitle   │         │  + pgcrypto  │
-   └──────────┬──────────┘      │  Devices · Source │         └──────────────┘
-              │                 │  Profile · Play   │         ┌──────────────┐
-              │ ID-token        │  Billing · EPG    │◀───────▶│   Redis 7    │
-              ▼                 └─┬─────────────┬───┘         └──────────────┘
-   ┌─────────────────────┐        │             │
-   │  Firebase Auth      │        ▼             ▼
-   └─────────────────────┘  ┌──────────┐  ┌──────────────┐
-                            │ billing- │  │  epg-worker  │
-                            │  worker  │  │   (XMLTV)    │
-                            └──────────┘  └──────────────┘
+```mermaid
+flowchart TB
+    classDef ext  fill:#1F2937,stroke:#3B82F6,color:#F8FAFC,stroke-width:1px
+    classDef tv   fill:#050608,stroke:#60A5FA,color:#F8FAFC,stroke-width:2px
+    classDef svc  fill:#272C35,stroke:#3B82F6,color:#F8FAFC,stroke-width:1px
+    classDef data fill:#0F172A,stroke:#2563EB,color:#F8FAFC,stroke-width:1px
+
+    FA["Firebase Auth"]:::ext
+    GP["Google Play Billing"]:::ext
+    XML["XMLTV providers"]:::ext
+
+    TV["Android TV app<br/>Compose · Media3 · Hilt"]:::tv
+
+    subgraph BACKEND["Backend (single host)"]
+      direction TB
+      API["NestJS API · /v1<br/>Auth · Entitlement · Devices<br/>Sources · Profiles · Playback<br/>Billing · EPG"]:::svc
+      BW["billing-worker"]:::svc
+      EW["epg-worker"]:::svc
+    end
+
+    PG[("Postgres 16<br/>+ pgcrypto")]:::data
+    RD[("Redis 7")]:::data
+
+    TV -- "ID token" --> FA
+    TV -- "purchase flow" --> GP
+    TV <-->|"Bearer · REST"| API
+
+    BW -- "verify · ack · refund" --> GP
+    EW -- "fetch XMLTV" --> XML
+
+    API <--> PG
+    API <--> RD
+    BW --> PG
+    EW --> PG
 ```
 
 Two non-negotiables:
