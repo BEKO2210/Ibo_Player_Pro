@@ -1,6 +1,20 @@
 # Premium TV Player — Project Guide for Claude Code
 
-> **This file is the single source of truth.** Every new Claude session starts by reading this file top-to-bottom, then executes the block under **▶️ Next Run**. After finishing the run, Claude MUST update this file (tick the run, write the next "Next Run" block, append to Run Log) and commit.
+> **This file owns the project plan.** It is the source of truth for the
+> roadmap, locked product decisions, the current run, and the run log. It
+> is **not** the source of truth for code-adjacent specs — those live next
+> to the code:
+>
+> - HTTP contract → [`packages/api-contracts/openapi.yaml`](./packages/api-contracts/openapi.yaml)
+> - Data model → [`docs/architecture/data-model.md`](./docs/architecture/data-model.md)
+> - Entitlement → [`docs/architecture/entitlement-state-machine.md`](./docs/architecture/entitlement-state-machine.md)
+> - Doc-drift contract + per-surface ownership → [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md)
+> - Operations / runbooks → [`docs/operations/`](./docs/operations/)
+>
+> Every new Claude session starts by reading this file top-to-bottom, then
+> executes the block under **▶️ Next Run**. After finishing the run, Claude
+> MUST update this file (tick the run, write the next "Next Run" block,
+> append to Run Log) and commit.
 
 ---
 
@@ -188,23 +202,51 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 ## 🔁 Per-Run Protocol (Claude MUST follow)
 
 1. **Read** CLAUDE.md completely — especially **Current State** and **▶️ Next Run**
-2. **Execute** only the Deliverables listed in the Next Run block. No scope creep.
-3. **Verify** against Acceptance criteria before finishing
-4. **Update CLAUDE.md**:
+2. **Read** [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md) on first session, then trust the doc-drift contract
+3. **Execute** only the Deliverables listed in the Next Run block. No scope creep.
+4. **Verify** against Acceptance criteria before finishing
+5. **Run the pre-commit checklist** — both must pass before any commit:
+   ```bash
+   ./scripts/check-drift.sh                                    # 8 invariants
+   cd services/api && npm test                                 # 143 backend tests
+   # cd apps/android-tv && ./gradlew :app:testDebugUnitTest    # local only (Android SDK)
+   ```
+6. **Update CLAUDE.md**:
    - Tick the just-finished run in the Full Roadmap
-   - Update **Current State** (Phase, Last completed run)
+   - Update **Current State** (Phase, Last completed run, Current branch if it changed)
    - Replace the **▶️ Next Run** block with the next run's Goal / Deliverables / Acceptance criteria / After-this-run note
    - Append a new entry to the **Run Log** below (date, title, 2–5 bullet summary)
-5. **Commit** with message format: `<area>: <short summary> (Run N)`
+7. **Commit** with message format: `<area>: <short summary> (Run N)`
    Examples: `docs: add PRD and user flows (Run 2)`, `api: scaffold NestJS service (Run 6)`, `tv: add home screen (Run 14)`
-6. **Push** to `claude/premium-tv-player-plan-WG2tC` with `git push -u origin claude/premium-tv-player-plan-WG2tC` (retry on network error: 2s, 4s, 8s, 16s)
-7. **Do NOT** open a Pull Request unless the user explicitly asks
+8. **Push** to the branch listed under **Current State → Current branch** with
+   `git push -u origin <that-branch>` (retry on network error: 2s, 4s, 8s, 16s)
+9. **Do NOT** open a Pull Request unless the user explicitly asks
 
-### Guardrails
-- **Never** introduce MAC-address based device binding. Always server-managed device slots tied to account.
+### Branch rules (absolute, no exceptions)
+
+- The branch you push to is the value of **Current State → Current branch** above.
+  Today: `claude/fix-api-timeout-vFqPP`. If the user changes it, update Current
+  State *first*, then push.
+- **Never** push to `main`. There is no second clause to this rule.
+- **Never** force-push (`--force`, `--force-with-lease`) without an explicit
+  request from the user in the current session.
+- **Never** skip git hooks (`--no-verify`, `--no-gpg-sign`) without an explicit
+  request. If a hook fails, fix the underlying cause.
+- **Never** create commits the user did not ask for. The trigger to commit is
+  always either an explicit request or step 7 of this protocol — nothing else.
+
+### Guardrails (product-level non-negotiables)
+- **Never** introduce MAC-address based device binding. Always server-managed
+  device slots tied to account.
 - **Never** store entitlement/trial state only on the client. Server is authoritative.
+- **Never** ship source credentials in plaintext. AES-256-GCM at rest, fresh IV per write.
+- **Never** weaken the PIN gate. Argon2id, server-side counter, server-side lockout window.
 - **Never** add an OSS license. This repo is proprietary.
-- **Never** scope-creep: if a task isn't in the current Next Run deliverables, note it under **Parking Lot** below instead of doing it.
+- **Never** scope-creep: if a task isn't in the current Next Run deliverables,
+  note it under **Parking Lot** below instead of doing it.
+- **Never** let documentation drift from code. Every code change updates the
+  surface that owns it — see [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md) for
+  the per-surface ownership matrix.
 
 ---
 

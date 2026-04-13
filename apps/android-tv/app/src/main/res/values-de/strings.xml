@@ -8,6 +8,8 @@
     -->
 
     <!-- Common -->
+    <string name="app_name">Premium TV Player</string>
+    <string name="common_dash">—</string>
     <string name="common_back">Zurück</string>
     <string name="common_cancel">Abbrechen</string>
     <string name="common_continue">Weiter</string>
