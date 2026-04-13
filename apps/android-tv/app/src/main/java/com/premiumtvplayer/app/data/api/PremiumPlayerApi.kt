@@ -1,8 +1,13 @@
 package com.premiumtvplayer.app.data.api
 
+import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.PUT
 import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 /**
  * Premium TV Player V1 API contract — mirrors `packages/api-contracts/openapi.yaml`.
@@ -34,9 +39,21 @@ interface PremiumPlayerApi {
     @GET("profiles")
     suspend fun listProfiles(): ProfileListResponse
 
-    // ── Sources (read-only here; full CRUD lands in Run 15) ────────────
+    // ── Sources (full CRUD — Run 15) ───────────────────────────────────
     @GET("sources")
     suspend fun listSources(
-        @retrofit2.http.Query("profileId") profileId: String? = null,
+        @Query("profileId") profileId: String? = null,
     ): SourceListResponse
+
+    @POST("sources")
+    suspend fun createSource(@Body body: CreateSourceRequest): SingleSourceResponse
+
+    @PUT("sources/{id}")
+    suspend fun updateSource(
+        @Path("id") id: String,
+        @Body body: UpdateSourceRequest,
+    ): SingleSourceResponse
+
+    @DELETE("sources/{id}")
+    suspend fun deleteSource(@Path("id") id: String): Response<Unit>
 }

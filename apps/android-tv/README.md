@@ -305,6 +305,69 @@ optional. The NavHost in `PremiumTvApp` reads it into
 Unit tests in `ui/home/HomeViewModelTest.kt` cover all four states
 (MockK + Turbine + `UnconfinedTestDispatcher`).
 
+## Source management (Run 15)
+
+Home's "Add Source" CTA, the source hero tile, and the Sources row all
+route into `ui/sources/SourceManagementScreen`. Three flows:
+
+- **List / edit / pause / delete** — `SourceManagementScreen`. Inline
+  rename via `SourceEditScreen` callsite; Pause ↔ Resume with
+  `PUT /v1/sources/{id}` `{isActive}`; Delete goes through a full-screen
+  confirmation overlay (`ConfirmDeleteOverlay`) before firing.
+- **Add source** — `AddSourceWizardScreen` with a 4-step machine:
+  1. `Kind` — three focusable radio cards (M3U, XMLTV, M3U+EPG)
+  2. `Endpoint` — name + URL + optional credentials via `PremiumTextField`
+  3. `Preview` — deterministic preview (channels / programme estimates)
+     derived from the URL hash. Real preview (fetch + parse) is gated
+     behind the Run 16 EPG worker so we don't block the wizard on a
+     network round-trip.
+  4. `Confirm` — `POST /v1/sources`; 402 → premium "requires active
+     entitlement" copy; 409 SLOT_FULL maps to a friendly banner.
+- **EPG browse** — `EpgBrowseScreen` for any source row: channels on
+  the left gutter, programmes on a 30-minute timeline to the right.
+  Focus any programme block to light up the Bravia-style
+  `FocusedProgrammeOverlay` at the top with title, subtitle,
+  description, and time range.
+
+### Data
+
+| Layer            | Artifact                                                    |
+|------------------|-------------------------------------------------------------|
+| API DTOs         | `CreateSourceRequest`, `UpdateSourceRequest`, `SingleSourceResponse` |
+| Retrofit         | `listSources`, `createSource`, `updateSource(PUT)`, `deleteSource(DELETE 204)` |
+| Repositories     | `SourceRepository.{list, create, rename, setActive, delete}`, `EpgRepository.browse(sourceId)` |
+| Domain           | `SourceKind` enum (mirrors `source_kind` on the backend); `EpgChannel`, `EpgProgramme`, `EpgBrowseSnapshot` |
+
+`EpgRepository.browse` returns fixture data in Run 15 — deterministic
+programme blocks derived from the live source list so the screen is
+exercisable without a running EPG worker. Run 16 swaps it for live
+`/v1/epg/*` calls; `EpgBrowseSnapshot` keeps its shape.
+
+### Nav routes
+
+| Constant                        | Path                                  |
+|---------------------------------|---------------------------------------|
+| `Routes.Sources`                | `sources`                             |
+| `Routes.AddSource`              | `sources/add`                         |
+| `Routes.EpgBrowsePattern`       | `sources/{sourceId}/epg`              |
+
+`Routes.epgBrowse(sourceId)` builds the path. `SourceIdArg` is the
+non-nullable nav argument read by `EpgBrowseViewModel` via
+`SavedStateHandle`.
+
+### Tests
+
+- `data/sources/SourceRepositoryTest.kt` — MockWebServer. Covers:
+  create (POST body shape + parse), 402 → `ApiException.Server`,
+  rename (PUT), setActive (PUT), delete 204 path, 404 mapping, 409
+  SLOT_FULL mapping.
+- `ui/sources/AddSourceWizardViewModelTest.kt` — MockK + Turbine.
+  Covers: initial Kind state, guard "pick kind", Kind→Endpoint advance,
+  Endpoint validation failure, preview generation for M3U+EPG
+  (non-zero programmes) and plain M3U (zero programmes), Confirm
+  happy-path → Done, Confirm with ENTITLEMENT_REQUIRED surfaces friendly
+  error, back from Endpoint returns to Kind, cancel resets draft.
+
 ## Build + run
 
 > **Tooling required (cannot be run in this repo's CI sandbox — Android

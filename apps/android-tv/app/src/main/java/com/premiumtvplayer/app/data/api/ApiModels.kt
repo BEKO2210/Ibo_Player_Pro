@@ -82,6 +82,29 @@ data class SourceListResponse(
     val sources: List<SourceDto>,
 )
 
+@Serializable
+data class CreateSourceRequest(
+    val profileId: String? = null,
+    val name: String,
+    /** One of: m3u, xmltv, m3u_plus_epg. */
+    val kind: String,
+    val url: String,
+    val username: String? = null,
+    val password: String? = null,
+    val headers: Map<String, String>? = null,
+)
+
+@Serializable
+data class UpdateSourceRequest(
+    val name: String? = null,
+    val isActive: Boolean? = null,
+)
+
+@Serializable
+data class SingleSourceResponse(
+    val source: SourceDto,
+)
+
 // ── Stable error envelope (matches packages/api-contracts ErrorEnvelope) ──
 
 @Serializable

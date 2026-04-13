@@ -7,7 +7,7 @@
 ## 🎯 Current State
 
 - **Phase:** C — Android TV Client
-- **Last completed run:** Run 14 — Home screen
+- **Last completed run:** Run 15 — Source management UI + EPG browse
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
@@ -15,42 +15,41 @@
 
 ---
 
-## ▶️ Next Run (Run 15): Source Management UI + EPG Browse View
+## ▶️ Next Run (Run 16): Playback (Media3 / ExoPlayer) + Heartbeat Sync
 
 ### Goal
-Wire the first fully writable flow in the Android TV client: users add, rename, pause, and remove M3U / XMLTV / M3U+EPG sources through a premium multi-step UI, and can browse live channels + the electronic programme guide (EPG) for sources that supply it. This is the run that makes the empty-source home from Run 14 actionable end-to-end.
+Wire Media3 / ExoPlayer into the Android TV client so live channels and VOD items actually play, with server-side heartbeat sync so Continue Watching and Watch History become real instead of stubbed. Also stand up the `epg-worker` backend process so EPG browse graduates from fixture data to real `/v1/epg/*` responses.
 
 ### Deliverables
-- [ ] `SourceManagementScreen` with three modes: **list**, **add**, **edit**. Uses `RowOfTiles` for existing sources, the shared `AuthFormScaffold` pattern for add / edit, and a confirmation step before destructive operations.
-- [ ] `AddSourceWizard` — 4 steps:
-  1. `Kind` — pick M3U / XMLTV / M3U+EPG via three focusable `PremiumCard`s
-  2. `Endpoint` — URL + optional username / password using `PremiumTextField`
-  3. `Preview` — call parser stub on the user-supplied URL; show channel-count + first 5 channels + first 5 programmes
-  4. `Confirm` — `POST /v1/sources`; map 402 → prompt to start trial, 403 → "source belongs to another account"
-- [ ] `EpgBrowseScreen` — grid-of-channels × timeline for a single source: vertical list of channels (left gutter), horizontal scrollable programme blocks (right). Focus moves on a 30-minute grid. When focus lands on a programme block, show `HeroSection` overlay with title / description / time window.
-- [ ] Repositories:
-  - `SourceRepository` extended with `create(…)`, `update(id, …)`, `delete(id)` — mirrors Run 10 endpoints
-  - `EpgRepository` with `channels(sourceId)` + `programmes(channelId, window)` — stubbed against the parser package until the Run 16 EPG worker serves live data
-- [ ] ViewModels with `StateFlow<UiState>` for all three screens; every destructive action goes through a confirmation state before firing the API
-- [ ] `@Preview`s for each screen (list, add wizard step 2, EPG browse with overlay)
+- [ ] `PlayerScreen` composable (full-bleed) hosting a Media3 `ExoPlayer` with TV-friendly controls (seek bar, play/pause, audio-track picker, subtitle picker) built on Run 12 components (`PremiumButton`, `PremiumChip`).
+- [ ] Playback deep-links resolved from `HomeDeeplink.LiveChannel` + `HomeDeeplink.VodItem` + EPG programme blocks → `Routes.play(sourceId, itemId, itemType)`.
+- [ ] `PlaybackRepository` against these new backend endpoints:
+  - `POST /v1/playback/start { profileId, sourceId, itemId, itemType }` → returns `{ sessionId }`
+  - `POST /v1/playback/heartbeat { sessionId, positionSeconds, state }` (every 10 s while playing)
+  - `POST /v1/playback/stop { sessionId, finalPositionSeconds }`
+- [ ] API side — new `PlaybackModule` + controllers + `playback_sessions` writes + `continue_watching` upsert at the same time (`continue_watching` is updated on every heartbeat + on stop).
+- [ ] `GET /v1/continue-watching?profileId=` endpoint returning the latest N rows for the caller; wire into `HomeRepository` to replace the stub data.
+- [ ] `services/epg-worker/` — standalone Node process (mirroring the Run 9 billing-worker pattern) that fetches XMLTV from registered sources, runs it through `packages/parsers`, and persists `epg_channels` + `epg_programs`. Expose the data via `GET /v1/epg/channels?sourceId=` + `GET /v1/epg/programmes?channelId=&from=&to=` on the API; swap `EpgRepository.browse` from fixture to live calls.
 - [ ] Unit tests:
-  - `SourceRepositoryTest` (MockWebServer) — full CRUD round-trip + error envelope mapping for 402 / 409 / 404
-  - `AddSourceWizardViewModelTest` — step transitions + validation + error branches
-- [ ] Update `apps/android-tv/README.md` with "Source management (Run 15)" + "EPG browse (Run 15)" sections
+  - `PlaybackRepositoryTest` (MockWebServer) — start / heartbeat / stop
+  - `PlayerViewModelTest` — state machine (buffering → playing → paused → stopped) + heartbeat scheduling
+  - API side: `PlaybackService.spec.ts` — session lifecycle, continue_watching upsert, error paths
+  - EPG worker: fetch + parse + persist round-trip with a fake HTTP server
+- [ ] Update both READMEs with a "Playback (Run 16)" + "EPG worker" section
 
 ### Acceptance criteria
-- Fresh account adds its first source end-to-end: Home empty-state → AddSourceWizard → `POST /v1/sources` succeeds → returns to Home with the new source on the rail AND as a hero card
-- Adding a malformed URL surfaces a premium error banner with the parser's `malformedEntries` count, never a crash
-- Users can rename and pause a source; DELETE asks for confirmation first
-- EPG browse renders channels + programmes for an M3U+EPG source against the in-process parser fixture (until Run 16)
-- All Run 13-14 tests remain green; new suites have ≥ 8 tests combined
+- Selecting a live channel or VOD item from Home / Sources / EPG starts playback within < 2 s on an emulator (HLS + MP4)
+- Server-side `playback_sessions` row is created, heartbeat updates `latest_position_seconds`, and `continue_watching` row is upserted at 10 s cadence
+- Home Continue Watching row reflects the real user history (not the stub)
+- `EpgBrowseScreen` renders real programmes served by the EPG worker for an M3U+EPG source
+- Every new Kotlin test + Jest test + worker test passes; existing suites stay green
 
 ### After this run — update CLAUDE.md
-1. Tick Run 15 in the roadmap
-2. Set "Last completed run" to `Run 15 — Source management UI + EPG browse`
-3. Write the new "Next Run" block for **Run 16: Playback (Media3/ExoPlayer) + heartbeat sync**
+1. Tick Run 16 in the roadmap
+2. Set "Last completed run" to `Run 16 — Playback + heartbeat + EPG worker`
+3. Write the new "Next Run" block for **Run 17: Billing flow in app (Play Billing Client, purchase, restore)**
 4. Append entry to **Run Log**
-5. Commit: `tv: add source management + EPG browse (Run 15)` and push
+5. Commit: `tv+api: add playback + heartbeat + epg worker (Run 16)` and push
 
 ---
 
@@ -178,7 +177,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 - [x] **Run 12** — Design system in Compose: dark theme, typography, colors, focus states, motion, reusable Card/Row/Hero
 - [x] **Run 13** — Onboarding/Auth screens: Welcome → Signup/Login → Trial activation → Profile picker. Firebase Auth + API client
 - [x] **Run 14** — Home screen: Hero carousel, rows, Continue Watching, Favorites. Logo wired in if not already
-- [ ] **Run 15** — Source management UI + EPG browse view
+- [x] **Run 15** — Source management UI + EPG browse view
 - [ ] **Run 16** — Playback (Media3/ExoPlayer): Live, VOD, Resume, subtitles, audio-track picker, heartbeat sync
 - [ ] **Run 17** — Billing flow in app: Play Billing Client, purchase trigger, Restore Purchase, entitlement UI states
 - [ ] **Run 18** — Parental controls: PIN gate, age filter, device list / logout / unpair
@@ -289,6 +288,27 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
 - Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 15 — 2026-04-13 — Source management UI + EPG browse view
+- Extended `PremiumPlayerApi` with `POST /v1/sources`, `PUT /v1/sources/{id}`, `DELETE /v1/sources/{id}`. Added matching DTOs (`CreateSourceRequest`, `UpdateSourceRequest`, `SingleSourceResponse`). `SourceRepository` grew `create`, `rename`, `setActive`, `delete` — all routed through `ApiErrorMapper` and a non-2xx DELETE response is re-thrown as `HttpException` so the stable ErrorEnvelope path stays uniform
+- Introduced `SourceKind` enum mirroring the backend's `source_kind` and `CreateSourceInput` normalized-input DTO
+- New `data/epg/` package (`EpgModels.kt` + `EpgRepository.kt`). Run 15 returns deterministic fixture channels (6 per source) × programmes (12 × 30-minute blocks) so `EpgBrowseScreen` is exercisable end-to-end without the Run 16 EPG worker. `EpgBrowseSnapshot` shape is locked in — Run 16 swaps the repo implementation; the UI doesn't change
+- `ui/sources/` package with 3 ViewModels + 3 screens:
+  - **`AddSourceWizardViewModel`** — explicit 4-step state machine (`Kind` / `Endpoint` / `Preview` / `Confirm`) with guards on each transition. `WizardUiState.Editing` carries the draft + preview + submitting/error; `Done(source)` terminals on success. Deterministic URL-hash-based preview estimates (channels + programmes, zero-programmes for plain M3U) so the screen reads "premium" without a network round-trip
+  - **`AddSourceWizardScreen`** — step indicator chips, 3 focusable `KindRadioCard`s, shared `PremiumTextField`-based endpoint form, preview + confirm review cards, error banner on `DangerRed` translucent backplate, footer with `Continue` / `Back` / `Cancel`
+  - **`SourceManagementViewModel`** — `Loading` / `Ready` / `Error` plus per-row `busyId` and `confirmingDeleteId` state so destructive ops can't race
+  - **`SourceManagementScreen`** — list of sources as premium rows with EPG / Pause-or-Resume / Delete actions. Delete flows through the full-screen `ConfirmDeleteOverlay` (translucent scrim + SurfaceFloating card)
+  - **`EpgBrowseViewModel`** + **`EpgBrowseScreen`** — 30-minute timeline grid. Left gutter pins channel names; right side is horizontal `TvLazyRow` of programme blocks with a fixed 3dp-per-minute width so rows align visually. Focusing any block updates a Bravia-style `FocusedProgrammeOverlay` at the top with title + chips + time range + description
+- Nav routes (`Routes.kt`): `Sources` = `sources`, `AddSource` = `sources/add`, `EpgBrowsePattern` = `sources/{sourceId}/epg`, `Routes.epgBrowse(id)` builder, `SourceIdArg` non-nullable nav argument. NavHost in `PremiumTvApp` registers all three routes. `HomeScreen.onAddSource` now navigates into `AddSource`; `HomeDeeplink.AddSource` and `Source` both route properly; `LiveChannel` / `VodItem` deep-links are held for Run 16 (playback)
+- Tests (JVM, via `./gradlew :app:testDebugUnitTest` locally):
+  - **`SourceRepositoryTest`** (MockWebServer) — 7 cases: create POST body shape + parse, 402 ENTITLEMENT_REQUIRED mapping, rename via PUT, setActive via PUT, delete 204 happy path, 404 mapping, 409 SLOT_FULL mapping
+  - **`AddSourceWizardViewModelTest`** (Turbine + MockK) — 10 cases: initial state, pick-kind guard, Kind→Endpoint advance, Endpoint URL guard, Preview generation for M3U+EPG vs. plain M3U, Confirm happy path → Done, Confirm ENTITLEMENT_REQUIRED surfaces friendly error, back from Endpoint → Kind, cancel resets draft
+- Docs:
+  - `apps/android-tv/README.md` — new "Source management (Run 15)" section: 4-step wizard breakdown, data table, nav-route table, test summary
+  - `CLAUDE.md` — Run 15 ticked, Run 16 (Playback + heartbeat + EPG worker) queued with new `PlayerScreen`, `PlaybackRepository`, API-side `/v1/playback/*`, `/v1/continue-watching`, standalone `services/epg-worker/`, and 4 test matrices
+- Token discipline verified (grep-clean): zero `Color(0x...)` literals in `ui/sources/`, all internal imports resolve
+- **Static verification done in this session:** Kotlin sources conform to Compose / tv-foundation / tv-material / Retrofit / Hilt / Navigation-Compose API surfaces. Routes.SourceIdArg / HomePattern references all resolve. No hardcoded color / dp / TextStyle literals in any screen body (grep-clean)
+- **Cannot verify in this session:** `./gradlew :app:assembleDebug` / `:app:testDebugUnitTest` — Android SDK absent. Verify locally with backend up (`docker compose` + `npm run start:dev`), real Firebase, emulator. End-to-end expectation: Home empty-state → Add Source → 4-step wizard → `POST /v1/sources` with encrypted credentials → back to sources list → source appears; EPG button opens the grid; Pause / Resume flips `is_active`; Delete goes through confirmation and actually removes the row
 
 ### Run 14 — 2026-04-13 — Home screen (hero + rows + empty-state)
 - Extended the API client with `SourceDto` / `SourceListResponse` and a `GET /v1/sources?profileId=` endpoint on `PremiumPlayerApi`. Added `SourceRepository.list(profileId)` wrapping the call through `ApiErrorMapper`

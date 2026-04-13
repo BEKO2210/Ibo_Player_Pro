@@ -29,10 +29,14 @@ import androidx.tv.material3.Text
 import com.premiumtvplayer.app.ui.components.BootProgress
 import com.premiumtvplayer.app.ui.components.BrandLogo
 import com.premiumtvplayer.app.ui.components.BrandLogoSize
+import com.premiumtvplayer.app.data.home.HomeDeeplink
 import com.premiumtvplayer.app.ui.home.HomeScreen
 import com.premiumtvplayer.app.ui.nav.Routes
 import com.premiumtvplayer.app.ui.onboarding.LoginScreen
 import com.premiumtvplayer.app.ui.onboarding.ProfilePickerScreen
+import com.premiumtvplayer.app.ui.sources.AddSourceWizardScreen
+import com.premiumtvplayer.app.ui.sources.EpgBrowseScreen
+import com.premiumtvplayer.app.ui.sources.SourceManagementScreen
 import com.premiumtvplayer.app.ui.onboarding.SignupScreen
 import com.premiumtvplayer.app.ui.onboarding.TrialActivationScreen
 import com.premiumtvplayer.app.ui.onboarding.WelcomeScreen
@@ -143,14 +147,52 @@ fun PremiumTvApp(navController: NavHostController = rememberNavController()) {
             ),
         ) {
             HomeScreen(
-                onOpenDeeplink = { /* Run 15 — source management / player deep-links */ },
-                onAddSource = { /* Run 15 — add source flow */ },
+                onOpenDeeplink = { deeplink ->
+                    when (deeplink) {
+                        HomeDeeplink.AddSource -> navController.navigate(Routes.AddSource)
+                        is HomeDeeplink.Source -> navController.navigate(Routes.Sources)
+                        // Deep-links into a live channel / VOD item kick off
+                        // playback — that's Run 16. For now we no-op.
+                        is HomeDeeplink.LiveChannel,
+                        is HomeDeeplink.VodItem -> Unit
+                    }
+                },
+                onAddSource = { navController.navigate(Routes.AddSource) },
                 onSignOut = {
-                    // Drop auth state + return to Welcome.
                     navController.navigate(Routes.Welcome) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
+            )
+        }
+        composable(Routes.Sources) {
+            SourceManagementScreen(
+                onAddSource = { navController.navigate(Routes.AddSource) },
+                onOpenEpg = { source -> navController.navigate(Routes.epgBrowse(source.id)) },
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(Routes.AddSource) {
+            AddSourceWizardScreen(
+                onDone = {
+                    // Pop back to the sources list so the fresh source appears
+                    // at the top of the rail.
+                    navController.popBackStack()
+                },
+                onCancel = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = Routes.EpgBrowsePattern,
+            arguments = listOf(
+                androidx.navigation.navArgument(Routes.SourceIdArg) {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = false
+                },
+            ),
+        ) {
+            EpgBrowseScreen(
+                onBack = { navController.popBackStack() },
             )
         }
     }

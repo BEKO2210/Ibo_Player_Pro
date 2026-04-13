@@ -19,4 +19,13 @@ object Routes {
     /** Builder — use this at call sites to navigate into Home. */
     fun home(profileId: String? = null): String =
         if (profileId == null) "home" else "home?$ProfileIdArg=$profileId"
+
+    // ── Sources (Run 15) ───────────────────────────────────────────
+    const val SourceIdArg = "sourceId"
+
+    const val Sources = "sources"
+    const val AddSource = "sources/add"
+    const val EpgBrowsePattern = "sources/{$SourceIdArg}/epg"
+
+    fun epgBrowse(sourceId: String): String = "sources/$sourceId/epg"
 }
