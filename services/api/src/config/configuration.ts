@@ -21,6 +21,18 @@ const envSchema = z
     FIREBASE_PROJECT_ID: z.string().optional(),
     FIREBASE_CLIENT_EMAIL: z.string().optional(),
     FIREBASE_PRIVATE_KEY: z.string().optional(),
+
+    // Billing (Google Play). The service-account reuses the Firebase
+    // credentials above — add the `androidpublisher` scope in GCP IAM.
+    BILLING_ANDROID_PACKAGE_NAME: z.string().optional(),
+    BILLING_PRODUCT_ID_SINGLE: z.string().default('premium_player_single'),
+    BILLING_PRODUCT_ID_FAMILY: z.string().default('premium_player_family'),
+    BILLING_WORKER_POLL_INTERVAL_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(300_000)
+      .default(15_000),
   })
   .superRefine((env, ctx) => {
     const hasJson = !!env.FIREBASE_SERVICE_ACCOUNT_JSON;
@@ -62,6 +74,12 @@ export interface AppConfig {
   };
   firebase: {
     credentials: FirebaseCredentials | null;
+  };
+  billing: {
+    androidPackageName: string | null;
+    productIdSingle: string;
+    productIdFamily: string;
+    workerPollIntervalMs: number;
   };
 }
 
@@ -125,5 +143,11 @@ export function configuration(): AppConfig {
     database: { url: env.DATABASE_URL },
     redis: { url: env.REDIS_URL },
     firebase: { credentials: resolveFirebaseCredentials(env) },
+    billing: {
+      androidPackageName: env.BILLING_ANDROID_PACKAGE_NAME ?? null,
+      productIdSingle: env.BILLING_PRODUCT_ID_SINGLE,
+      productIdFamily: env.BILLING_PRODUCT_ID_FAMILY,
+      workerPollIntervalMs: env.BILLING_WORKER_POLL_INTERVAL_MS,
+    },
   };
 }
