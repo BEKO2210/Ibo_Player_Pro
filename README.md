@@ -1,317 +1,157 @@
-<div align="center"><img src="./assets/logo/logo-no_background.png" alt="Premium TV Player Logo" width="140" />
-  
-  Premium TV Player
+<div align="center">
+  <img src="./assets/logo/logo-no_background.png" alt="Premium TV Player Logo" width="140" />
 
----
+# Premium TV Player
 
-A premium multi-platform TV player built Android TV first
+**Android TV first • Premium UI • User-authorized sources only**
 
-<p align="center">
+<p>
   <img src="https://img.shields.io/badge/Android%20TV-First-0A84FF?style=for-the-badge&logo=android&logoColor=white" alt="Android TV First" />
   <img src="https://img.shields.io/badge/Status-Private%20Development-111827?style=for-the-badge" alt="Private Development" />
   <img src="https://img.shields.io/badge/Trial-14%20Days-22C55E?style=for-the-badge" alt="14 Day Trial" />
   <img src="https://img.shields.io/badge/Profiles-Up%20to%205-8B5CF6?style=for-the-badge" alt="Up to 5 Profiles" />
-  <img src="https://img.shields.io/badge/Family%20Plan-Enabled-06B6D4?style=for-the-badge" alt="Family Plan" />
-  <img src="https://img.shields.io/badge/Cloud%20Sync-Built%20In-2563EB?style=for-the-badge" alt="Cloud Sync" />
   <img src="https://img.shields.io/badge/License-All%20Rights%20Reserved-DC2626?style=for-the-badge" alt="All Rights Reserved" />
-</p><p align="center">
-  Premium dark design. TV-first navigation. Account-based entitlements. Server-authoritative access.
-</p></div>
+</p>
+</div>
 
 ---
 
-Vision
+## 🇬🇧 English
 
-Premium TV Player is being built as a serious premium living-room product, not just a functional player.
+Premium TV Player is a **private, premium multi-platform TV player project** with an Android TV-first strategy.
 
-The goal is a polished, cinematic, multi-platform experience with elegant TV navigation, premium focus states, strong account infrastructure, and a backend that treats entitlements, devices, profiles, and sync as first-class product features.
+### What it is
+- A polished TV experience focused on **remote-first navigation**, clean layouts, and premium dark visuals.
+- A product with **account-based entitlements** (not MAC-address binding).
+- A platform where users can add their own **M3U / M3U8 / XMLTV** sources.
 
-This project is designed around a simple idea:
+### What it is not
+- Not a content provider.
+- Not bundled with channels, movies, series, or copyrighted media catalogs.
+- Not intended to bypass licensing, subscriptions, geo-restrictions, DRM, or copyright law.
 
-> A TV player should feel as premium as the content experience around it.
-
-
-
-
----
-
-What this project is aiming for
-
-Android TV first with a true 10-foot experience
-
-Premium dark interface inspired by high-end streaming products
-
-Account-based entitlements, not device hacks
-
-14-day server-side trial
-
-Up to 5 profiles
-
-Family plan support
-
-Cloud sync for playback state, favorites, and profiles
-
-User-authorized sources only — the app ships empty
-
-Scalable architecture across TV, mobile, web, and future clients
-
-
+### Legal & compliance
+- The app ships empty; users are responsible for the legality of sources they add.
+- Use only streams and metadata you are authorized to access.
+- Respect local laws, copyright, and provider terms of service.
 
 ---
 
-Why this is different
+## 🇦🇱 Shqip (Albanian)
 
-Most TV players stop at basic playback.
+Premium TV Player është një projekt privat për një TV player premium, me fokus fillestar në Android TV.
 
-This project is being built around a much higher standard:
+### Çfarë është
+- Përvojë moderne për TV me navigim të optimizuar për telekomandë.
+- Sistemi i abonimit dhe aksesit është i lidhur me llogarinë (jo me MAC-address).
+- Përdoruesi mund të shtojë burimet e veta **M3U / M3U8 / XMLTV**.
 
-premium visual language
+### Çfarë nuk është
+- Nuk është ofrues përmbajtjeje.
+- Nuk vjen me kanale, filma ose kataloge të mbrojtura.
+- Nuk është krijuar për të anashkaluar licencat, DRM ose ligjin e autorësisë.
 
-TV-native focus and navigation behavior
-
-backend-authoritative entitlement logic
-
-clean architecture from the beginning
-
-platform expansion planned from day one
-
-shared design tokens and structured delivery runs
-
-product-level thinking instead of quick prototype shortcuts
-
-
-This is meant to become a real product.
-
+### Aspekte ligjore
+- Aplikacioni vjen bosh; përdoruesi mban përgjegjësi për burimet që shton.
+- Përdorni vetëm burime për të cilat keni të drejtë ligjore.
+- Respektoni ligjet lokale dhe kushtet e përdorimit të ofruesve.
 
 ---
 
-Core product pillars
+## 🇹🇷 Türkçe (Turkish)
 
-Pillar	Description
+Premium TV Player, Android TV öncelikli, özel geliştirme aşamasında olan premium bir TV oynatıcı projesidir.
 
-Premium UI	Dark, elegant, cinematic, and built for large screens first.
-TV-first UX	Focus behavior, spacing, typography, and interaction patterns designed for remote navigation.
-Account-based system	Entitlements, profiles, and device slots belong to the account, not to MAC-address hacks.
-Server authority	Trial state, active purchases, revocations, and limits are enforced on the backend.
-Cloud sync	Watch state, favorites, and profile data are designed to move with the user.
-Multi-platform roadmap	Android TV first, then Android mobile, admin web, tvOS/iOS, Samsung Tizen, and LG webOS.
-User-controlled sources	The app ships empty; users add their own M3U / M3U8 / XMLTV sources.
+### Nedir
+- Uzaktan kumanda odaklı, şık ve modern bir TV deneyimi sunar.
+- Yetkilendirme ve kullanım hakları hesap tabanlıdır (MAC adresi tabanlı değildir).
+- Kullanıcı kendi **M3U / M3U8 / XMLTV** kaynaklarını ekleyebilir.
 
+### Ne değildir
+- Bir içerik sağlayıcı değildir.
+- Kanal, film, dizi veya lisanslı medya kataloğu ile gelmez.
+- Lisans, DRM, coğrafi kısıtlama veya telif kurallarını aşmak için tasarlanmamıştır.
 
-
----
-
-Planned experience
-
-Welcome → Sign up / Log in → Start trial → Pick profile → Home → Playback → Continue watching → Sync across devices
-
-The intended product experience includes:
-
-cinematic onboarding
-
-premium hero sections and content rows
-
-profile picker
-
-continue watching
-
-favorites
-
-parental controls
-
-EPG integration
-
-live and VOD playback
-
-purchase and restore flows
-
-synced account state across supported clients
-
-
+### Hukuki not
+- Uygulama boş gelir; eklenen kaynakların yasal sorumluluğu kullanıcıya aittir.
+- Yalnızca kullanım hakkınız olan yayınları kullanın.
+- Yerel yasalara ve servis sağlayıcı şartlarına uyun.
 
 ---
 
-Platform strategy
+## 🇩🇪 Deutsch (German)
 
-The long-term rollout is planned in this order:
+Premium TV Player ist ein privates Premium-TV-Player-Projekt mit klarem Android-TV-First-Fokus.
 
-1. Android TV
+### Was es ist
+- Eine hochwertige TV-Erfahrung mit Remote-optimierter Navigation und modernem, dunklem UI.
+- Konto-basierte Berechtigungen und Geräteverwaltung (keine MAC-Adress-Bindung).
+- Nutzer können eigene **M3U / M3U8 / XMLTV**-Quellen hinzufügen.
 
+### Was es nicht ist
+- Kein Inhaltsanbieter.
+- Keine mitgelieferten Sender, Filme, Serien oder urheberrechtlich geschützten Kataloge.
+- Nicht zum Umgehen von Lizenzen, DRM, Geoblocking oder Urheberrecht gedacht.
 
-2. Android Mobile
-
-
-3. Admin Web
-
-
-4. tvOS / iOS
-
-
-5. Samsung Tizen
-
-
-6. LG webOS
-
-
-
-Android TV is the current primary client and the first premium experience being built.
-
+### Rechtlicher Hinweis
+- Die App wird ohne Inhalte ausgeliefert; die Verantwortung für hinzugefügte Quellen liegt beim Nutzer.
+- Verwende nur Quellen, für die du eine gültige Berechtigung hast.
+- Beachte lokale Gesetze und die Nutzungsbedingungen der Anbieter.
 
 ---
 
-Product model
+## 🇸🇦 العربية (Arabic)
 
-Area	Direction
+Premium TV Player هو مشروع خاص لمشغل تلفاز مميز مع أولوية لمنصة Android TV.
 
-Positioning	Neutral premium player for user-authorized sources
-Auth	Firebase Authentication with own backend entitlement layer
-Monetization	14-day trial, Lifetime Single, Lifetime Family
-Profiles	Up to 5 profiles
-Device model	Server-managed device slots tied to account
-Playback data	Cloud-synced state and local caching
-Source model	User adds own M3U / M3U8 / XMLTV sources
-License	Proprietary, all rights reserved
+### ما هو
+- تجربة تلفاز حديثة مع واجهة أنيقة وتنقل مناسب لجهاز التحكم.
+- نظام صلاحيات قائم على الحساب وليس على عنوان MAC.
+- يمكن للمستخدم إضافة مصادره الخاصة **M3U / M3U8 / XMLTV**.
 
+### ما ليس كذلك
+- ليس مزوّد محتوى.
+- لا يتضمن قنوات أو أفلامًا أو مسلسلات أو مكتبات وسائط محمية بحقوق النشر.
+- غير مخصص لتجاوز التراخيص أو DRM أو القيود الجغرافية أو قوانين الملكية الفكرية.
 
-
----
-
-Architecture at a glance
-
-Client
-
-Kotlin
-
-Jetpack Compose
-
-Compose for TV
-
-Media3 / ExoPlayer
-
-Hilt
-
-Navigation-Compose
-
-Room
-
-DataStore
-
-
-Backend
-
-NestJS
-
-PostgreSQL
-
-Prisma
-
-Redis
-
-Firebase Admin
-
-REST API + structured contracts
-
-
-Shared packages
-
-API contracts
-
-Domain models
-
-Parsers
-
-i18n
-
-UI tokens
-
-Entitlement engine
-
-
+### ملاحظة قانونية
+- التطبيق يأتي بدون محتوى؛ المستخدم مسؤول عن قانونية المصادر التي يضيفها.
+- استخدم فقط المصادر التي لديك حق قانوني في الوصول إليها.
+- التزم بالقوانين المحلية وشروط استخدام مزودي الخدمة.
 
 ---
 
-Development status
+## Product Highlights
 
-> Private repository
-Early development in progress
+- Android TV first, multi-platform roadmap.
+- Premium dark design language with TV-first focus behavior.
+- Account-based entitlement system with server-authoritative logic.
+- Cloud sync architecture for profiles, playback state, and favorites.
+- Firebase Authentication + backend API integration.
 
+## Current Development Phase
 
+This repository is in **private active development**.
 
-Current work includes:
+Recent focus areas:
+- Backend foundation and entitlement flows.
+- Billing worker and profile/source modules.
+- Android TV bootstrap and design system.
+- Onboarding/auth flow implementation.
 
-backend foundation
+## Repository Structure
 
-auth and entitlement modules
+```text
+apps/                  # Client applications (Android TV first)
+services/              # API and workers
+packages/              # Shared contracts, domain, parsers, i18n, UI tokens
+infra/                 # Docker and infrastructure configs
+docs/                  # Product and architecture documentation
+assets/                # Branding assets
+```
 
-billing worker
+## License
 
-profile and source modules
+**Proprietary — All Rights Reserved.**
 
-Android TV bootstrap
-
-premium Compose design system
-
-onboarding and auth flow implementation
-
-
-This repository is under active structured development.
-
-
----
-
-Repository guide
-
-For contributors and coding agents, start with:
-
-CLAUDE.md
-
-CLAUDE.md is the operational guide for this repository and contains:
-
-current project state
-
-locked product decisions
-
-architecture direction
-
-active run plan
-
-roadmap progression
-
-execution protocol
-
-implementation guardrails
-
-
-Anyone working on this repository should read that file first.
-
-
----
-
-Project principles
-
-Build for the living-room experience first
-
-Prefer clean architecture over fast shortcuts
-
-Keep entitlement and billing logic server-authoritative
-
-Avoid scope creep by working in structured runs
-
-Maintain a premium design language across every screen
-
-Prepare for multi-platform expansion without compromising V1 quality
-
-
-
----
-
-License
-
-Copyright © 2026 Premium TV Player. All Rights Reserved.
-
-See LICENSE.
-
-This repository and all of its contents are proprietary and confidential.
-No part of this codebase may be copied, modified, published, distributed, sublicensed, or sold without prior written permission from the copyright holder.
-
-Unauthorized use, reproduction, or distribution is strictly prohibited.
+See [LICENSE](./LICENSE) for full terms.
