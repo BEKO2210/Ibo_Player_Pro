@@ -7,40 +7,53 @@
 ## 🎯 Current State
 
 - **Phase:** A — Foundation & Specs
-- **Last completed run:** Run 2 — PRD + user flows
-- **Current branch:** `claude/premium-tv-player-plan-WG2tC`
-- **Push target:** same branch (`-u origin claude/premium-tv-player-plan-WG2tC`)
+- **Last completed run:** Run 3 — Data model (split into 3 parts)
+- **Current branch:** `claude/split-aber-three-parts-jBX8l`
+- **Push target:** same branch (`-u origin claude/split-aber-three-parts-jBX8l`)
 - **Logo status:** ⏳ pending — Claude will ask the user in **Run 6**
 - **applicationId:** ⏳ to be decided in **Run 11**
 
 ---
 
-## ▶️ Next Run (Run 3): Data Model
+## ▶️ Next Run (Run 4): API Contracts (OpenAPI + Zod)
 
 ### Goal
-Define the complete V1 database schema and an ER diagram that every backend/API/contract run will reference. Pure documentation — no migrations yet (those happen in Run 6 when NestJS + Prisma are bootstrapped).
+Produce the V1 REST API contract as a single OpenAPI 3.1 document plus runtime-validated Zod schemas that both the NestJS backend (Run 6+) and the Android TV client (Run 11+) will generate types from. Pure contract — no implementation, no server code.
 
 ### Deliverables
-- [ ] `docs/architecture/data-model.md` containing:
-  - [ ] Narrative overview: entity responsibilities and relationships
-  - [ ] SQL DDL (PostgreSQL dialect) for every table: `accounts`, `devices`, `profiles`, `profile_pins`, `entitlements`, `purchases`, `sources`, `source_credentials`, `epg_channels`, `epg_programs`, `watch_history`, `continue_watching`, `favorites`, `playback_sessions`, `audit_log`
-  - [ ] Indexes and foreign keys for all common access paths (by account, by profile, by device, by source, by epg channel/time)
-  - [ ] An **ER diagram** as a mermaid `erDiagram`
-  - [ ] Notes on: encryption-at-rest for source URLs + credentials, PIN hashing (argon2id), soft-delete strategy, timestamps (`created_at`, `updated_at`), UUID primary keys
+- [ ] `packages/api-contracts/package.json` minimal (name, private, no deps yet — Run 6 wires them)
+- [ ] `packages/api-contracts/openapi.yaml` — OpenAPI 3.1 covering V1 surface:
+  - Auth: `POST /v1/auth/register`, `POST /v1/auth/login`, `POST /v1/auth/refresh`, `POST /v1/auth/logout`
+  - Account: `GET /v1/me`, `PATCH /v1/me`, `DELETE /v1/me`
+  - Entitlement: `GET /v1/entitlement`, `POST /v1/entitlement/trial`
+  - Devices: `GET /v1/devices`, `POST /v1/devices`, `DELETE /v1/devices/:id`
+  - Profiles: `GET /v1/profiles`, `POST /v1/profiles`, `PATCH /v1/profiles/:id`, `DELETE /v1/profiles/:id`, `POST /v1/profiles/:id/pin`, `POST /v1/profiles/:id/pin/verify`
+  - Sources: `GET /v1/sources`, `POST /v1/sources`, `PATCH /v1/sources/:id`, `DELETE /v1/sources/:id`, `POST /v1/sources/:id/refresh`
+  - EPG: `GET /v1/epg/channels`, `GET /v1/epg/programs?channel_id&from&to`
+  - Activity: `GET /v1/continue-watching`, `PUT /v1/continue-watching`, `GET /v1/favorites`, `PUT /v1/favorites/:asset_ref`, `DELETE /v1/favorites/:asset_ref`, `POST /v1/watch-history`
+  - Playback: `POST /v1/playback/sessions`, `POST /v1/playback/sessions/:id/heartbeat`, `POST /v1/playback/sessions/:id/end`
+  - Billing: `POST /v1/billing/google-play/verify`, `POST /v1/billing/restore`
+- [ ] Reusable schema components mirroring the data model (Account, Profile, Device, Entitlement, Purchase, Source, EpgChannel, EpgProgram, ContinueWatchingItem, FavoriteItem, PlaybackSession, ProblemDetails)
+- [ ] RFC-9457 `application/problem+json` error envelope; standard error codes table
+- [ ] Bearer auth (Firebase ID token) as the global security scheme
+- [ ] `packages/api-contracts/zod/*.ts` — Zod schemas matching every component (no generation yet, hand-written; Run 6 can swap to `openapi-zod-client` later)
+- [ ] `packages/api-contracts/README.md` — how to consume (server validate, client types)
 
 ### Acceptance criteria
-- Every entity referenced in `docs/product/user-flows.md` has a corresponding table
-- All five entitlement states (`none`, `trial`, `lifetime_single`, `lifetime_family`, `expired`, `revoked`) are representable
-- Family cap (5 profiles, 5 active devices) is enforceable from schema + app logic
-- A reader can move from this doc straight to Prisma schema in Run 6 without guessing
-- Diagrams render on GitHub (mermaid)
+- Every write path from `docs/product/user-flows.md` has a matching endpoint
+- Every table in `docs/architecture/data-model*.md` that users touch has at least one read path
+- All 6 entitlement states are representable in the `Entitlement` schema
+- Error envelope is consistent across all endpoints (RFC 9457)
+- `openapi.yaml` validates against the OpenAPI 3.1 JSON Schema (no linter errors)
+- Zod schemas compile as standalone TS (tsc `--noEmit` would pass in isolation)
+- A frontend dev can build the onboarding + home + playback flows against this contract alone
 
 ### After this run — update CLAUDE.md
-1. Tick Run 3 in the roadmap
-2. Set "Last completed run" to `Run 3 — Data model`
-3. Write the new "Next Run" block for **Run 4: API Contracts (OpenAPI + Zod)**
+1. Tick Run 4 in the roadmap
+2. Set "Last completed run" to `Run 4 — API contracts`
+3. Write the new "Next Run" block for **Run 5: Entitlement state machine + billing event handling**
 4. Append entry to **Run Log**
-5. Commit: `docs: add data model and ER diagram (Run 3)` and push
+5. Commit: `contracts: add OpenAPI 3.1 + Zod (Run 4)` and push to the same branch
 
 ---
 
@@ -151,7 +164,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 ### Phase A — Foundation & Specs
 - [x] **Run 1** — Repo skeleton + CLAUDE.md + LICENSE + .gitignore + .editorconfig + README
 - [x] **Run 2** — PRD + user flows (`docs/product/`)
-- [ ] **Run 3** — Data model: SQL schemas + ER diagram (`docs/architecture/data-model.md`)
+- [x] **Run 3** — Data model: SQL schemas + ER diagram (`docs/architecture/data-model.md`, split into 3 parts)
 - [ ] **Run 4** — API contracts: OpenAPI 3.1 + Zod (`packages/api-contracts/`)
 - [ ] **Run 5** — Entitlement state machine + billing event handling (`docs/architecture/entitlement-state-machine.md`)
 
@@ -196,7 +209,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
    - Append a new entry to the **Run Log** below (date, title, 2–5 bullet summary)
 5. **Commit** with message format: `<area>: <short summary> (Run N)`
    Examples: `docs: add PRD and user flows (Run 2)`, `api: scaffold NestJS service (Run 6)`, `tv: add home screen (Run 14)`
-6. **Push** to `claude/premium-tv-player-plan-WG2tC` with `git push -u origin claude/premium-tv-player-plan-WG2tC` (retry on network error: 2s, 4s, 8s, 16s)
+6. **Push** to `claude/split-aber-three-parts-jBX8l` with `git push -u origin claude/split-aber-three-parts-jBX8l` (retry on network error: 2s, 4s, 8s, 16s)
 7. **Do NOT** open a Pull Request unless the user explicitly asks
 
 ### Guardrails
@@ -242,3 +255,10 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Wrote `docs/product/PRD.md`: vision, personas, V1 in/out scope, monetization table (Trial / Lifetime Single / Lifetime Family), product principles, success metrics, risks, glossary
 - Wrote `docs/product/user-flows.md`: 17 canonical flows with mermaid diagrams — Onboarding, Signup, Login, Trial activation, Purchase, Restore, Profile picker, Profile CRUD, Add source, Home, Kids PIN gate, Device management, Playback + Resume, Logout, Expired/Revoked handling, Error surfaces, Happy path
 - All flows consistent with locked decisions (server-authoritative trial/entitlement, account-based device slots, no MAC binding, 5 profiles / 5 device slots for Family)
+
+### Run 3 — 2026-04-13 — Data model (split into 3 parts)
+- Wrote `docs/architecture/data-model.md` as an **index** with design principles, entitlement-state recap, and a consolidated mermaid `erDiagram` covering all 15 tables
+- Wrote `docs/architecture/data-model-part-1-identity.md`: narrative + PostgreSQL DDL + indexes + flow mapping for `accounts`, `profiles`, `profile_pins`, `devices`
+- Wrote `docs/architecture/data-model-part-2-commerce-sources.md`: `entitlement_state` + `source_kind` enums, DDL + indexes + flow mapping for `entitlements`, `purchases`, `sources`, `source_credentials`
+- Wrote `docs/architecture/data-model-part-3-epg-activity.md`: DDL + indexes + flow mapping for `epg_channels`, `epg_programs`, `watch_history`, `continue_watching`, `favorites`, `playback_sessions`, `audit_log` plus cross-cutting notes (AES-256-GCM encryption at rest, argon2id PINs, soft-delete, UUID/bigserial PKs, Family cap enforcement, Prisma handoff)
+- Split performed on user request; `data-model.md` remains the canonical entry point referenced by later runs
