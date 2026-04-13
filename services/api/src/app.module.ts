@@ -13,6 +13,8 @@ import { DevicesModule } from './devices/devices.module';
 import { BillingModule } from './billing/billing.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { SourcesModule } from './sources/sources.module';
+import { PlaybackModule } from './playback/playback.module';
+import { ApiEpgModule } from './epg/epg.module';
 import { AllExceptionsFilter } from './common/http-exception.filter';
 
 @Module({
@@ -34,6 +36,8 @@ import { AllExceptionsFilter } from './common/http-exception.filter';
     BillingModule,
     ProfilesModule,
     SourcesModule,
+    PlaybackModule,
+    ApiEpgModule,
   ],
   providers: [
     {
