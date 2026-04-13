@@ -23,4 +23,12 @@ class FirebaseTokenSource @Inject constructor(
         val user = firebaseAuth.currentUser ?: return null
         return user.getIdToken(forceRefresh).await().token
     }
+
+    /**
+     * The currently signed-in Firebase user's uid, or null when nobody
+     * is signed in. Used by callers (e.g. [com.premiumtvplayer.app.data.entitlement.EntitlementCache])
+     * that need to scope persisted data to a specific user without
+     * depending on FirebaseAuth directly.
+     */
+    fun currentUid(): String? = firebaseAuth.currentUser?.uid
 }
