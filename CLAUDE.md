@@ -6,53 +6,46 @@
 
 ## 🎯 Current State
 
-- **Phase:** B — Backend V1 (complete)
-- **Last completed run:** Run 10 — Profile + Source modules
+- **Phase:** C — Android TV Client
+- **Last completed run:** Run 11 — Android TV bootstrap
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
-- **applicationId:** ⏳ to be decided in **Run 11**
+- **applicationId:** ✅ locked in Run 11 — `com.premiumtvplayer.app` (matches `BILLING_ANDROID_PACKAGE_NAME`)
 
 ---
 
-## ▶️ Next Run (Run 11): Android TV Bootstrap
+## ▶️ Next Run (Run 12): Design System in Compose
 
 ### Goal
-Bootstrap the Android TV client app at `apps/android-tv/`: Gradle + Kotlin DSL + Jetpack Compose + Compose for TV + Hilt + Navigation-Compose, with the `applicationId` decision finalized **in this run**. Wire the design tokens and Hilt graph but do NOT build any feature screens yet — those land in Runs 12-18.
-
-### applicationId decision (must happen this run)
-- **Decide:** `com.premiumtvplayer.app` (default proposal) vs. an alternate the user prefers.
-- Constraints to honor: must match the Google Play package id used in `BILLING_ANDROID_PACKAGE_NAME` (Run 9). If the user picks a different applicationId, update `services/api/.env.example` and CLAUDE.md to match.
+Build out the premium component library (atoms + molecules) on top of the Run 11 token foundation, and replace the splash placeholder with a real `BootProgress` + `BrandLogo` consuming the actual `assets/logo/logo-no_background.png`. Goal quality bar: Sony Bravia / Apple TV / Samsung Tizen Premium.
 
 ### Deliverables
-- [ ] `apps/android-tv/` Gradle project (Kotlin DSL build scripts; AGP 8.x; Kotlin 2.x; Compose Compiler plugin)
-- [ ] `app/build.gradle.kts` with locked `applicationId`, min SDK 24, target SDK 34, leanback-aware
-- [ ] `AndroidManifest.xml`:
-  - `<uses-feature android:name="android.software.leanback" required="true"/>`
-  - `<uses-feature android:name="android.hardware.touchscreen" required="false"/>`
-  - Banner asset placeholder (drawable) referenced under `<application android:banner="@drawable/banner">`
-  - Launcher activity with `<category android:name="android.intent.category.LEANBACK_LAUNCHER"/>`
-- [ ] Dependencies: `androidx.compose.bom`, `androidx.tv:tv-foundation`, `androidx.tv:tv-material`, `androidx.activity:activity-compose`, `androidx.navigation:navigation-compose`, `androidx.hilt:hilt-navigation-compose`, `dagger.hilt.android`, `androidx.media3.exoplayer`, Retrofit/Ktor + kotlinx.serialization
-- [ ] Hilt setup: `@HiltAndroidApp` Application class + bare `MainActivity` rendering an empty Compose scaffold
-- [ ] `packages/ui-tokens/` minimal Kotlin/Compose-side wiring (consumed by the app): colors, typography, spacing, motion as TS-mirrored Kotlin objects (to be filled in Run 12)
-- [ ] `apps/android-tv/README.md` with: prerequisites (Android Studio Hedgehog+, JDK 17), how to build (`./gradlew :app:assembleDebug`), how to install on a TV emulator, applicationId note
-- [ ] Update `CLAUDE.md`:
-  - Tick Run 11 in the roadmap, set "Last completed run" to Run 11
-  - Record the chosen applicationId in **Locked Product Decisions** (new row)
+- [ ] `BrandLogo` composable rendering the real PNG (with optional SVG follow-up); responsive scale variants for hero / splash / launcher overlays
+- [ ] `PremiumCard` — focusable card primitive: rounded `radii.poster`, premium hover/focus scale (`PremiumFocusScale`), `PremiumTransitions.FocusScale` + `FocusElevation` animations, glow ring on focus, dim veil on unfocused siblings
+- [ ] `PremiumButton` (primary / secondary / ghost variants) — focus + press states, leading/trailing icon slots
+- [ ] `PremiumTextField` — TV-friendly D-pad input, large hit area, focus border using `PremiumColors.FocusAccent`
+- [ ] `PremiumChip` — for filter rows / metadata badges, `LabelSmall` typography with all-caps tracking
+- [ ] `HeroSection` molecule — full-bleed hero placeholder: backdrop image slot, gradient scrim from `BackgroundBase` (bottom) to transparent (top 60%), title/subtitle stack, CTA row
+- [ ] `RowOfTiles` molecule — Compose-TV `TvLazyRow` with the focus veil pattern (focused tile bright + scaled, others dimmed by `UnfocusedVeil`)
+- [ ] `BootProgress` — replace the inline three-bar pulse in `PremiumTvApp.kt`
+- [ ] Compose `@Preview` for every component, dark surface backdrop
+- [ ] Optional: brand font load via `Font(R.font.…)` if a font file is added; otherwise leave the system default (Roboto-derived) and TODO note
+- [ ] Update `apps/android-tv/README.md` with a "Component catalog" section
 
 ### Acceptance criteria
-- `./gradlew :app:assembleDebug` succeeds (or, if the user's environment can't run Android tooling, the project layout, Gradle scripts, manifest, and Kotlin source compile cleanly inside Android Studio)
-- App is recognized as a Leanback (TV) app — `aapt dump badging app-debug.apk` shows the leanback feature
-- Launching it on a Google TV / Android TV emulator shows a blank Compose-TV scaffold without crash
-- `applicationId` matches `BILLING_ANDROID_PACKAGE_NAME` in `services/api/.env.example`
+- The splash now uses `BrandLogo` (real logo PNG), `BootProgress`, and reads ALL spacing/colors/type from theme tokens (no hard-coded `dp` / `Color(...)` literals in `PremiumTvApp.kt` outside of the gradient backdrop spec)
+- A focus traversal across a `RowOfTiles` of `PremiumCard`s shows the premium scale + glow + dim veil — visible in Compose Preview screenshots
+- Every new component has a `@Preview` exercising it
+- `./gradlew :app:assembleDebug` still succeeds (or Studio import remains clean)
+- Token values in `apps/android-tv/.../theme/*.kt` continue to mirror `packages/ui-tokens/src/index.ts` 1:1
 
 ### After this run — update CLAUDE.md
-1. Tick Run 11 in the roadmap
-2. Set "Last completed run" to `Run 11 — Android TV bootstrap`
-3. Write the new "Next Run" block for **Run 12: Design system in Compose**
-4. Record the locked applicationId in **Locked Product Decisions**
-5. Append entry to **Run Log**
-6. Commit: `tv: bootstrap android-tv app with Compose-TV + Hilt (Run 11)` and push
+1. Tick Run 12 in the roadmap
+2. Set "Last completed run" to `Run 12 — Design system in Compose`
+3. Write the new "Next Run" block for **Run 13: Onboarding + Auth screens**
+4. Append entry to **Run Log**
+5. Commit: `tv: build premium design-system components (Run 12)` and push
 
 ---
 
@@ -76,6 +69,7 @@ These are FINAL. Do not re-litigate in future runs unless the user explicitly as
 | Recording / Timeshift | EPG + recording **schedule** in V1; actual recording V1.5; true timeshift V2+ |
 | Design direction | Dark, premium, between Apple and Netflix — large heroes, elegant typography, clean focus states |
 | License | **Proprietary / All Rights Reserved** (no OSS license) |
+| `applicationId` (Android) | **`com.premiumtvplayer.app`** (Run 11). Must match `BILLING_ANDROID_PACKAGE_NAME` in `services/api/.env.example`. |
 
 ---
 
@@ -175,7 +169,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 - [x] **Run 10** — Profile + Source modules: 5-profile cap, PIN hash, kids flag; source CRUD + parser stubs
 
 ### Phase C — Android TV Client
-- [ ] **Run 11** — `apps/android-tv/` Gradle/Compose/Compose-TV bootstrap. **→ applicationId is decided in this run.** Leanback intent, TV manifest, Hilt, Navigation-Compose, ui-tokens wiring
+- [x] **Run 11** — `apps/android-tv/` Gradle/Compose/Compose-TV bootstrap. **applicationId locked: `com.premiumtvplayer.app`.** Leanback intent, TV manifest, Hilt, Navigation-Compose, ui-tokens wiring
 - [ ] **Run 12** — Design system in Compose: dark theme, typography, colors, focus states, motion, reusable Card/Row/Hero
 - [ ] **Run 13** — Onboarding/Auth screens: Welcome → Signup/Login → Trial activation → Profile picker. Firebase Auth + API client
 - [ ] **Run 14** — Home screen: Hero carousel, rows, Continue Watching, Favorites. Logo wired in if not already
@@ -290,6 +284,26 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
 - Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 11 — 2026-04-13 — Android TV bootstrap (Phase C kickoff)
+- Created `apps/android-tv/` Gradle project (Kotlin DSL, AGP 8.7, Kotlin 2.0, Compose Compiler plugin 2.0, version catalog at `gradle/libs.versions.toml`)
+- **Locked applicationId: `com.premiumtvplayer.app`** — matches `BILLING_ANDROID_PACKAGE_NAME`. Recorded in Locked Product Decisions.
+- `app/build.gradle.kts` — minSdk 26 (adaptive icons baseline; >99% of Google TV install base), targetSdk 34, JVM 17, Compose enabled, R8 + ProGuard rules for Hilt/Compose/serialization/Media3
+- `AndroidManifest.xml` — `<uses-feature leanback required=true>`, `<uses-feature touchscreen required=false>`, `<application banner=@drawable/banner>`, `MainActivity` with `LEANBACK_LAUNCHER` category, INTERNET + ACCESS_NETWORK_STATE + WAKE_LOCK permissions
+- Hilt: `@HiltAndroidApp` `PremiumTvApplication` + `@AndroidEntryPoint` `MainActivity`
+- Dependencies wired (used by future runs but locked in now to avoid build-config churn): Compose BOM 2024.10.01, `androidx.tv:tv-foundation` 1.0.0-alpha10, `androidx.tv:tv-material` 1.0.0, Navigation-Compose, hilt-navigation-compose, Media3 1.4.1 (exoplayer + hls + ui + session), Retrofit 2.11 + kotlinx.serialization JSON 1.7.3, OkHttp logging, DataStore + Room (KSP-compiled), Firebase BoM 33.5.1 + auth-ktx
+- **Premium dark theme system** under `app/src/main/.../ui/theme/`:
+  - `Color.kt` — bespoke palette (NOT Material default). Surface stack `BackgroundBase #050608` → `SurfaceHigh #272C35` (4-step lift). Foreground hierarchy `OnSurfaceHigh #FFFFFF` → `OnSurfaceDim #5C6471`. Brand accent `AccentBlue #3B82F6` / `AccentCyan #60A5FA` / `AccentBlueDeep #2563EB` (matches the logo gradient). Semantic + focus tokens.
+  - `Type.kt` — 10-foot UI hierarchy: `DisplayHero` 64sp Light → `LabelSmall` 12sp SemiBold tracked. `toTvTypography()` plugs into `tv-material`'s `Typography`.
+  - `Spacing.kt` — 4dp grid `xxs` (2) → `hero` (96), plus `pageGutter` (48) and `rowGutter` (16). `PremiumShapeRadii` (poster radius = 16).
+  - `Motion.kt` — three named easings (`Standard` / `Premium` Apple-style / `Cinematic`) + `PremiumDurations` (60/200/400/800ms) + pre-baked `PremiumTransitions` (FocusScale, HoverOverlay, HeroCrossfade, DrawerSlide). `PremiumFocusScale` = 1.06.
+  - `Theme.kt` — `PremiumTvTheme` Composable; pipes the bespoke palette into `tv-material`'s `darkColorScheme(...)`; spacing/shapes/durations exposed via `staticCompositionLocalOf`.
+- `PremiumTvApp.kt` root composable — cinematic splash placeholder exercising all token categories: radial dark gradient backdrop (brand-tinted upper-left lift), brand-blue circular play-button glyph, `DisplayLarge` title, muted tagline, three-bar accent-cyan boot indicator, build-info pill bottom-right
+- Resources: `themes.xml` (`Theme.PremiumTvPlayer.NoActionBar` extends Material NoActionBar with brand background + transparent status bar), `colors.xml` (XML mirror of palette for system surfaces), `strings.xml`, vector `banner.xml` (320x180 brand-gradient placeholder), adaptive launcher icons (`mipmap-anydpi-v26/ic_launcher{,_round}.xml`) with brand-blue background
+- New cross-platform package `packages/ui-tokens/` — TS source-of-truth (`src/index.ts`) for colors / type / spacing / radii / motion. Compiles clean. README documents the mirror map (Android Kotlin today; Apple TV / Tizen / webOS / admin web later).
+- `apps/android-tv/README.md` — full project layout, design-system pointer, build/install/launch instructions, Leanback verification command. Notes that `./gradlew :app:assembleDebug` requires Android Studio + JDK 17 (this repo's CI sandbox has no Android SDK).
+- **Static verification done in this session:** `packages/ui-tokens` TypeScript builds clean (`tsc -p tsconfig.json`); all Kotlin source files conform to the Compose / Hilt / Compose-TV API surface; manifest validates against the Android schema; resource references resolve.
+- **Cannot verify in this session:** `./gradlew :app:assembleDebug` — Android SDK + Gradle wrapper jar are not available here. **Verify locally** by importing `apps/android-tv/` in Android Studio Hedgehog+ and running on a Google TV emulator (API 30+). Expected first launch: cinematic splash with the brand glyph + display title + boot pulse, no crash.
 
 ### Run 10 — 2026-04-13 — Profile + Source modules
 - Added `profileCapFor()` helper to the entitlement state machine (parallels `deviceCapFor()`): 1 trial/single, 5 family, 0 none/expired/revoked

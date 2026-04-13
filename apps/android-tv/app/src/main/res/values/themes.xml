@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme. Compose owns the actual look — this is
+         the system-side theme used for the splash, status bar, and the
+         pre-Compose window background. -->
+    <style name="Theme.PremiumTvPlayer" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/premium_background_base</item>
+        <item name="android:colorBackground">@color/premium_background_base</item>
+        <item name="android:textColor">@color/premium_on_surface</item>
+        <item name="android:windowContentTransitions">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+
+    <style name="Theme.PremiumTvPlayer.NoActionBar" parent="Theme.PremiumTvPlayer">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>

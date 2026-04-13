@@ -1,0 +1,19 @@
+{
+  "name": "@premium-player/ui-tokens",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Premium TV Player — design tokens (cross-platform spec)",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.12",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=20.11.0"
+  }
+}
