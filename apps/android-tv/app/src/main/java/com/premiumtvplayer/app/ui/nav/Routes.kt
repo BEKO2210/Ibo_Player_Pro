@@ -47,6 +47,15 @@ object Routes {
     // ── Paywall (Run 17) ───────────────────────────────────────────
     const val Paywall = "paywall"
 
+    // ── Parental controls (Run 18) ─────────────────────────────────
+    const val ProfileManagement = "profiles/manage"
+    const val DeviceManagement = "devices/manage"
+    const val ProfileNameArg = "profileName"
+    const val PinGatePattern = "profiles/{$ProfileIdArg}/pin-gate?$ProfileNameArg={$ProfileNameArg}"
+
+    fun pinGate(profileId: String, profileName: String): String =
+        "profiles/$profileId/pin-gate?$ProfileNameArg=${java.net.URLEncoder.encode(profileName, "UTF-8")}"
+
     fun play(
         profileId: String,
         sourceId: String,

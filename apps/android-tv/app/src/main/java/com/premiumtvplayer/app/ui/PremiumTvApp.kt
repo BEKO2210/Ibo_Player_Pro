@@ -199,6 +199,8 @@ fun PremiumTvApp(navController: NavHostController = rememberNavController()) {
                     }
                 },
                 onOpenPaywall = { navController.navigate(Routes.Paywall) },
+                onOpenProfileSettings = { navController.navigate(Routes.ProfileManagement) },
+                onOpenDeviceSettings = { navController.navigate(Routes.DeviceManagement) },
             )
         }
         composable(Routes.Sources) {
@@ -273,6 +275,39 @@ fun PremiumTvApp(navController: NavHostController = rememberNavController()) {
                 mediaUrl = mediaUrl,
                 itemTitle = title,
                 onExit = { navController.popBackStack() },
+            )
+        }
+        composable(Routes.ProfileManagement) {
+            com.premiumtvplayer.app.ui.parental.ProfileManagementScreen(
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(Routes.DeviceManagement) {
+            com.premiumtvplayer.app.ui.parental.DeviceManagementScreen(
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = Routes.PinGatePattern,
+            arguments = listOf(
+                androidx.navigation.navArgument(Routes.ProfileIdArg) {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = false
+                },
+                androidx.navigation.navArgument(Routes.ProfileNameArg) {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) { entry ->
+            val profileName = entry.arguments?.getString(Routes.ProfileNameArg)
+                ?.let { java.net.URLDecoder.decode(it, "UTF-8") }
+                .orEmpty()
+            com.premiumtvplayer.app.ui.parental.PinGateScreen(
+                profileName = profileName,
+                onUnlocked = { navController.popBackStack() },
+                onBack = { navController.popBackStack() },
             )
         }
     }

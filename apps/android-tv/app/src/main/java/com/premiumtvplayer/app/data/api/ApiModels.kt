@@ -62,6 +62,68 @@ data class ProfileListResponse(
     val profiles: List<ProfileDto>,
 )
 
+@Serializable
+data class CreateProfileRequest(
+    val name: String,
+    val isKids: Boolean,
+    val ageLimit: Int? = null,
+    val pin: String? = null,
+    val isDefault: Boolean? = null,
+)
+
+@Serializable
+data class UpdateProfileRequest(
+    val name: String? = null,
+    val ageLimit: Int? = null,
+    val pin: String? = null,
+    val clearPin: Boolean? = null,
+    val isDefault: Boolean? = null,
+)
+
+@Serializable
+data class SingleProfileResponse(
+    val profile: ProfileDto,
+)
+
+@Serializable
+data class VerifyPinRequest(
+    val pin: String,
+)
+
+@Serializable
+data class VerifyPinResponse(
+    val ok: Boolean,
+    val reason: String? = null,
+    val failedAttemptCount: Int? = null,
+    val lockedUntil: String? = null,
+)
+
+// ── Devices (Run 8 endpoints, client-side DTOs Run 18) ────────────────
+
+@Serializable
+data class DeviceDto(
+    val id: String,
+    val name: String,
+    val platform: String,
+    val appVersion: String? = null,
+    val osVersion: String? = null,
+    val lastSeenAt: String? = null,
+    val revokedAt: String? = null,
+    val createdAt: String,
+    val isCurrent: Boolean,
+    val isRevoked: Boolean,
+)
+
+@Serializable
+data class DeviceListResponse(
+    val devices: List<DeviceDto>,
+)
+
+@Serializable
+data class RevokeDeviceResponse(
+    val device: DeviceDto,
+)
+
 // ── Sources ────────────────────────────────────────────────────────────
 
 @Serializable

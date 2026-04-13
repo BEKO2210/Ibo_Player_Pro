@@ -79,6 +79,8 @@ fun HomeScreen(
     onAddSource: () -> Unit,
     onSignOut: () -> Unit,
     onOpenPaywall: () -> Unit = {},
+    onOpenProfileSettings: () -> Unit = {},
+    onOpenDeviceSettings: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -100,7 +102,11 @@ fun HomeScreen(
         when (val s = state) {
             HomeUiState.Loading -> LoadingState()
             is HomeUiState.EmptySource -> Column {
-                HomeHeader(profile = s.profile)
+                HomeHeader(
+                    profile = s.profile,
+                    onProfileSettings = onOpenProfileSettings,
+                    onDeviceSettings = onOpenDeviceSettings,
+                )
                 SourcePickerRail(
                     onAddSource = onAddSource,
                     onSignOut = onSignOut,
@@ -110,6 +116,8 @@ fun HomeScreen(
                 profile = s.profile,
                 snapshot = s.snapshot,
                 onOpenDeeplink = onOpenDeeplink,
+                onOpenProfileSettings = onOpenProfileSettings,
+                onOpenDeviceSettings = onOpenDeviceSettings,
             )
             is HomeUiState.Error -> ErrorState(
                 message = s.message,
@@ -125,6 +133,8 @@ private fun PopulatedHome(
     profile: ProfileDto?,
     snapshot: HomeSnapshot,
     onOpenDeeplink: (HomeDeeplink) -> Unit,
+    onOpenProfileSettings: () -> Unit = {},
+    onOpenDeviceSettings: () -> Unit = {},
 ) {
     val spacing = LocalPremiumSpacing.current
     val scroll = rememberScrollState()
@@ -134,7 +144,11 @@ private fun PopulatedHome(
             .fillMaxSize()
             .verticalScroll(scroll),
     ) {
-        HomeHeader(profile = profile)
+        HomeHeader(
+            profile = profile,
+            onProfileSettings = onOpenProfileSettings,
+            onDeviceSettings = onOpenDeviceSettings,
+        )
         HeroCarousel(
             heroes = snapshot.heroes,
             onOpenDeeplink = onOpenDeeplink,

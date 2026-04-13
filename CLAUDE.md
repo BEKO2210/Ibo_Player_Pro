@@ -6,8 +6,8 @@
 
 ## 🎯 Current State
 
-- **Phase:** C — Android TV Client
-- **Last completed run:** Run 17 — Play Billing flow in app
+- **Phase:** C — Android TV Client (complete)
+- **Last completed run:** Run 18 — Parental controls
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
@@ -15,34 +15,33 @@
 
 ---
 
-## ▶️ Next Run (Run 18): Parental Controls
+## ▶️ Next Run (Run 19): i18n Finalization + Error States + Diagnostics
 
 ### Goal
-Complete Phase C polish with parental-control surfaces on top of the existing backend: profile-level PIN gate, kids-profile age filter, and a device-management screen to rename / unpair devices. This is the last run that adds end-user-visible features before Phase D (i18n + E2E + release).
+Ship-ready polish for Phase D. Every user-visible string moves into resource catalogues (English baseline + stub `values-de/` for German + a loader); every error path has a premium surface; a diagnostic screen exposes build / env / backend-connectivity info for support use.
 
 ### Deliverables
-- [ ] `PinGateScreen` — full-screen PIN entry invoked before switching into a PIN-protected profile or before surfacing kids-hostile content on an adult profile
-- [ ] `PinGateViewModel` — wraps the Run 10 `POST /v1/profiles/{id}/verify-pin` endpoint; surfaces lockout state with a countdown chip
-- [ ] Profile management: `POST/PUT/DELETE /v1/profiles` on `PremiumPlayerApi` + `ProfileRepository` (CRUD beyond Run 13's `list`). Screen: `ProfileManagementScreen` with rename / set age cap / set or clear PIN / mark default / delete (with confirmation overlay)
-- [ ] Age-filter gating: new `AgeFilter` helper that compares the caller's profile `ageLimit` against an item's rating chip; any item rated above the cap is visually locked with a PIN chip overlay
-- [ ] Device management: `DevicesRepository` + `DeviceManagementScreen` wired to Run 8 endpoints (`GET /v1/devices`, `POST /v1/devices/{id}/revoke`). Rename path is Parking Lot — backend add in Run 18, UI here if it lands
-- [ ] Wire the new screens into the home's profile indicator overflow: clicking the avatar opens a drawer with "Switch Profile", "Profile Settings", "Devices", "Sign Out"
-- [ ] Unit tests: `PinGateViewModelTest`, `ProfileRepositoryTest` (full CRUD), `DeviceManagementViewModelTest`
-- [ ] Update `apps/android-tv/README.md` with "Parental controls (Run 18)"
+- [ ] Move all hard-coded English user copy out of composables into `res/values/strings.xml` + referenced via `stringResource(R.string.*)`. Remaining `Text(text = "…")` literals become a PR-review smell.
+- [ ] Add `res/values-de/strings.xml` with German translations (machine-translated seed is OK; mark each string with a TODO for human review)
+- [ ] Replace `ApiErrorCopy.forCode(...)` with a `stringResource`-backed helper so the error-envelope mapping is locale-aware
+- [ ] Premium error states for every loading surface (Home, Sources, EPG, Player, Paywall, Parental). Shared `PremiumErrorBanner` component (`DangerRed` tinted backplate + icon + retry button)
+- [ ] `DiagnosticsScreen` — routed from a long-press on the build pill. Surfaces: Firebase project id, API base URL, entitlement state, device id, last heartbeat, health-check response from `GET /health`, recent error log (in-memory ring buffer sized 50)
+- [ ] `DiagnosticsViewModel` pulling the health endpoint + reading build config
+- [ ] Unit test for `DiagnosticsViewModel` (mocked health check + OK / unreachable paths)
+- [ ] Update `apps/android-tv/README.md` with "i18n & diagnostics (Run 19)"
 
 ### Acceptance criteria
-- Creating / resuming a PIN-protected profile forces the user through `PinGateScreen`; 5 misses lock the profile for the configured window
-- Kids profiles only see content rated ≤ their `ageLimit`; locked items surface a PIN prompt
-- Revoking a device from the management screen immediately invalidates playback sessions on that device
-- All Run 13-17 tests remain green
-- No new hard-coded color / dp / TextStyle literals
+- Changing the device locale to German (Settings → Language) swaps every visible string into `values-de/strings.xml` — including error banners
+- Every screen's error state is a styled banner, not a raw Text
+- DiagnosticsScreen shows up-to-date health status and is only reachable via the build-pill long-press (never via normal nav flow)
+- Existing 50+ unit tests remain green; i18n helper has at least one test covering a known code → resource-id mapping
+- No remaining `"..."` Compose text literals visible to the user (grep audit in the test suite)
 
 ### After this run — update CLAUDE.md
-1. Tick Run 18 in the roadmap
-2. Set "Last completed run" to `Run 18 — Parental controls`
-3. Write the new "Next Run" block for **Run 19: i18n finalization + error states + diagnostics**
-4. Append entry to **Run Log**
-5. Commit: `tv: add parental controls (PIN gate + age filter + device mgmt) (Run 18)` and push
+1. Tick Run 19 in the roadmap, set Last completed run
+2. Write the new "Next Run" block for **Run 20: E2E smoke test + release-build config + store-listing checklist**
+3. Append entry to **Run Log**
+4. Commit: `tv: i18n finalization + premium error states + diagnostics (Run 19)` and push
 
 ---
 
@@ -173,7 +172,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 - [x] **Run 15** — Source management UI + EPG browse view
 - [x] **Run 16** — Playback (Media3/ExoPlayer): Live, VOD, Resume, subtitles, audio-track picker, heartbeat sync
 - [x] **Run 17** — Billing flow in app: Play Billing Client, purchase trigger, Restore Purchase, entitlement UI states
-- [ ] **Run 18** — Parental controls: PIN gate, age filter, device list / logout / unpair
+- [x] **Run 18** — Parental controls: PIN gate, age filter, device list / logout / unpair
 
 ### Phase D — Polish & Ship-Ready
 - [ ] **Run 19** — i18n finalization (all strings keyed, en default, fallback), error states, diagnostics screen
@@ -283,6 +282,29 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
 - Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 18 — 2026-04-13 — Parental controls
+- API: extended `PremiumPlayerApi` with full profile CRUD (`POST/PUT/DELETE /v1/profiles`), `POST /v1/profiles/{id}/verify-pin`, plus the Run 8 device endpoints (`GET /v1/devices`, `POST /v1/devices/{id}/revoke`). New DTOs: `CreateProfileRequest`, `UpdateProfileRequest` (`clearPin` flag supported), `SingleProfileResponse`, `VerifyPinRequest/Response`, `DeviceDto`, `DeviceListResponse`, `RevokeDeviceResponse`
+- `data/profiles/ProfileRepository` extended with `create`, `update`, `delete`, `verifyPin` — all via `ApiErrorMapper`. `delete` treats non-2xx as `HttpException` so ErrorEnvelope path stays uniform
+- New `data/devices/DevicesRepository` with `list` + `revoke`
+- New `data/parental/AgeFilter` — pure helper, handles MPAA (G/PG/PG-13/R/NC-17), US TV (TV-Y/TV-Y7/TV-G/TV-PG/TV-14/TV-MA), BBFC (U/PG/12/12A/15/18), FSK (0/6/12/16/18), and bare numeric ratings. Unknown ratings default to allowed. 7 unit tests
+- `ui/parental/PinGateViewModel` — wraps `verifyPin`. `PinGateUiState.Editing(pin, submitting, errorMessage, failedAttemptCount, lockedUntilIso)` → `Unlocked` on success. Handles 4 server outcomes: `ok` → Unlocked; `mismatch` → clear PIN + bump counter; `locked` → set `lockedUntilIso`; `no_pin` → defensive Unlocked. 7 unit tests
+- `ui/parental/PinGateScreen` — full-screen PIN entry with live countdown chip (`MM:SS` format, driven by a per-second `LaunchedEffect`). Numeric-only `PremiumTextField`. PIN is digits-only, capped at 10
+- `ui/parental/ProfileManagementViewModel` — `Ready(profiles, busyId, confirmingDeleteId, errorMessage)`. Tracks per-row busy id so simultaneous mutations can't race. Operations: `createProfile`, `rename`, `setAgeLimit`, `setPin`, `clearPin`, `makeDefault`, `requestDelete` → `confirmDelete`. After every mutation `refresh()` pulls the list again
+- `ui/parental/ProfileManagementScreen` — per-profile row editor with inline rename / age-cap / PIN / default / delete. Add-profile form with Kids/Adult toggle. Delete goes through full-screen `ConfirmDeleteOverlay`
+- `ui/parental/DeviceManagementViewModel` — `Ready(devices, busyId, confirmingRevokeId, errorMessage)`. Optimistically updates the row on revoke success. 5 unit tests
+- `ui/parental/DeviceManagementScreen` — list of devices with platform chip, "This device" indicator, last-seen timestamp, "Revoke"/"Sign Out This Device" button. Confirmation overlay explains the consequence (current vs other device wording)
+- `ui/home/HomeHeader` — added optional `onProfileSettings` + `onDeviceSettings` ghost buttons between brand-logo and profile indicator. `HomeScreen` wires them through `onOpenProfileSettings` + `onOpenDeviceSettings` callbacks; NavHost maps to `Routes.ProfileManagement` / `Routes.DeviceManagement`
+- Nav: `Routes.ProfileManagement = "profiles/manage"`, `Routes.DeviceManagement = "devices/manage"`, `Routes.PinGatePattern = "profiles/{profileId}/pin-gate?profileName={name}"` with `Routes.pinGate(profileId, profileName)` URL-encoding helper. NavHost registers all three (PinGate composable URL-decodes `profileName`)
+- Tests (JVM, via `./gradlew :app:testDebugUnitTest`):
+  - `AgeFilterTest` — 7 cases covering the full rating-vocabulary matrix
+  - `ProfileRepositoryCrudTest` — 7 cases (MockWebServer) covering create POST body + parse, partial update PUT, clearPin flag, 409 SLOT_FULL, 204 delete, 409 last-profile VALIDATION_ERROR, verifyPin result parsing
+  - `PinGateViewModelTest` — 7 cases covering initial state, onPinChange filter/cap, short-PIN guard, successful verify → Unlocked, mismatch clears pin + counter, locked carries `lockedUntilIso`, `no_pin` defensive Unlocked
+  - `DeviceManagementViewModelTest` — 5 cases covering init loads, init Error on 401, requestRevoke → confirmRevoke updates list, confirmRevoke no-op without request, revoke error surfaces errorMessage
+- Docs: `apps/android-tv/README.md` gained a "Parental controls (Run 18)" section with feature breakdown, nav routes table, full test matrix
+- Token discipline verified (grep-clean): zero `Color(0x...)` literals in `ui/parental/`, `data/devices/`, `data/parental/`
+- **Static verification done:** Kotlin sources conform to Compose / tv-foundation / tv-material / Retrofit / Hilt / Navigation-Compose API surfaces; internal imports resolve
+- **Cannot verify in this session:** `./gradlew :app:assembleDebug` / `:app:testDebugUnitTest` — no Android SDK in the sandbox. **Verify locally** with backend up + real Firebase; flow: create a Kids profile with a 4-digit PIN → HomeHeader → Profiles → delete one → DeviceManagement → Revoke → PinGate countdown surfaces after 5 misses
 
 ### Run 17 — 2026-04-13 — Play Billing flow in the app
 - Added `billing-ktx 7.1.1` to the Android version catalog + `app/build.gradle.kts`
