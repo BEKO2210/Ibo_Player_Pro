@@ -7,7 +7,7 @@
 ## 🎯 Current State
 
 - **Phase:** C — Android TV Client
-- **Last completed run:** Run 13 — Onboarding + Auth screens
+- **Last completed run:** Run 14 — Home screen
 - **Current branch:** `claude/fix-api-timeout-vFqPP`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
@@ -15,37 +15,42 @@
 
 ---
 
-## ▶️ Next Run (Run 14): Home Screen
+## ▶️ Next Run (Run 15): Source Management UI + EPG Browse View
 
 ### Goal
-Replace the `HomePlaceholder` stub with the premium home screen: hero carousel, horizontal rows (Continue Watching, Favorites, Suggested), and a settings rail entry point. Home is the first screen a returning user sees after profile pick; it is the app's brand ambassador, so its visual bar must match Apple TV / Netflix / Bravia.
+Wire the first fully writable flow in the Android TV client: users add, rename, pause, and remove M3U / XMLTV / M3U+EPG sources through a premium multi-step UI, and can browse live channels + the electronic programme guide (EPG) for sources that supply it. This is the run that makes the empty-source home from Run 14 actionable end-to-end.
 
 ### Deliverables
-- [ ] `HomeScreen` composable backed by `HomeViewModel` (Hilt-injected). Top band uses `HeroSection` with a cycling highlight (3-5 items); rest of the screen is a vertical stack of `RowOfTiles` molecules.
-- [ ] `HomeRepository` pulling:
-  - `continue-watching` rows (stub data in Run 14; wired to `/v1/continue-watching` when endpoint lands in Run 16)
-  - `favorites` list (stub → `/v1/favorites` in Run 15)
-  - `sources` summary (from Run 10 `/v1/sources` via `ProfileRepository` sibling)
-- [ ] `SourcePickerRail` visible when the account has zero sources — prompts the user to add their first M3U / XMLTV source (routes to Run 15's source management screen which can be stubbed for now)
-- [ ] `BrandLogo(Inline)` in the top-left header plus profile indicator in the top-right (avatar + profile name)
-- [ ] D-pad navigation: hero tiles ↔ row tiles move focus naturally; ensure the first row auto-receives focus after hero
-- [ ] `@Preview` for the populated home (with fixture data) AND for the empty-source state
-- [ ] Unit tests for `HomeViewModel` (3 states: loading / populated / empty-source)
-- [ ] Update `apps/android-tv/README.md` with a "Home screen" section
+- [ ] `SourceManagementScreen` with three modes: **list**, **add**, **edit**. Uses `RowOfTiles` for existing sources, the shared `AuthFormScaffold` pattern for add / edit, and a confirmation step before destructive operations.
+- [ ] `AddSourceWizard` — 4 steps:
+  1. `Kind` — pick M3U / XMLTV / M3U+EPG via three focusable `PremiumCard`s
+  2. `Endpoint` — URL + optional username / password using `PremiumTextField`
+  3. `Preview` — call parser stub on the user-supplied URL; show channel-count + first 5 channels + first 5 programmes
+  4. `Confirm` — `POST /v1/sources`; map 402 → prompt to start trial, 403 → "source belongs to another account"
+- [ ] `EpgBrowseScreen` — grid-of-channels × timeline for a single source: vertical list of channels (left gutter), horizontal scrollable programme blocks (right). Focus moves on a 30-minute grid. When focus lands on a programme block, show `HeroSection` overlay with title / description / time window.
+- [ ] Repositories:
+  - `SourceRepository` extended with `create(…)`, `update(id, …)`, `delete(id)` — mirrors Run 10 endpoints
+  - `EpgRepository` with `channels(sourceId)` + `programmes(channelId, window)` — stubbed against the parser package until the Run 16 EPG worker serves live data
+- [ ] ViewModels with `StateFlow<UiState>` for all three screens; every destructive action goes through a confirmation state before firing the API
+- [ ] `@Preview`s for each screen (list, add wizard step 2, EPG browse with overlay)
+- [ ] Unit tests:
+  - `SourceRepositoryTest` (MockWebServer) — full CRUD round-trip + error envelope mapping for 402 / 409 / 404
+  - `AddSourceWizardViewModelTest` — step transitions + validation + error branches
+- [ ] Update `apps/android-tv/README.md` with "Source management (Run 15)" + "EPG browse (Run 15)" sections
 
 ### Acceptance criteria
-- Fresh account (zero sources, fresh trial) → home shows the source-picker rail and an inviting hero card prompting "Add your first source"
-- Account with sources + history → home shows Continue Watching row above Suggested / Favorites rows
-- Focus traversal hero ↔ rows ↔ sibling rows is smooth, with the focus-veil applied at the row level
-- No hard-coded color / dp / TextStyle literals in any screen body
-- All existing onboarding tests + Run 10-11 backend tests remain green
+- Fresh account adds its first source end-to-end: Home empty-state → AddSourceWizard → `POST /v1/sources` succeeds → returns to Home with the new source on the rail AND as a hero card
+- Adding a malformed URL surfaces a premium error banner with the parser's `malformedEntries` count, never a crash
+- Users can rename and pause a source; DELETE asks for confirmation first
+- EPG browse renders channels + programmes for an M3U+EPG source against the in-process parser fixture (until Run 16)
+- All Run 13-14 tests remain green; new suites have ≥ 8 tests combined
 
 ### After this run — update CLAUDE.md
-1. Tick Run 14 in the roadmap
-2. Set "Last completed run" to `Run 14 — Home screen`
-3. Write the new "Next Run" block for **Run 15: Source management UI + EPG browse view**
+1. Tick Run 15 in the roadmap
+2. Set "Last completed run" to `Run 15 — Source management UI + EPG browse`
+3. Write the new "Next Run" block for **Run 16: Playback (Media3/ExoPlayer) + heartbeat sync**
 4. Append entry to **Run Log**
-5. Commit: `tv: add home screen (hero + rows + continue watching) (Run 14)` and push
+5. Commit: `tv: add source management + EPG browse (Run 15)` and push
 
 ---
 
@@ -172,7 +177,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 - [x] **Run 11** — `apps/android-tv/` Gradle/Compose/Compose-TV bootstrap. **applicationId locked: `com.premiumtvplayer.app`.** Leanback intent, TV manifest, Hilt, Navigation-Compose, ui-tokens wiring
 - [x] **Run 12** — Design system in Compose: dark theme, typography, colors, focus states, motion, reusable Card/Row/Hero
 - [x] **Run 13** — Onboarding/Auth screens: Welcome → Signup/Login → Trial activation → Profile picker. Firebase Auth + API client
-- [ ] **Run 14** — Home screen: Hero carousel, rows, Continue Watching, Favorites. Logo wired in if not already
+- [x] **Run 14** — Home screen: Hero carousel, rows, Continue Watching, Favorites. Logo wired in if not already
 - [ ] **Run 15** — Source management UI + EPG browse view
 - [ ] **Run 16** — Playback (Media3/ExoPlayer): Live, VOD, Resume, subtitles, audio-track picker, heartbeat sync
 - [ ] **Run 17** — Billing flow in app: Play Billing Client, purchase trigger, Restore Purchase, entitlement UI states
@@ -284,6 +289,23 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
 - Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 14 — 2026-04-13 — Home screen (hero + rows + empty-state)
+- Extended the API client with `SourceDto` / `SourceListResponse` and a `GET /v1/sources?profileId=` endpoint on `PremiumPlayerApi`. Added `SourceRepository.list(profileId)` wrapping the call through `ApiErrorMapper`
+- New domain package `data/home/` with stable, platform-free models (`HomeTile`, `HomeRow`, `HomeHero`, `HomeDeeplink`, `HomeSnapshot`)
+- `HomeRepository.snapshot(profileId)` aggregates the live source list with stub Continue Watching / Favorites / Suggested rows. Stub rows are derived deterministically from the source list so the populated state always has meaningful content while the real endpoints (Run 15 favorites, Run 16 continue-watching) land in later runs
+- `HomeViewModel` (`ui/home/`) reads `profileId` from `SavedStateHandle` and exposes `StateFlow<HomeUiState>` with four states: `Loading`, `EmptySource(profile)`, `Populated(profile, snapshot)`, `Error(message)`. Error path pipes through `ApiErrorCopy.forCode(...)` for user-facing strings
+- `Routes.HomePattern = "home?profileId={profileId}"` with `Routes.home(profileId)` builder and `Routes.ProfileIdArg` constant. `PremiumTvApp` NavHost registers the pattern with a nullable string `navArgument`. `ProfilePickerScreen` now navigates with the selected profile's id
+- UI components:
+  - `HomeHeader` — inline `BrandLogo` + right-aligned profile indicator (initial-avatar gradient + name + adult/kids label)
+  - `SourcePickerRail` — premium empty-state hero: outline chips ("Step 1 of 1", "M3U · XMLTV · M3U+EPG"), `DisplayHero` title, editorial body copy, Add Source + Sign Out CTAs
+  - `HomeScreen` — full populated layout: header + hero carousel (21:9 `PremiumCard`s with brand-accent gradient backdrops and a `HeroCaption` column below each) + stacked `RowOfTiles` sections for Continue Watching / Favorites / Suggested / Your Sources. Every row implements the Run 12 focus-veil pattern independently. First hero auto-focuses on composition so the user lands "inside" the page
+- Compose `@Preview`s for the populated home (with fixture profile + 2 sources), the empty-source variant, `HomeHeader`, `SourcePickerRail`
+- Unit tests (`test/.../ui/home/HomeViewModelTest.kt`) — MockK + Turbine with `UnconfinedTestDispatcher`. Three cases: Populated with profile resolved from nav arg; EmptySource when sources list is empty; Error with mapped UNAUTHORIZED message. Tolerates the init-Loading race by accepting Loading followed by the terminal state
+- Verified Run 11-13 content bar still holds: grep-clean — zero hardcoded `Color(0x…)` in `ui/home/`, zero `Routes.Home` stale references, imports all resolve
+- Updated `apps/android-tv/README.md` with a full "Home screen (Run 14)" section: ASCII layout diagrams for populated + empty, data-flow diagram (ProfilePicker → HomeViewModel → HomeRepository → SourceRepository → `/v1/sources`), nav-pattern notes, state-model table
+- **Static verification done in this session:** Kotlin sources align with Compose / tv-foundation / tv-material / Hilt / Navigation-Compose API surfaces. Internal imports resolve. No hardcoded dp/Color/TextStyle literals in any screen body
+- **Cannot verify in this session:** `./gradlew :app:assembleDebug` / `:app:testDebugUnitTest` — Android SDK absent. **Verify locally** with backend up (`docker compose up -d` + `npm run start:dev`), real Firebase credentials in `local.properties`, then sign in, pick profile, observe Home hitting `GET /v1/sources?profileId=…` with the Bearer token attached. Expected: empty-state rail for fresh account, hero + rows stack after a source is added
 
 ### Run 13 — 2026-04-13 — Onboarding + Auth screens
 - Added `BuildConfig` fields (`API_BASE_URL`, `FIREBASE_API_KEY`, `FIREBASE_PROJECT_ID`, `FIREBASE_APPLICATION_ID`) fed from `local.properties` / Gradle properties. Debug default points at `http://10.0.2.2:3000/v1/` for the emulator-to-host API loop.

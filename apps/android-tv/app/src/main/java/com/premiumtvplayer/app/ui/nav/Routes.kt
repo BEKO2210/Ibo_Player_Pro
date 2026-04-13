@@ -9,6 +9,14 @@ object Routes {
     const val TrialActivation = "trial-activation"
     const val ProfilePicker = "profile-picker"
 
-    /** Where Run 14 lands. Stub for now. */
-    const val Home = "home"
+    // ── Home (Run 14) ──────────────────────────────────────────────
+    /** Nav argument key consumed by `HomeViewModel` via SavedStateHandle. */
+    const val ProfileIdArg = "profileId"
+
+    /** Pattern registered with NavHost. */
+    const val HomePattern = "home?$ProfileIdArg={$ProfileIdArg}"
+
+    /** Builder — use this at call sites to navigate into Home. */
+    fun home(profileId: String? = null): String =
+        if (profileId == null) "home" else "home?$ProfileIdArg=$profileId"
 }

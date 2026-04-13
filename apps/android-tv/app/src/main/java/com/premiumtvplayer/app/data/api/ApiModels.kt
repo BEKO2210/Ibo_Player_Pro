@@ -62,6 +62,26 @@ data class ProfileListResponse(
     val profiles: List<ProfileDto>,
 )
 
+// ── Sources ────────────────────────────────────────────────────────────
+
+@Serializable
+data class SourceDto(
+    val id: String,
+    val profileId: String? = null,
+    val name: String,
+    /** One of: m3u, xmltv, m3u_plus_epg. */
+    val kind: String,
+    val isActive: Boolean,
+    val validationStatus: String,
+    val itemCountEstimate: Int? = null,
+    val createdAt: String,
+)
+
+@Serializable
+data class SourceListResponse(
+    val sources: List<SourceDto>,
+)
+
 // ── Stable error envelope (matches packages/api-contracts ErrorEnvelope) ──
 
 @Serializable

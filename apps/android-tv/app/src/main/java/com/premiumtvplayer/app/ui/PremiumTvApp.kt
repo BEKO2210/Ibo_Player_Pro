@@ -29,6 +29,7 @@ import androidx.tv.material3.Text
 import com.premiumtvplayer.app.ui.components.BootProgress
 import com.premiumtvplayer.app.ui.components.BrandLogo
 import com.premiumtvplayer.app.ui.components.BrandLogoSize
+import com.premiumtvplayer.app.ui.home.HomeScreen
 import com.premiumtvplayer.app.ui.nav.Routes
 import com.premiumtvplayer.app.ui.onboarding.LoginScreen
 import com.premiumtvplayer.app.ui.onboarding.ProfilePickerScreen
@@ -122,10 +123,8 @@ fun PremiumTvApp(navController: NavHostController = rememberNavController()) {
         }
         composable(Routes.ProfilePicker) {
             ProfilePickerScreen(
-                onProfileSelected = {
-                    // Run 14 replaces this placeholder with navigation into
-                    // the home screen carrying the selected profileId.
-                    navController.navigate(Routes.Home) {
+                onProfileSelected = { profile ->
+                    navController.navigate(Routes.home(profile.id)) {
                         popUpTo(Routes.ProfilePicker) { inclusive = true }
                     }
                 },
@@ -133,8 +132,26 @@ fun PremiumTvApp(navController: NavHostController = rememberNavController()) {
                 onManageProfiles = { /* Run 18 */ },
             )
         }
-        composable(Routes.Home) {
-            HomePlaceholder()
+        composable(
+            route = Routes.HomePattern,
+            arguments = listOf(
+                androidx.navigation.navArgument(Routes.ProfileIdArg) {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) {
+            HomeScreen(
+                onOpenDeeplink = { /* Run 15 — source management / player deep-links */ },
+                onAddSource = { /* Run 15 — add source flow */ },
+                onSignOut = {
+                    // Drop auth state + return to Welcome.
+                    navController.navigate(Routes.Welcome) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+            )
         }
     }
 }

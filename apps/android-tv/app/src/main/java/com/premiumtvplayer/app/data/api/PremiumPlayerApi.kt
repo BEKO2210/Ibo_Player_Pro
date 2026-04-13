@@ -30,7 +30,13 @@ interface PremiumPlayerApi {
     @POST("entitlement/trial/start")
     suspend fun startTrial(): EntitlementStatusResponse
 
-    // ── Profiles (read-only here; full CRUD lands in Run 14/18) ────────
+    // ── Profiles (read-only here; full CRUD lands in Run 18) ────────
     @GET("profiles")
     suspend fun listProfiles(): ProfileListResponse
+
+    // ── Sources (read-only here; full CRUD lands in Run 15) ────────────
+    @GET("sources")
+    suspend fun listSources(
+        @retrofit2.http.Query("profileId") profileId: String? = null,
+    ): SourceListResponse
 }

@@ -219,6 +219,92 @@ strings. i18n hooks in Run 19 replace this with a resource lookup.
 4. Tearing down trial on the same account twice surfaces the friendly
    "already used" state (driven by `TRIAL_ALREADY_CONSUMED`).
 
+## Home screen (Run 14)
+
+After profile pick, the app lands on `HomeScreen` (`ui/home/HomeScreen.kt`).
+Two presentation modes driven by the sources count:
+
+### Populated (≥ 1 source)
+
+```
+┌──────────────────────────────────────────────────┐
+│ [inline logo]                        [Alex · Adult] │  HomeHeader
+├──────────────────────────────────────────────────┤
+│ HERO CAROUSEL — 3 cards, 21:9, focus-veil between │
+│   (chips · Headline · subtitle · deep-link CTA)   │
+├──────────────────────────────────────────────────┤
+│ Continue Watching  ▸  card card card card …      │  RowOfTiles
+│ Favorites          ▸  card card card card …      │
+│ Suggested for you  ▸  card card card card …      │
+│ Your Sources       ▸  card card card …           │
+└──────────────────────────────────────────────────┘
+```
+
+- Hero carousel **auto-focuses the first tile on first composition**
+  (Apple TV / Bravia convention). Users land "inside" the page — no
+  "press D-pad to start".
+- Every row runs the **focus-veil pattern** from Run 12: as focus slides
+  left/right, sibling tiles dim to 40% through `PremiumEasing.Standard`.
+- Hero cards render `PremiumCard` with a 21:9 aspect ratio and a brand-
+  accent linear gradient backdrop, paired with a `HeroCaption` column
+  (outline chips, `Headline` title, muted subtitle).
+
+### Empty source (0 sources)
+
+```
+┌──────────────────────────────────────────────────┐
+│ [inline logo]                        [Alex · Adult] │
+├──────────────────────────────────────────────────┤
+│ ── chips · "Step 1 of 1" + "M3U · XMLTV · M3U+EPG"│
+│ Add your first source                             │  SourcePickerRail
+│ Premium TV Player ships empty — you bring the     │
+│ content. Paste a playlist or EPG URL …           │
+│ [ Add Source ]    Sign Out (ghost)                │
+└──────────────────────────────────────────────────┘
+```
+
+Visible whenever `GET /v1/sources?profileId=…` returns an empty list.
+The primary CTA routes to the source-management flow (Run 15).
+
+### Data flow
+
+```
+ProfilePicker ──(profileId)──► Home route
+                                   │
+                                   ▼
+                          HomeViewModel
+                             │    (SavedStateHandle[profileId])
+                             ▼
+                      HomeRepository.snapshot(profileId)
+                      ├─ SourceRepository.list(profileId)   → /v1/sources
+                      ├─ continue-watching rows (STUB)      → /v1/continue-watching in Run 16
+                      ├─ favorites list (STUB)              → /v1/favorites in Run 15
+                      └─ hero carousel derived from sources
+```
+
+`HomeRepository` builds the populated snapshot deterministically from
+the live source list — no feature flags. Continue-watching, favorites,
+and suggested become real endpoints in Runs 15-16 with no screen-side
+change (the repo keeps the same return shape).
+
+### Nav wiring
+
+`Routes.HomePattern = "home?profileId={profileId}"` — profileId is
+optional. The NavHost in `PremiumTvApp` reads it into
+`SavedStateHandle[Routes.ProfileIdArg]`.
+
+### State model (`HomeUiState`)
+
+| State          | When                                    |
+|----------------|-----------------------------------------|
+| `Loading`      | Initial load and after `refresh()`      |
+| `EmptySource`  | API returned zero sources               |
+| `Populated`    | Sources exist — show hero + rows        |
+| `Error`        | `/v1/sources` failed — shows retry/sign-out |
+
+Unit tests in `ui/home/HomeViewModelTest.kt` cover all four states
+(MockK + Turbine + `UnconfinedTestDispatcher`).
+
 ## Build + run
 
 > **Tooling required (cannot be run in this repo's CI sandbox — Android
