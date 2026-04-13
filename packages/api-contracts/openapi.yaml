@@ -1,0 +1,822 @@
+openapi: 3.1.0
+info:
+  title: Premium TV Player API Contracts
+  version: 0.1.0
+  description: V1 contract baseline for backend and clients.
+servers:
+  - url: https://api.premium-tv-player.example
+
+tags:
+  - name: Auth
+  - name: Entitlement
+  - name: Devices
+  - name: Profiles
+  - name: Sources
+  - name: Playback
+  - name: Billing
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Registered and authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '409':
+          description: Active device slot cap reached.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        '204':
+          description: Logged out and device token revoked.
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Session refreshed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefreshResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /entitlement/status:
+    get:
+      tags: [Entitlement]
+      operationId: entitlementStatus
+      responses:
+        '200':
+          description: Current account entitlement.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntitlementStatusResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /devices:
+    get:
+      tags: [Devices]
+      operationId: listDevices
+      responses:
+        '200':
+          description: Device slots for the account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceListResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /devices/{deviceId}:
+    parameters:
+      - $ref: '#/components/parameters/DeviceId'
+    put:
+      tags: [Devices]
+      operationId: renameDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenameDeviceRequest'
+      responses:
+        '200':
+          description: Device updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      tags: [Devices]
+      operationId: revokeDevice
+      responses:
+        '204':
+          description: Device revoked.
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /profiles:
+    get:
+      tags: [Profiles]
+      operationId: listProfiles
+      responses:
+        '200':
+          description: Profiles for account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileListResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      tags: [Profiles]
+      operationId: createProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProfileRequest'
+      responses:
+        '201':
+          description: Profile created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /profiles/{profileId}:
+    parameters:
+      - $ref: '#/components/parameters/ProfileId'
+    put:
+      tags: [Profiles]
+      operationId: updateProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      tags: [Profiles]
+      operationId: deleteProfile
+      responses:
+        '204':
+          description: Profile soft deleted.
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /profiles/{profileId}/verify-pin:
+    post:
+      tags: [Profiles]
+      operationId: verifyProfilePin
+      parameters:
+        - $ref: '#/components/parameters/ProfileId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyPinRequest'
+      responses:
+        '200':
+          description: PIN check result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyPinResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /sources:
+    get:
+      tags: [Sources]
+      operationId: listSources
+      responses:
+        '200':
+          description: Sources for account/profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceListResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      tags: [Sources]
+      operationId: createSource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSourceRequest'
+      responses:
+        '201':
+          description: Source created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /sources/{sourceId}:
+    parameters:
+      - $ref: '#/components/parameters/SourceId'
+    put:
+      tags: [Sources]
+      operationId: updateSource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSourceRequest'
+      responses:
+        '200':
+          description: Source updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      tags: [Sources]
+      operationId: deleteSource
+      responses:
+        '204':
+          description: Source deleted.
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /playback/start:
+    post:
+      tags: [Playback]
+      operationId: startPlayback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaybackStartRequest'
+      responses:
+        '200':
+          description: Playback session started.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaybackSessionResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /playback/heartbeat:
+    post:
+      tags: [Playback]
+      operationId: playbackHeartbeat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaybackHeartbeatRequest'
+      responses:
+        '204':
+          description: Heartbeat accepted.
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /playback/stop:
+    post:
+      tags: [Playback]
+      operationId: stopPlayback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaybackStopRequest'
+      responses:
+        '204':
+          description: Session stopped and resume state synced.
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /billing/verify:
+    post:
+      tags: [Billing]
+      operationId: verifyPurchase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillingVerifyRequest'
+      responses:
+        '200':
+          description: Purchase verified and entitlement evaluated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntitlementStatusResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /billing/restore:
+    post:
+      tags: [Billing]
+      operationId: restorePurchase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillingRestoreRequest'
+      responses:
+        '200':
+          description: Restored entitlement status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntitlementStatusResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+components:
+  parameters:
+    DeviceId:
+      name: deviceId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProfileId:
+      name: profileId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SourceId:
+      name: sourceId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    ErrorResponse:
+      description: Error response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+  schemas:
+    EntitlementState:
+      type: string
+      enum: [none, trial, lifetime_single, lifetime_family, expired, revoked]
+
+    ErrorCode:
+      type: string
+      enum: [UNAUTHORIZED, SLOT_FULL, PIN_INVALID, ENTITLEMENT_REQUIRED, VALIDATION_ERROR]
+
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              $ref: '#/components/schemas/ErrorCode'
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+            requestId:
+              type: string
+
+    DeviceInfo:
+      type: object
+      required: [platform, appVersion]
+      properties:
+        platform:
+          type: string
+          enum: [android_tv, android_mobile]
+        appVersion:
+          type: string
+        osVersion:
+          type: string
+        deviceName:
+          type: string
+
+    Entitlement:
+      type: object
+      required: [state]
+      properties:
+        state:
+          $ref: '#/components/schemas/EntitlementState'
+        trialEndsAt:
+          type: string
+          format: date-time
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Account:
+      type: object
+      required: [id, email, locale]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        locale:
+          type: string
+
+    RegisterRequest:
+      type: object
+      required: [firebaseIdToken, locale, device]
+      properties:
+        firebaseIdToken:
+          type: string
+        locale:
+          type: string
+        device:
+          $ref: '#/components/schemas/DeviceInfo'
+
+    LoginRequest:
+      allOf:
+        - $ref: '#/components/schemas/RegisterRequest'
+
+    LogoutRequest:
+      type: object
+      required: [deviceToken]
+      properties:
+        deviceToken:
+          type: string
+
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [account, deviceToken, accessToken, refreshToken, entitlement]
+      properties:
+        account:
+          $ref: '#/components/schemas/Account'
+        deviceToken:
+          type: string
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        entitlement:
+          $ref: '#/components/schemas/Entitlement'
+
+    TokenRefreshResponse:
+      type: object
+      required: [accessToken, refreshToken]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+
+    EntitlementStatusResponse:
+      type: object
+      required: [entitlement]
+      properties:
+        entitlement:
+          $ref: '#/components/schemas/Entitlement'
+
+    Device:
+      type: object
+      required: [id, name, platform, isCurrent, isRevoked]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        platform:
+          type: string
+        isCurrent:
+          type: boolean
+        isRevoked:
+          type: boolean
+        lastSeenAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    DeviceListResponse:
+      type: object
+      required: [items, maxActiveSlots]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Device'
+        maxActiveSlots:
+          type: integer
+          minimum: 1
+
+    RenameDeviceRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+
+    Profile:
+      type: object
+      required: [id, name, isKids]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        isKids:
+          type: boolean
+        ageLimit:
+          type: integer
+          nullable: true
+        isDefault:
+          type: boolean
+
+    ProfileListResponse:
+      type: object
+      required: [items, maxProfiles]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Profile'
+        maxProfiles:
+          type: integer
+          minimum: 1
+
+    CreateProfileRequest:
+      type: object
+      required: [name, isKids]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        isKids:
+          type: boolean
+        ageLimit:
+          type: integer
+          minimum: 0
+          maximum: 21
+          nullable: true
+        pin:
+          type: string
+          minLength: 4
+          maxLength: 10
+          nullable: true
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        ageLimit:
+          type: integer
+          minimum: 0
+          maximum: 21
+          nullable: true
+        pin:
+          type: string
+          minLength: 4
+          maxLength: 10
+          nullable: true
+
+    VerifyPinRequest:
+      type: object
+      required: [pin]
+      properties:
+        pin:
+          type: string
+          minLength: 4
+          maxLength: 10
+
+    VerifyPinResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+
+    SourceKind:
+      type: string
+      enum: [m3u, xmltv, m3u_plus_epg]
+
+    Source:
+      type: object
+      required: [id, name, kind, isActive, validationStatus]
+      properties:
+        id:
+          type: string
+          format: uuid
+        profileId:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+        kind:
+          $ref: '#/components/schemas/SourceKind'
+        isActive:
+          type: boolean
+        validationStatus:
+          type: string
+          enum: [pending, valid, invalid]
+        itemCountEstimate:
+          type: integer
+          nullable: true
+
+    SourceListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Source'
+
+    CreateSourceRequest:
+      type: object
+      required: [name, kind, url]
+      properties:
+        profileId:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        kind:
+          $ref: '#/components/schemas/SourceKind'
+        url:
+          type: string
+          format: uri
+        username:
+          type: string
+          nullable: true
+        password:
+          type: string
+          nullable: true
+
+    UpdateSourceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        isActive:
+          type: boolean
+
+    PlaybackState:
+      type: string
+      enum: [starting, playing, paused, buffering, stopped, error]
+
+    PlaybackStartRequest:
+      type: object
+      required: [profileId, sourceId, itemId, itemType]
+      properties:
+        profileId:
+          type: string
+          format: uuid
+        sourceId:
+          type: string
+          format: uuid
+        itemId:
+          type: string
+        itemType:
+          type: string
+          enum: [live, vod, series_episode]
+
+    PlaybackSessionResponse:
+      type: object
+      required: [sessionId]
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+
+    PlaybackHeartbeatRequest:
+      type: object
+      required: [sessionId, positionSeconds, state]
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        positionSeconds:
+          type: integer
+          minimum: 0
+        state:
+          $ref: '#/components/schemas/PlaybackState'
+
+    PlaybackStopRequest:
+      type: object
+      required: [sessionId, finalPositionSeconds]
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        finalPositionSeconds:
+          type: integer
+          minimum: 0
+
+    BillingVerifyRequest:
+      type: object
+      required: [purchaseToken, productId, deviceToken]
+      properties:
+        purchaseToken:
+          type: string
+        productId:
+          type: string
+        deviceToken:
+          type: string
+
+    BillingRestoreRequest:
+      type: object
+      required: [deviceToken]
+      properties:
+        deviceToken:
+          type: string
