@@ -7,7 +7,7 @@
 ## 🎯 Current State
 
 - **Phase:** A — Foundation & Specs
-- **Last completed run:** Run 2 — PRD + user flows
+- **Last completed run:** Run 5 — Entitlement state machine
 - **Current branch:** `claude/premium-tv-player-plan-WG2tC`
 - **Push target:** same branch (`-u origin claude/premium-tv-player-plan-WG2tC`)
 - **Logo status:** ⏳ pending — Claude will ask the user in **Run 6**
@@ -15,32 +15,33 @@
 
 ---
 
-## ▶️ Next Run (Run 3): Data Model
+## ▶️ Next Run (Run 6): NestJS Bootstrap + Infra
 
 ### Goal
-Define the complete V1 database schema and an ER diagram that every backend/API/contract run will reference. Pure documentation — no migrations yet (those happen in Run 6 when NestJS + Prisma are bootstrapped).
+Bootstrap the V1 backend service foundation in `services/api` with NestJS, Prisma, PostgreSQL, Redis, and local Docker development workflow.
 
 ### Deliverables
-- [ ] `docs/architecture/data-model.md` containing:
-  - [ ] Narrative overview: entity responsibilities and relationships
-  - [ ] SQL DDL (PostgreSQL dialect) for every table: `accounts`, `devices`, `profiles`, `profile_pins`, `entitlements`, `purchases`, `sources`, `source_credentials`, `epg_channels`, `epg_programs`, `watch_history`, `continue_watching`, `favorites`, `playback_sessions`, `audit_log`
-  - [ ] Indexes and foreign keys for all common access paths (by account, by profile, by device, by source, by epg channel/time)
-  - [ ] An **ER diagram** as a mermaid `erDiagram`
-  - [ ] Notes on: encryption-at-rest for source URLs + credentials, PIN hashing (argon2id), soft-delete strategy, timestamps (`created_at`, `updated_at`), UUID primary keys
+- [ ] Create `services/api/` NestJS project scaffold (TypeScript strict mode)
+- [ ] Add Prisma setup with initial schema skeleton aligned to Run 3 docs
+- [ ] Add local `docker-compose` stack for Postgres + Redis under `infra/docker/`
+- [ ] Add `GET /health` endpoint returning service/db/redis readiness snapshot
+- [ ] Add environment config templates (`.env.example`) and runtime config module
+- [ ] Add minimal README in `services/api/` with run/migrate/test commands
+- [ ] Ask user to upload logo assets into `assets/logo/` (PNG/SVG, dark+light preferred)
 
 ### Acceptance criteria
-- Every entity referenced in `docs/product/user-flows.md` has a corresponding table
-- All five entitlement states (`none`, `trial`, `lifetime_single`, `lifetime_family`, `expired`, `revoked`) are representable
-- Family cap (5 profiles, 5 active devices) is enforceable from schema + app logic
-- A reader can move from this doc straight to Prisma schema in Run 6 without guessing
-- Diagrams render on GitHub (mermaid)
+- `services/api` starts locally and responds on health endpoint
+- Prisma can connect to Postgres from docker-compose
+- Redis connectivity is verified in health/status output
+- Environment setup is documented and reproducible by a fresh developer
+- Logo upload request is explicitly made to the user during this run
 
 ### After this run — update CLAUDE.md
-1. Tick Run 3 in the roadmap
-2. Set "Last completed run" to `Run 3 — Data model`
-3. Write the new "Next Run" block for **Run 4: API Contracts (OpenAPI + Zod)**
+1. Tick Run 6 in the roadmap
+2. Set "Last completed run" to `Run 6 — NestJS bootstrap`
+3. Write the new "Next Run" block for **Run 7: Auth module**
 4. Append entry to **Run Log**
-5. Commit: `docs: add data model and ER diagram (Run 3)` and push
+5. Commit: `api: scaffold NestJS service with Prisma/Redis/Postgres (Run 6)` and push
 
 ---
 
@@ -151,9 +152,9 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 ### Phase A — Foundation & Specs
 - [x] **Run 1** — Repo skeleton + CLAUDE.md + LICENSE + .gitignore + .editorconfig + README
 - [x] **Run 2** — PRD + user flows (`docs/product/`)
-- [ ] **Run 3** — Data model: SQL schemas + ER diagram (`docs/architecture/data-model.md`)
-- [ ] **Run 4** — API contracts: OpenAPI 3.1 + Zod (`packages/api-contracts/`)
-- [ ] **Run 5** — Entitlement state machine + billing event handling (`docs/architecture/entitlement-state-machine.md`)
+- [x] **Run 3** — Data model: SQL schemas + ER diagram (`docs/architecture/data-model.md`)
+- [x] **Run 4** — API contracts: OpenAPI 3.1 + Zod (`packages/api-contracts/`)
+- [x] **Run 5** — Entitlement state machine + billing event handling (`docs/architecture/entitlement-state-machine.md`)
 
 ### Phase B — Backend V1
 - [ ] **Run 6** — NestJS bootstrap (`services/api/`): Prisma, Postgres, Redis, docker-compose, health endpoint, env setup. **→ Claude asks user for logo upload into `assets/logo/` here.**
@@ -242,3 +243,24 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Wrote `docs/product/PRD.md`: vision, personas, V1 in/out scope, monetization table (Trial / Lifetime Single / Lifetime Family), product principles, success metrics, risks, glossary
 - Wrote `docs/product/user-flows.md`: 17 canonical flows with mermaid diagrams — Onboarding, Signup, Login, Trial activation, Purchase, Restore, Profile picker, Profile CRUD, Add source, Home, Kids PIN gate, Device management, Playback + Resume, Logout, Expired/Revoked handling, Error surfaces, Happy path
 - All flows consistent with locked decisions (server-authoritative trial/entitlement, account-based device slots, no MAC binding, 5 profiles / 5 device slots for Family)
+
+
+### Run 3 — 2026-04-13 — Data model
+- Wrote `docs/architecture/data-model.md` with full V1 relational model narrative covering accounts, entitlements, profiles, sources, EPG, playback, and audit responsibilities
+- Added PostgreSQL DDL for 15 required tables plus enums, constraints, foreign keys, and indexing strategy for account/profile/device/source/EPG-time access paths
+- Added GitHub-renderable mermaid ER diagram and implementation notes for encryption-at-rest, Argon2id PIN hashing, soft deletes, UTC timestamps, and UUID PKs
+- Confirmed entitlement states and family caps are representable via schema + app-layer enforcement
+
+
+### Run 4 — 2026-04-13 — API contracts (OpenAPI + Zod)
+- Added `packages/api-contracts/openapi.yaml` with V1 endpoints for auth, entitlement, devices, profiles, sources, playback, and billing
+- Added `packages/api-contracts/src/zod.ts` with runtime schemas mirroring OpenAPI requests/responses and core enums
+- Added `packages/api-contracts/README.md` documenting contract rules, stable error envelope, and usage expectations
+- Kept entitlement states and error codes aligned with locked product decisions and user-flow endpoints
+
+
+### Run 5 — 2026-04-13 — Entitlement state machine + billing events
+- Added `docs/architecture/entitlement-state-machine.md` with canonical entitlement states, deterministic transition table, and billing event mapping
+- Defined trial lifecycle rules (consume-once), refund/revoke fallback policy, and explicit device/profile caps by entitlement state
+- Documented idempotency keys, replay handling, and worker/API concurrency conflict resolution
+- Added GitHub-renderable mermaid state diagram and error semantics aligned to stable API error codes
