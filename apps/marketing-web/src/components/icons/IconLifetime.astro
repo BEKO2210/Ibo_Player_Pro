@@ -1,0 +1,10 @@
+---
+/* Infinity symbol crossed with a gem facet — lifetime license. */
+interface Props { size?: number; class?: string }
+const { size = 24, class: className } = Astro.props;
+---
+<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class={className} aria-hidden="true">
+  <path d="M6.5 8a4 4 0 1 0 0 8c1.6 0 2.6-1 4-3s2.4-3 4-3a4 4 0 1 1 0 8c-1.6 0-2.6-1-4-3S8.1 8 6.5 8z"/>
+  <path d="M9 4.5l3 2 3-2" opacity="0.85"/>
+  <path d="M12 6.5v2" opacity="0.6"/>
+</svg>

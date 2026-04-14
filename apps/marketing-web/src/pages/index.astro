@@ -4,6 +4,12 @@ import Hero from "../components/Hero.astro";
 import Section from "../components/Section.astro";
 import FeatureCard from "../components/FeatureCard.astro";
 import Button from "../components/Button.astro";
+import IconSources from "../components/icons/IconSources.astro";
+import IconProfiles from "../components/icons/IconProfiles.astro";
+import IconKidsShield from "../components/icons/IconKidsShield.astro";
+import IconEpgGrid from "../components/icons/IconEpgGrid.astro";
+import IconLifetime from "../components/icons/IconLifetime.astro";
+import IconPrivacyLock from "../components/icons/IconPrivacyLock.astro";
 import { link, WAITLIST_MAILTO } from "../utils/link";
 ---
 <BaseLayout
@@ -21,33 +27,45 @@ import { link, WAITLIST_MAILTO } from "../utils/link";
   <Section
     eyebrow="Why it feels different"
     title="Built like a flagship streaming app."
-    lede="Cinematic focus states, instant launch, 60fps focus animations, and a dark palette tuned for living-room TVs. Everything you'd expect from a premium streaming service — running on the sources you authorize yourself."
+    lede="Cinematic focus states, instant launch, 60fps focus animations, and a dark palette tuned for living-room TVs — running on the sources you authorize yourself."
   >
     <div class="feature-grid">
       <FeatureCard
         title="Bring your own sources"
         body="Add any M3U, M3U8 or XMLTV URL you are authorized to use. Credentials are encrypted at rest with AES-256-GCM; only the player can decrypt them."
-      />
+      >
+        <IconSources slot="icon" />
+      </FeatureCard>
       <FeatureCard
         title="Up to 5 profiles"
-        body="Separate profiles for everyone in the household. Watch history, favorites and continue-watching sync to the cloud per profile."
-      />
+        body="Separate profiles for everyone in the household. Watch history, favorites and Continue Watching sync to the cloud per profile."
+      >
+        <IconProfiles slot="icon" />
+      </FeatureCard>
       <FeatureCard
         title="Kids-safe by design"
         body="A dedicated Kids profile with age-rating filter and PIN gate. Argon2id hashing and server-side lockout keep the gate honest."
-      />
+      >
+        <IconKidsShield slot="icon" />
+      </FeatureCard>
       <FeatureCard
-        title="Live TV + EPG"
-        body="Electronic programme guide with a 48-hour window, channel list with logos, and one-click timeshift-ready playback (recording rolls out in V1.5)."
-      />
+        title="Live TV with a proper EPG"
+        body="Electronic programme guide with a 48-hour window, channel list with logos, and a one-press focus into the programme you care about."
+      >
+        <IconEpgGrid slot="icon" />
+      </FeatureCard>
       <FeatureCard
         title="Lifetime license"
         body="Pay once at launch. No monthly fees. €19.99 for one device / one profile, €39.99 for the Family plan with 5 profiles and 5 devices."
-      />
+      >
+        <IconLifetime slot="icon" />
+      </FeatureCard>
       <FeatureCard
-        title="No tracking, no ads"
+        title="No ads. No tracking."
         body="We don't serve ads, sell profiles or build advertising graphs. Only your email, a Firebase UID and your entitlement status ever reach our server."
-      />
+      >
+        <IconPrivacyLock slot="icon" />
+      </FeatureCard>
     </div>
   </Section>
 
@@ -56,7 +74,7 @@ import { link, WAITLIST_MAILTO } from "../utils/link";
       <li>
         <span class="step-num">01</span>
         <h3 class="t-title">Install &amp; sign in</h3>
-        <p class="t-body-small">At launch, grab the app from Google Play on your Android TV. Create an account with email + password — your 14-day trial starts on the first login.</p>
+        <p class="t-body-small">At launch, grab the app from Google Play on your Android TV. Create an account — your 14-day trial starts on first login.</p>
       </li>
       <li>
         <span class="step-num">02</span>
@@ -73,7 +91,7 @@ import { link, WAITLIST_MAILTO } from "../utils/link";
 
   <Section>
     <div class="cta-panel">
-      <div>
+      <div class="cta-copy">
         <h2 class="t-headline">Be the first to know.</h2>
         <p class="t-body-small cta-body">We're wrapping up the final polish. Drop us a line and we'll ping you the moment the app goes live on Google Play.</p>
       </div>
@@ -83,10 +101,14 @@ import { link, WAITLIST_MAILTO } from "../utils/link";
 </BaseLayout>
 
 <style>
+  /*
+    Feature grid follows phi in column rhythm: 1 → 2 → 3 cols.
+    Gap uses a phi-proportional value (base gap × 1.618 on wide viewports).
+  */
   .feature-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: var(--space-l);
+    gap: clamp(16px, 2.4vw, 26px);
   }
   @media (min-width: 640px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (min-width: 960px) { .feature-grid { grid-template-columns: repeat(3, 1fr); } }
@@ -97,15 +119,15 @@ import { link, WAITLIST_MAILTO } from "../utils/link";
     padding: 0;
     display: grid;
     grid-template-columns: 1fr;
-    gap: var(--space-l);
+    gap: clamp(16px, 2.4vw, 26px);
     max-width: 960px;
     margin-inline: auto;
   }
   @media (min-width: 800px) { .steps { grid-template-columns: repeat(3, 1fr); } }
   .steps li {
-    padding: clamp(20px, 4vw, 32px);
+    padding: clamp(20px, 2.8vw, 32px);
     border-radius: var(--radius-l);
-    background: linear-gradient(180deg, rgba(29, 33, 40, 0.7), rgba(20, 23, 28, 0.7));
+    background: linear-gradient(180deg, rgba(29, 33, 40, 0.72), rgba(20, 23, 28, 0.72));
     border: 1px solid rgba(255, 255, 255, 0.06);
     display: flex; flex-direction: column; gap: var(--space-s);
   }
@@ -119,19 +141,22 @@ import { link, WAITLIST_MAILTO } from "../utils/link";
   .steps h3 { margin: 0; color: var(--color-on-surface-high); }
   .steps p  { margin: 0; }
 
+  /* Golden-ratio split in the CTA panel at wide widths: 1.618fr : 1fr */
   .cta-panel {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-l);
-    padding: clamp(24px, 5vw, 48px);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(16px, 2.4vw, 28px);
+    align-items: center;
+    padding: clamp(24px, 3.2vw, 48px);
     border-radius: var(--radius-l);
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.25), rgba(139, 92, 246, 0.15));
-    border: 1px solid rgba(96, 165, 250, 0.3);
-    align-items: flex-start;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.28), rgba(139, 92, 246, 0.16));
+    border: 1px solid rgba(96, 165, 250, 0.32);
   }
   @media (min-width: 800px) {
-    .cta-panel { flex-direction: row; align-items: center; justify-content: space-between; }
+    .cta-panel { grid-template-columns: 1.618fr 1fr; }
   }
+  .cta-copy h2 { margin: 0; color: var(--color-on-surface-high); }
   .cta-body { margin: var(--space-s) 0 0; }
-  .cta-panel h2 { margin: 0; color: var(--color-on-surface-high); }
+  .cta-panel :global(.btn) { justify-self: start; }
+  @media (min-width: 800px) { .cta-panel :global(.btn) { justify-self: end; } }
 </style>

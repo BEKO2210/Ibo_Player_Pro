@@ -1,11 +1,12 @@
 ---
 import { link } from "../utils/link";
 const year = new Date().getFullYear();
+const logoHref = link("/logo.png");
 ---
 <footer class="site-footer">
   <div class="container footer-inner">
     <div class="footer-brand">
-      <span class="brand-mark" aria-hidden="true"></span>
+      <img class="brand-mark" src={logoHref} alt="" width="28" height="28" />
       <span>Premium TV Player</span>
     </div>
     <nav class="footer-nav" aria-label="Footer">
@@ -53,10 +54,9 @@ const year = new Date().getFullYear();
     font-weight: 600;
   }
   .brand-mark {
-    width: 24px;
-    height: 24px;
-    border-radius: 7px;
-    background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-blue-deep));
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
   }
   .footer-nav {
     display: grid;

@@ -1,0 +1,9 @@
+---
+/* Shield with a heart — parental controls / kids-safe by design. */
+interface Props { size?: number; class?: string }
+const { size = 24, class: className } = Astro.props;
+---
+<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class={className} aria-hidden="true">
+  <path d="M12 3 4 6v5.5c0 4.6 3.4 8.3 8 9.5 4.6-1.2 8-4.9 8-9.5V6L12 3z"/>
+  <path d="M12 15.5c-2.6-1.5-3.9-3.2-3.9-4.6a1.8 1.8 0 0 1 3.4-1 1.8 1.8 0 0 1 3.4 1c0 1.4-1.3 3.1-3.9 4.6z" fill="currentColor" stroke="none"/>
+</svg>

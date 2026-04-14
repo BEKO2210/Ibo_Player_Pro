@@ -8,11 +8,12 @@ const nav = [
   { href: "/pricing", label: "Pricing" },
   { href: "/download", label: "Download" },
 ];
+const logoHref = link("/logo.png");
 ---
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href={link("/")} aria-label="Premium TV Player home">
-      <span class="brand-mark" aria-hidden="true"></span>
+      <img class="brand-mark" src={logoHref} alt="" width="36" height="36" />
       <span class="brand-wordmark">Premium TV Player</span>
     </a>
     <nav class="primary-nav" aria-label="Primary">
@@ -62,11 +63,10 @@ const nav = [
   }
   .brand-mark {
     flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-blue-deep));
-    box-shadow: 0 6px 20px -6px rgba(59, 130, 246, 0.6);
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 14px rgba(59, 130, 246, 0.35));
   }
   .brand-wordmark {
     font-size: 15px;

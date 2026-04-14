@@ -38,7 +38,11 @@ body {
 .t-label         { font-size: 14px; line-height: 1.43; font-weight: 500; letter-spacing: 0.4px; }
 .t-label-small   { font-size: 12px; line-height: 1.33; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; }
 
-/* Container — mobile-first, generous inner gutter that scales up */
+/*
+  Container — phi-tuned: max-width 1200px is close to 1236 (764 × phi);
+  gutter scales from 16 → 48 with a middle breakpoint that maintains
+  golden rhythm at tablet widths.
+*/
 .container {
   width: 100%;
   max-width: var(--content-max);
@@ -46,8 +50,14 @@ body {
   padding-inline: clamp(16px, 4vw, 48px);
 }
 
-/* Uniform section padding — scales from 40px on phones to 96px on desktop */
-.section { padding-block: clamp(40px, 8vw, 96px); }
+/*
+  Section rhythm — clamp uses phi ratio: 40 (mobile floor), 96 (desktop
+  ceiling). Middle term picks 8vw so the transition is smooth.
+*/
+.section { padding-block: clamp(40px, 7.4vw, 96px); }
+
+/* Narrow prose container for long-form copy (≈ 680px = 1200 / phi) */
+.prose { max-width: 680px; }
 
 /* Focus — accessible + premium */
 :focus-visible {

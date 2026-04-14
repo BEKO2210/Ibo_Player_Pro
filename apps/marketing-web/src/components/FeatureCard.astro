@@ -1,13 +1,23 @@
 ---
+/*
+  Feature card — now takes an `<Icon />` component as the named "icon" slot.
+  The slot renders the SVG directly (no opaque placeholder box).
+
+  Usage:
+    <FeatureCard title="..." body="...">
+      <IconSources slot="icon" />
+    </FeatureCard>
+*/
 interface Props {
   title: string;
   body: string;
-  icon?: "play" | "shield" | "profile" | "cloud" | "tv" | "lock";
 }
-const { title, body, icon = "play" } = Astro.props;
+const { title, body } = Astro.props;
 ---
 <article class="feature-card">
-  <div class="icon" aria-hidden="true" data-icon={icon}></div>
+  <div class="icon-wrap" aria-hidden="true">
+    <slot name="icon" />
+  </div>
   <h3 class="t-title-large feature-title">{title}</h3>
   <p class="t-body-small feature-body">{body}</p>
 </article>
@@ -15,37 +25,43 @@ const { title, body, icon = "play" } = Astro.props;
 <style>
   .feature-card {
     position: relative;
-    padding: var(--space-xl);
+    padding: clamp(20px, 2.4vw, 32px);
     border-radius: var(--radius-l);
-    background: linear-gradient(180deg, rgba(29, 33, 40, 0.7), rgba(20, 23, 28, 0.7));
+    background: linear-gradient(180deg, rgba(29, 33, 40, 0.72), rgba(20, 23, 28, 0.72));
     border: 1px solid rgba(255, 255, 255, 0.06);
-    transition: transform var(--dur-short) var(--easing-premium),
-                border-color var(--dur-short) var(--easing-premium),
-                box-shadow var(--dur-short) var(--easing-premium);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.4vw, 16px);
+    transition:
+      transform var(--dur-short) var(--easing-premium),
+      border-color var(--dur-short) var(--easing-premium),
+      box-shadow var(--dur-short) var(--easing-premium);
   }
   .feature-card:hover {
     transform: translateY(-3px);
-    border-color: rgba(96, 165, 250, 0.35);
-    box-shadow: 0 20px 50px -28px rgba(59, 130, 246, 0.4);
+    border-color: rgba(96, 165, 250, 0.38);
+    box-shadow: 0 20px 50px -28px rgba(59, 130, 246, 0.45);
   }
-  .icon {
-    width: 44px;
-    height: 44px;
+
+  .icon-wrap {
+    width: 52px;
+    height: 52px;
     border-radius: var(--radius-m);
-    background: linear-gradient(135deg, var(--color-accent-blue), var(--color-accent-violet));
-    margin-bottom: var(--space-m);
-    position: relative;
-    box-shadow: 0 8px 20px -8px rgba(59, 130, 246, 0.5);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent-cyan);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(139, 92, 246, 0.12));
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    box-shadow:
+      0 8px 24px -10px rgba(59, 130, 246, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
-  .icon::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background:
-      radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), transparent 40%);
-    mix-blend-mode: overlay;
+  .icon-wrap :global(svg) {
+    width: 26px;
+    height: 26px;
   }
-  .feature-title { margin: 0 0 var(--space-s); color: var(--color-on-surface-high); }
+
+  .feature-title { margin: 0; color: var(--color-on-surface-high); }
   .feature-body  { margin: 0; }
 </style>
