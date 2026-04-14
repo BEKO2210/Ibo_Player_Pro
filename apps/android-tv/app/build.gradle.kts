@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "com.premiumtvplayer.app"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         // ⚠ Locked product decision (Run 11):
@@ -19,7 +19,7 @@ android {
         // matrix needed) and matches the Google TV install base — the
         // sub-26 Android TV population is functionally zero in 2026.
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
 

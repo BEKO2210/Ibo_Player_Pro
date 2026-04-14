@@ -73,7 +73,7 @@ class BillingClientWrapper @Inject constructor(
 
     private val client: BillingClient = BillingClient.newBuilder(context)
         .setListener(listener)
-        .enablePendingPurchases()
+        .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
         .build()
 
     /**

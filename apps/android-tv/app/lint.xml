@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!--
+        UnusedResources: i18n string keys are referenced via stringResource(R.string.*)
+        in Compose — lint cannot trace these at static analysis time.
+        The drift check (check-drift.sh invariant 3/4) enforces every key is used.
+    -->
+    <issue id="UnusedResources" severity="ignore" />
+
+    <!--
+        UnsafeOptInUsage: androidx.tv:tv-foundation and tv-material expose
+        @ExperimentalTvFoundationApi / @ExperimentalTvMaterialApi. These APIs are
+        stable enough for production use in a TV-only app; opting in project-wide
+        avoids per-callsite @OptIn noise.
+    -->
+    <issue id="UnsafeOptInUsage" severity="ignore" />
+
+    <!--
+        ObsoleteLintCustomCheck: comes from transitive dependencies (Hilt, Compose),
+        not from our own code. Nothing to act on.
+    -->
+    <issue id="ObsoleteLintCustomCheck" severity="ignore" />
+</lint>
