@@ -6,8 +6,18 @@ import Footer from "../components/Footer.astro";
 interface Props {
   title: string;
   description?: string;
+  ogImage?: string;
+  noIndex?: boolean;
 }
-const { title, description = "Premium TV Player" } = Astro.props;
+const {
+  title,
+  description = "A premium player for your own M3U, M3U8 and XMLTV sources. Lifetime license, no subscriptions, cloud-synced profiles.",
+  ogImage = "/og-default.png",
+  noIndex = false,
+} = Astro.props;
+
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? "https://premiumtvplayer.app").toString();
+const ogImageUrl = new URL(ogImage, Astro.site ?? "https://premiumtvplayer.app").toString();
 ---
 <!doctype html>
 <html lang="en">
@@ -17,12 +27,48 @@ const { title, description = "Premium TV Player" } = Astro.props;
     <meta name="theme-color" content="#050608" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+    {noIndex && <meta name="robots" content="noindex,nofollow" />}
+
+    {/* Open Graph */}
+    <meta property="og:site_name" content="Premium TV Player" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:locale" content="en_US" />
+
+    {/* Twitter */}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
     <Header />
     <main id="main">
       <slot />
     </main>
     <Footer />
+
+    <style>
+      .skip-link {
+        position: absolute;
+        top: -100px;
+        left: 16px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        background: var(--color-accent-blue);
+        color: #fff;
+        z-index: 100;
+        transition: top 0.2s ease;
+      }
+      .skip-link:focus { top: 12px; }
+    </style>
   </body>
 </html>

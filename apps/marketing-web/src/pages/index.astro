@@ -3,24 +3,82 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Hero from "../components/Hero.astro";
 import Section from "../components/Section.astro";
 import FeatureCard from "../components/FeatureCard.astro";
+import Button from "../components/Button.astro";
+
+const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiumtvplayer.app";
 ---
-<BaseLayout title="Premium TV Player" description="A premium player for your authorized sources.">
+<BaseLayout
+  title="Premium TV Player — a premium player for your own sources"
+  description="Bring your own M3U, M3U8 or XMLTV sources. Lifetime license, cloud-synced profiles, kids mode, and a cinematic Android TV experience. No subscriptions."
+>
   <Hero
-    eyebrow="Placeholder eyebrow"
-    title="Placeholder hero headline."
-    subtitle="Placeholder subtitle — final copy ships in Run 3. This line exists to demonstrate the display-hero type scale and the hero composition."
-    primaryCta={{ href: "/download", label: "Get the app" }}
-    secondaryCta={{ href: "/features", label: "See features" }}
+    eyebrow="Now on Android TV"
+    title="Your sources. Your library. Premium playback."
+    subtitle="Premium TV Player is a neutral, premium player for the M3U, M3U8 and XMLTV sources you already own. One-time payment, no subscriptions, no ads, no tracking. Built for the 10-foot experience."
+    primaryCta={{ href: "/download", label: "Get it on Google Play" }}
+    secondaryCta={{ href: "/features", label: "See what's inside" }}
   />
 
-  <Section eyebrow="Features" title="Placeholder feature section" lede="Placeholder lede to show the section header composition. Real copy lands in Run 3.">
+  <Section
+    eyebrow="Why it feels different"
+    title="A player built like a flagship streaming app."
+    lede="Cinematic focus states, instant launch, 60fps focus animations, and a dark palette tuned for living-room TVs. Everything you'd expect from a premium streaming service — running on the sources you authorize yourself."
+  >
     <div class="feature-grid">
-      <FeatureCard title="Feature one" body="Placeholder description of the first feature block." />
-      <FeatureCard title="Feature two" body="Placeholder description of the second feature block." />
-      <FeatureCard title="Feature three" body="Placeholder description of the third feature block." />
-      <FeatureCard title="Feature four" body="Placeholder description of the fourth feature block." />
-      <FeatureCard title="Feature five" body="Placeholder description of the fifth feature block." />
-      <FeatureCard title="Feature six" body="Placeholder description of the sixth feature block." />
+      <FeatureCard
+        title="Bring your own sources"
+        body="Add any M3U, M3U8 or XMLTV URL you are authorized to use. Credentials are encrypted at rest with AES-256-GCM; only the player can decrypt them."
+      />
+      <FeatureCard
+        title="Up to 5 profiles"
+        body="Separate profiles for everyone in the household. Watch history, favorites and continue-watching sync to the cloud per profile."
+      />
+      <FeatureCard
+        title="Kids-safe by design"
+        body="A dedicated Kids profile with age-rating filter and PIN gate. Argon2id hashing and server-side lockout keep the gate honest."
+      />
+      <FeatureCard
+        title="Live TV + EPG"
+        body="Electronic programme guide with a 48-hour window, channel list with logos, and one-click timeshift-ready playback (recording rolls out in V1.5)."
+      />
+      <FeatureCard
+        title="Lifetime license"
+        body="Pay once. No monthly fees. €19.99 for one device / one profile, €39.99 for the Family plan with 5 profiles and 5 devices."
+      />
+      <FeatureCard
+        title="No tracking, no ads"
+        body="We don't serve ads, sell profiles or build advertising graphs. Only your email, a Firebase UID and your entitlement status ever reach our server."
+      />
+    </div>
+  </Section>
+
+  <Section eyebrow="How it works" title="Three steps from install to playback." align="center">
+    <ol class="steps">
+      <li>
+        <span class="step-num">01</span>
+        <h3 class="t-title">Install &amp; sign in</h3>
+        <p class="t-body-small">Grab the app from Google Play on your Android TV. Create an account with email + password — your 14-day trial starts on the first login.</p>
+      </li>
+      <li>
+        <span class="step-num">02</span>
+        <h3 class="t-title">Add your source</h3>
+        <p class="t-body-small">Paste the M3U, M3U8 or XMLTV URL you were given by your provider. We encrypt the credentials and never expose them to third parties.</p>
+      </li>
+      <li>
+        <span class="step-num">03</span>
+        <h3 class="t-title">Play</h3>
+        <p class="t-body-small">Your home screen populates with hero rails, Continue Watching, Favorites, and a proper EPG grid. Hand the remote to the couch.</p>
+      </li>
+    </ol>
+  </Section>
+
+  <Section>
+    <div class="cta-panel">
+      <div>
+        <h2 class="t-headline">Start your 14-day trial today.</h2>
+        <p class="t-body-small cta-body">No credit card, no commitment. Upgrade to Lifetime any time from the app.</p>
+      </div>
+      <Button href={PLAY_STORE_URL} label="Get it on Google Play" variant="primary" external />
     </div>
   </Section>
 </BaseLayout>
@@ -33,4 +91,48 @@ import FeatureCard from "../components/FeatureCard.astro";
   }
   @media (min-width: 640px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (min-width: 960px) { .feature-grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-l);
+    max-width: 960px;
+    margin-inline: auto;
+  }
+  @media (min-width: 800px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+  .steps li {
+    padding: var(--space-xl);
+    border-radius: var(--radius-l);
+    background: linear-gradient(180deg, rgba(29, 33, 40, 0.7), rgba(20, 23, 28, 0.7));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex; flex-direction: column; gap: var(--space-s);
+  }
+  .step-num {
+    display: inline-block;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: var(--color-accent-cyan);
+  }
+  .steps h3 { margin: 0; color: var(--color-on-surface-high); }
+  .steps p  { margin: 0; }
+
+  .cta-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-l);
+    padding: var(--space-xxl);
+    border-radius: var(--radius-l);
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.25), rgba(139, 92, 246, 0.15));
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    align-items: flex-start;
+  }
+  @media (min-width: 800px) {
+    .cta-panel { flex-direction: row; align-items: center; justify-content: space-between; }
+  }
+  .cta-body { margin: var(--space-s) 0 0; }
+  .cta-panel h2 { margin: 0; color: var(--color-on-surface-high); }
 </style>

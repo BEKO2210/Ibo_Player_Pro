@@ -2,24 +2,113 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PageHeader from "../../components/PageHeader.astro";
 import Section from "../../components/Section.astro";
+
+const LAST_UPDATED = "2026-04-14";
 ---
-<BaseLayout title="Privacy Policy — Premium TV Player">
+<BaseLayout
+  title="Privacy Policy — Premium TV Player"
+  description="What Premium TV Player collects, why, where it's stored, and how you can delete it."
+>
   <PageHeader
     eyebrow="Legal"
     title="Privacy Policy"
-    lede="Placeholder — real policy text lands in Run 3."
+    lede={`Last updated: ${LAST_UPDATED}. This page is a plain-language summary of what we collect, why, and how to remove it. Our legal team will finalize the binding text before launch.`}
   />
+
   <Section>
     <article class="legal-body">
-      <p>Placeholder legal paragraph demonstrating the long-form text layout.</p>
-      <h2 class="t-title-large">Placeholder heading</h2>
-      <p>Placeholder legal paragraph.</p>
+      <p class="legal-callout">
+        <strong>TL;DR.</strong> We collect the bare minimum needed to run the app:
+        your email, a Firebase user ID, your entitlement status, and the URLs
+        of the sources you add (encrypted). We don't serve ads, we don't sell
+        data, and we don't build advertising profiles.
+      </p>
+
+      <h2 class="t-title-large">1. Who we are</h2>
+      <p>
+        Premium TV Player ("the App", "we", "us") is operated by
+        <em>{"{Company name to be inserted}"}</em>
+        (the "Operator"). Contact details are published on the
+        <a href="/legal/imprint">Imprint</a> page.
+      </p>
+
+      <h2 class="t-title-large">2. Data we collect</h2>
+      <ul>
+        <li><strong>Account data.</strong> Email address and a Firebase UID, used to sign you in and associate your purchases with your account.</li>
+        <li><strong>Entitlement status.</strong> Whether your account is on trial, Lifetime Single, Lifetime Family, expired or revoked, plus the Google Play purchase token for refund / revocation handling.</li>
+        <li><strong>Profiles.</strong> Profile name, whether it is a Kids profile, age-rating cap, and an optional PIN (stored only as an Argon2id hash).</li>
+        <li><strong>Sources.</strong> The URLs, usernames, passwords and custom headers for the M3U / M3U8 / XMLTV feeds you add. All credential fields are encrypted at rest with AES-256-GCM and a fresh IV per write.</li>
+        <li><strong>Library state.</strong> Your watch history, favorites, and Continue Watching positions — scoped to the profile you're using.</li>
+        <li><strong>Device metadata.</strong> A hashed device token, device model, OS version, and last-seen timestamp, used for device-slot management.</li>
+      </ul>
+
+      <h2 class="t-title-large">3. What we do not collect</h2>
+      <ul>
+        <li>We do <strong>not</strong> use advertising SDKs. No ad impressions, no click tracking, no cross-app identifiers.</li>
+        <li>We do <strong>not</strong> bind your account to a MAC address or to any hardware identifier the OS hasn't explicitly handed us.</li>
+        <li>We do <strong>not</strong> record the specific streams or programmes you watch — we record the show you were watching per profile, so Continue Watching works, and we record aggregate watch history. We do not sell, share or export this.</li>
+        <li>We do <strong>not</strong> have access to the content of your sources. We parse the playlist / EPG structure, that's it.</li>
+      </ul>
+
+      <h2 class="t-title-large">4. Sub-processors</h2>
+      <ul>
+        <li><strong>Google (Firebase Authentication).</strong> Handles sign-up / sign-in / password reset. Governed by Google's Firebase Data Processing Terms.</li>
+        <li><strong>Google (Play Billing).</strong> Processes purchases and refund events. Governed by Google's Play Developer Distribution Agreement.</li>
+        <li><strong>Our own hosted infrastructure.</strong> PostgreSQL + Redis in the EU. No other third-party data processor is in the loop.</li>
+      </ul>
+
+      <h2 class="t-title-large">5. Retention</h2>
+      <p>
+        Account and library data is kept while your account exists. When you delete your
+        account from inside the app, profiles, sources, watch history and PINs are deleted
+        within 30 days. Firebase sign-in records are deleted at the same time via the
+        Firebase Admin SDK. Encrypted backups may retain a hashed copy for up to 90 days
+        for disaster recovery, after which they are purged.
+      </p>
+
+      <h2 class="t-title-large">6. Your rights (GDPR)</h2>
+      <p>
+        If you are in the EU / EEA / UK, you have the right to access, correct, port and
+        delete your personal data under the GDPR. You can exercise all of these rights
+        directly from the <em>Settings → Account</em> screen in the app. For anything that
+        isn't self-service, email the address on the <a href="/legal/imprint">Imprint</a> page.
+      </p>
+
+      <h2 class="t-title-large">7. Children</h2>
+      <p>
+        Premium TV Player is rated for general audiences but is not directed at children
+        under 13. The Kids profile is a parental-controls feature — it does not imply the
+        service is designed for children as its primary audience. Accounts are created by
+        the device owner, not by children.
+      </p>
+
+      <h2 class="t-title-large">8. Changes</h2>
+      <p>
+        When we update this policy, we bump the "Last updated" date at the top of this page
+        and, for material changes, surface an in-app notice the next time you open the app.
+      </p>
+
+      <p class="legal-footer">
+        Last updated: {LAST_UPDATED}.
+      </p>
     </article>
   </Section>
 </BaseLayout>
 
 <style>
-  .legal-body { max-width: 760px; display: flex; flex-direction: column; gap: var(--space-l); }
-  .legal-body h2 { margin: var(--space-m) 0 0; color: var(--color-on-surface-high); }
-  .legal-body p { margin: 0; color: var(--color-on-surface); }
+  .legal-body {
+    max-width: 780px;
+    display: flex; flex-direction: column; gap: var(--space-l);
+  }
+  .legal-body h2 { margin: var(--space-l) 0 0; color: var(--color-on-surface-high); }
+  .legal-body p, .legal-body li { margin: 0; color: var(--color-on-surface); }
+  .legal-body ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: var(--space-s); }
+  .legal-body a { color: var(--color-accent-cyan); text-decoration: underline; text-underline-offset: 3px; }
+  .legal-callout {
+    padding: var(--space-l);
+    border-radius: var(--radius-m);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    background: rgba(59, 130, 246, 0.08);
+  }
+  .legal-footer { color: var(--color-on-surface-muted); }
 </style>

@@ -3,23 +3,116 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import PageHeader from "../../components/PageHeader.astro";
 import Section from "../../components/Section.astro";
 ---
-<BaseLayout title="Imprint — Premium TV Player">
+<BaseLayout
+  title="Imprint — Premium TV Player"
+  description="Legal operator details for Premium TV Player."
+>
   <PageHeader
     eyebrow="Legal"
     title="Imprint"
-    lede="Placeholder — real company details land in Run 3."
+    lede="Legal operator details per § 5 TMG / § 18 MStV. These placeholders need to be replaced with the final company details before launch."
   />
+
   <Section>
     <article class="legal-body">
-      <p>Placeholder imprint paragraph.</p>
-      <h2 class="t-title-large">Placeholder contact</h2>
-      <p>Placeholder contact block.</p>
+      <p class="legal-callout">
+        <strong>TODO before launch.</strong> Every field below marked with
+        <code>{"{…}"}</code> must be replaced with the final, legally binding
+        company details and reviewed by counsel.
+      </p>
+
+      <h2 class="t-title-large">Operator</h2>
+      <p>
+        <strong>{"{Company name to be inserted}"}</strong><br />
+        {"{Street and house number}"}<br />
+        {"{Postal code and city}"}<br />
+        {"{Country}"}
+      </p>
+
+      <h2 class="t-title-large">Represented by</h2>
+      <p>{"{Legal representative(s) / Managing director(s)}"}</p>
+
+      <h2 class="t-title-large">Contact</h2>
+      <p>
+        Email: <a href="mailto:hello@premiumtvplayer.app">hello@premiumtvplayer.app</a><br />
+        Support: <a href="mailto:support@premiumtvplayer.app">support@premiumtvplayer.app</a><br />
+        Phone: {"{Optional phone number}"}
+      </p>
+
+      <h2 class="t-title-large">Commercial register</h2>
+      <p>
+        Register court: {"{e.g. Amtsgericht München}"}<br />
+        Register number: {"{e.g. HRB 000000}"}
+      </p>
+
+      <h2 class="t-title-large">VAT identification number</h2>
+      <p>{"{e.g. DE000000000 — per § 27 a UStG}"}</p>
+
+      <h2 class="t-title-large">Responsible for content</h2>
+      <p>
+        Per § 18 Abs. 2 MStV:<br />
+        {"{Name}"}<br />
+        {"{Address, if different from above}"}
+      </p>
+
+      <h2 class="t-title-large">EU dispute resolution</h2>
+      <p>
+        The European Commission provides a platform for online dispute resolution:
+        <a href="https://ec.europa.eu/consumers/odr/" rel="noopener noreferrer" target="_blank">
+          https://ec.europa.eu/consumers/odr/
+        </a>.
+        We are neither obliged nor willing to participate in dispute-resolution proceedings
+        before a consumer arbitration board.
+      </p>
+
+      <h2 class="t-title-large">Liability for content</h2>
+      <p>
+        As a service provider we are responsible for our own content on these pages per
+        § 7 Abs. 1 TMG. According to §§ 8–10 TMG we are not, however, obliged to monitor
+        transmitted or stored third-party information or to investigate circumstances that
+        point to illegal activity. We act promptly to remove such content once we become
+        aware of concrete legal infringements.
+      </p>
+
+      <h2 class="t-title-large">Liability for links</h2>
+      <p>
+        Our site contains links to external websites over which we have no control. We
+        therefore assume no liability for the external content. The respective provider or
+        operator of the linked sites is always responsible for their content.
+      </p>
+
+      <h2 class="t-title-large">Copyright</h2>
+      <p>
+        The content and works on these pages, created by the site operator, are subject to
+        copyright law. Reproduction, adaptation, distribution and any kind of exploitation
+        outside the limits of copyright require the written consent of the respective
+        author / creator.
+      </p>
     </article>
   </Section>
 </BaseLayout>
 
 <style>
-  .legal-body { max-width: 760px; display: flex; flex-direction: column; gap: var(--space-l); }
-  .legal-body h2 { margin: var(--space-m) 0 0; color: var(--color-on-surface-high); }
-  .legal-body p { margin: 0; color: var(--color-on-surface); }
+  .legal-body {
+    max-width: 780px;
+    display: flex; flex-direction: column; gap: var(--space-l);
+  }
+  .legal-body h2 { margin: var(--space-l) 0 0; color: var(--color-on-surface-high); }
+  .legal-body p, .legal-body li { margin: 0; color: var(--color-on-surface); }
+  .legal-body a { color: var(--color-accent-cyan); text-decoration: underline; text-underline-offset: 3px; }
+  .legal-body code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 14px;
+    padding: 1px 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-on-surface-high);
+  }
+  .legal-callout {
+    padding: var(--space-l);
+    border-radius: var(--radius-m);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    background: rgba(245, 158, 11, 0.06);
+    color: var(--color-on-surface) !important;
+  }
 </style>

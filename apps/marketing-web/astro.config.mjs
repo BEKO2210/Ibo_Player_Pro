@@ -1,8 +1,9 @@
 import { defineConfig } from "astro/config";
+import sitemap from "@astrojs/sitemap";
 
-// Run 1: minimal static config. Styling/integrations added in Run 2.
 export default defineConfig({
   site: "https://premiumtvplayer.app",
   output: "static",
   trailingSlash: "ignore",
+  integrations: [sitemap()],
 });
