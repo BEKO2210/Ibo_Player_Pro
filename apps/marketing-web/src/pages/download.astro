@@ -1,7 +1,51 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHeader from "../components/PageHeader.astro";
+import Section from "../components/Section.astro";
+import Button from "../components/Button.astro";
 ---
 <BaseLayout title="Download — Premium TV Player">
-  <h1>Download</h1>
-  <p>Placeholder — Play Store link slots in during Run 3.</p>
+  <PageHeader
+    eyebrow="Download"
+    title="Placeholder download title."
+    lede="Placeholder lede. Play Store link + system requirements land in Run 3."
+  />
+  <Section>
+    <div class="download">
+      <div class="download-card">
+        <p class="t-label-small platform">Android TV</p>
+        <p class="t-body">Placeholder description of the Android TV download.</p>
+        <Button href="#" label="Placeholder Play Store link" variant="primary" />
+      </div>
+      <div class="requirements">
+        <h3 class="t-title">Placeholder requirements</h3>
+        <ul>
+          <li>Placeholder requirement line</li>
+          <li>Placeholder requirement line</li>
+          <li>Placeholder requirement line</li>
+        </ul>
+      </div>
+    </div>
+  </Section>
 </BaseLayout>
+
+<style>
+  .download {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+  }
+  @media (min-width: 800px) {
+    .download { grid-template-columns: 1.2fr 1fr; align-items: start; }
+  }
+  .download-card {
+    padding: var(--space-xl);
+    border-radius: var(--radius-l);
+    background: linear-gradient(180deg, rgba(29, 33, 40, 0.7), rgba(20, 23, 28, 0.7));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex; flex-direction: column; gap: var(--space-m);
+  }
+  .platform { margin: 0; color: var(--color-accent-cyan); }
+  .requirements ul { margin: var(--space-s) 0 0; padding-left: 20px; color: var(--color-on-surface); display: flex; flex-direction: column; gap: var(--space-s); }
+  .requirements h3 { margin: 0; color: var(--color-on-surface-high); }
+</style>

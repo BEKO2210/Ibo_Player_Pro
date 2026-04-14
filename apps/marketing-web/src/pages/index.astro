@@ -1,7 +1,36 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import Hero from "../components/Hero.astro";
+import Section from "../components/Section.astro";
+import FeatureCard from "../components/FeatureCard.astro";
 ---
-<BaseLayout title="Premium TV Player">
-  <h1>Home</h1>
-  <p>Placeholder — real hero copy lands in Run 3.</p>
+<BaseLayout title="Premium TV Player" description="A premium player for your authorized sources.">
+  <Hero
+    eyebrow="Placeholder eyebrow"
+    title="Placeholder hero headline."
+    subtitle="Placeholder subtitle — final copy ships in Run 3. This line exists to demonstrate the display-hero type scale and the hero composition."
+    primaryCta={{ href: "/download", label: "Get the app" }}
+    secondaryCta={{ href: "/features", label: "See features" }}
+  />
+
+  <Section eyebrow="Features" title="Placeholder feature section" lede="Placeholder lede to show the section header composition. Real copy lands in Run 3.">
+    <div class="feature-grid">
+      <FeatureCard title="Feature one" body="Placeholder description of the first feature block." />
+      <FeatureCard title="Feature two" body="Placeholder description of the second feature block." />
+      <FeatureCard title="Feature three" body="Placeholder description of the third feature block." />
+      <FeatureCard title="Feature four" body="Placeholder description of the fourth feature block." />
+      <FeatureCard title="Feature five" body="Placeholder description of the fifth feature block." />
+      <FeatureCard title="Feature six" body="Placeholder description of the sixth feature block." />
+    </div>
+  </Section>
 </BaseLayout>
+
+<style>
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-l);
+  }
+  @media (min-width: 640px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 960px) { .feature-grid { grid-template-columns: repeat(3, 1fr); } }
+</style>

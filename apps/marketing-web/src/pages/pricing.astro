@@ -1,7 +1,77 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHeader from "../components/PageHeader.astro";
+import Section from "../components/Section.astro";
+import Button from "../components/Button.astro";
 ---
 <BaseLayout title="Pricing — Premium TV Player">
-  <h1>Pricing</h1>
-  <p>Placeholder — Lifetime Single / Family tiers described in Run 3.</p>
+  <PageHeader
+    eyebrow="Pricing"
+    title="Placeholder pricing title."
+    lede="Placeholder lede. Real tier copy + final prices land in Run 3."
+  />
+  <Section>
+    <div class="plans">
+      <article class="plan">
+        <h3 class="t-title-large plan-name">Placeholder Single</h3>
+        <p class="plan-price"><span class="t-display">€--</span><span class="plan-price-note"> one-time</span></p>
+        <ul class="plan-list">
+          <li>Placeholder bullet</li>
+          <li>Placeholder bullet</li>
+          <li>Placeholder bullet</li>
+        </ul>
+        <Button href="/download" label="Get the app" variant="secondary" />
+      </article>
+      <article class="plan plan--featured">
+        <p class="t-label-small plan-tag">Recommended</p>
+        <h3 class="t-title-large plan-name">Placeholder Family</h3>
+        <p class="plan-price"><span class="t-display">€--</span><span class="plan-price-note"> one-time</span></p>
+        <ul class="plan-list">
+          <li>Placeholder bullet</li>
+          <li>Placeholder bullet</li>
+          <li>Placeholder bullet</li>
+          <li>Placeholder bullet</li>
+        </ul>
+        <Button href="/download" label="Get the app" variant="primary" />
+      </article>
+    </div>
+  </Section>
 </BaseLayout>
+
+<style>
+  .plans {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-l);
+  }
+  @media (min-width: 800px) {
+    .plans { grid-template-columns: repeat(2, 1fr); }
+  }
+  .plan {
+    padding: var(--space-xl);
+    border-radius: var(--radius-l);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(180deg, rgba(29, 33, 40, 0.7), rgba(20, 23, 28, 0.7));
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-m);
+  }
+  .plan--featured {
+    border-color: rgba(96, 165, 250, 0.4);
+    box-shadow: 0 30px 60px -30px rgba(59, 130, 246, 0.4);
+    position: relative;
+  }
+  .plan-tag {
+    margin: 0;
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--color-accent-blue), var(--color-accent-violet));
+    color: #fff;
+    width: fit-content;
+  }
+  .plan-name { margin: 0; color: var(--color-on-surface-high); }
+  .plan-price { margin: 0; color: var(--color-on-surface-high); display: inline-flex; align-items: baseline; gap: 6px; }
+  .plan-price-note { color: var(--color-on-surface-muted); font-size: 16px; }
+  .plan-list { margin: 0; padding-left: 20px; color: var(--color-on-surface); display: flex; flex-direction: column; gap: var(--space-s); }
+</style>

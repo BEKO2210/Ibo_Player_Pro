@@ -1,7 +1,25 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHeader from "../../components/PageHeader.astro";
+import Section from "../../components/Section.astro";
 ---
 <BaseLayout title="Imprint — Premium TV Player">
-  <h1>Imprint</h1>
-  <p>Placeholder — company details land in Run 3.</p>
+  <PageHeader
+    eyebrow="Legal"
+    title="Imprint"
+    lede="Placeholder — real company details land in Run 3."
+  />
+  <Section>
+    <article class="legal-body">
+      <p>Placeholder imprint paragraph.</p>
+      <h2 class="t-title-large">Placeholder contact</h2>
+      <p>Placeholder contact block.</p>
+    </article>
+  </Section>
 </BaseLayout>
+
+<style>
+  .legal-body { max-width: 760px; display: flex; flex-direction: column; gap: var(--space-l); }
+  .legal-body h2 { margin: var(--space-m) 0 0; color: var(--color-on-surface-high); }
+  .legal-body p { margin: 0; color: var(--color-on-surface); }
+</style>

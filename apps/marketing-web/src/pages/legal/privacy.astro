@@ -1,7 +1,25 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHeader from "../../components/PageHeader.astro";
+import Section from "../../components/Section.astro";
 ---
 <BaseLayout title="Privacy Policy — Premium TV Player">
-  <h1>Privacy Policy</h1>
-  <p>Placeholder — legal text lands in Run 3.</p>
+  <PageHeader
+    eyebrow="Legal"
+    title="Privacy Policy"
+    lede="Placeholder — real policy text lands in Run 3."
+  />
+  <Section>
+    <article class="legal-body">
+      <p>Placeholder legal paragraph demonstrating the long-form text layout.</p>
+      <h2 class="t-title-large">Placeholder heading</h2>
+      <p>Placeholder legal paragraph.</p>
+    </article>
+  </Section>
 </BaseLayout>
+
+<style>
+  .legal-body { max-width: 760px; display: flex; flex-direction: column; gap: var(--space-l); }
+  .legal-body h2 { margin: var(--space-m) 0 0; color: var(--color-on-surface-high); }
+  .legal-body p { margin: 0; color: var(--color-on-surface); }
+</style>

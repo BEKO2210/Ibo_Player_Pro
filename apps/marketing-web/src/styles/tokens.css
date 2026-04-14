@@ -1,0 +1,64 @@
+/* Design tokens — mirror of packages/ui-tokens/src/index.ts.
+   Keep in sync by name + value when tokens change. */
+:root {
+  /* Surface stack */
+  --color-bg: #050608;
+  --color-surface: #0B0D11;
+  --color-surface-elevated: #14171C;
+  --color-surface-floating: #1D2128;
+  --color-surface-high: #272C35;
+
+  /* Foreground */
+  --color-on-surface-high: #FFFFFF;
+  --color-on-surface: #E8EAEE;
+  --color-on-surface-muted: #9CA3AF;
+  --color-on-surface-dim: #5C6471;
+
+  /* Brand accent */
+  --color-accent-blue: #3B82F6;
+  --color-accent-blue-deep: #2563EB;
+  --color-accent-cyan: #60A5FA;
+  --color-accent-violet: #8B5CF6;
+
+  /* Semantic */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+
+  /* Focus */
+  --color-focus: #60A5FA;
+
+  /* Spacing (4pt grid) */
+  --space-xxs: 2px;
+  --space-xs: 4px;
+  --space-s: 8px;
+  --space-sm: 12px;
+  --space-m: 16px;
+  --space-l: 24px;
+  --space-xl: 32px;
+  --space-xxl: 48px;
+  --space-huge: 64px;
+  --space-hero: 96px;
+  --gutter: 48px;
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 20px;
+  --radius-xl: 28px;
+  --radius-poster: 16px;
+
+  /* Motion */
+  --easing-standard: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --easing-premium: cubic-bezier(0.32, 0.72, 0.0, 1.0);
+  --easing-cinematic: cubic-bezier(0.4, 0.0, 0.2, 1.0);
+  --dur-micro: 60ms;
+  --dur-short: 200ms;
+  --dur-medium: 400ms;
+  --dur-long: 800ms;
+
+  /* Layout */
+  --content-max: 1200px;
+  --header-height: 72px;
+}

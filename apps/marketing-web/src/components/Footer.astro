@@ -1,0 +1,76 @@
+---
+const year = new Date().getFullYear();
+---
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>Premium TV Player</span>
+    </div>
+    <nav class="footer-nav" aria-label="Footer">
+      <div class="footer-col">
+        <h4 class="t-label-small">Product</h4>
+        <a href="/features">Features</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/download">Download</a>
+      </div>
+      <div class="footer-col">
+        <h4 class="t-label-small">Legal</h4>
+        <a href="/legal/privacy">Privacy</a>
+        <a href="/legal/imprint">Imprint</a>
+      </div>
+    </nav>
+    <p class="footer-note t-body-small">
+      © {year} Premium TV Player. All rights reserved.
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: var(--space-huge);
+    padding-block: var(--space-xxl);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.02));
+  }
+  .footer-inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+  }
+  @media (min-width: 800px) {
+    .footer-inner {
+      grid-template-columns: 1fr 2fr 1fr;
+      align-items: start;
+    }
+  }
+  .footer-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--color-on-surface-high);
+    font-weight: 600;
+  }
+  .brand-mark {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-blue-deep));
+  }
+  .footer-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-xl);
+  }
+  .footer-col { display: flex; flex-direction: column; gap: var(--space-s); }
+  .footer-col h4 { margin: 0 0 4px; color: var(--color-on-surface-muted); }
+  .footer-col a {
+    color: var(--color-on-surface);
+    transition: color var(--dur-short) var(--easing-premium);
+  }
+  .footer-col a:hover { color: var(--color-on-surface-high); }
+  .footer-note { margin: 0; text-align: left; }
+  @media (min-width: 800px) {
+    .footer-note { text-align: right; }
+  }
+</style>

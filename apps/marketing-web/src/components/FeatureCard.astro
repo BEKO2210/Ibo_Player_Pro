@@ -1,0 +1,51 @@
+---
+interface Props {
+  title: string;
+  body: string;
+  icon?: "play" | "shield" | "profile" | "cloud" | "tv" | "lock";
+}
+const { title, body, icon = "play" } = Astro.props;
+---
+<article class="feature-card">
+  <div class="icon" aria-hidden="true" data-icon={icon}></div>
+  <h3 class="t-title-large feature-title">{title}</h3>
+  <p class="t-body-small feature-body">{body}</p>
+</article>
+
+<style>
+  .feature-card {
+    position: relative;
+    padding: var(--space-xl);
+    border-radius: var(--radius-l);
+    background: linear-gradient(180deg, rgba(29, 33, 40, 0.7), rgba(20, 23, 28, 0.7));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: transform var(--dur-short) var(--easing-premium),
+                border-color var(--dur-short) var(--easing-premium),
+                box-shadow var(--dur-short) var(--easing-premium);
+  }
+  .feature-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(96, 165, 250, 0.35);
+    box-shadow: 0 20px 50px -28px rgba(59, 130, 246, 0.4);
+  }
+  .icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-m);
+    background: linear-gradient(135deg, var(--color-accent-blue), var(--color-accent-violet));
+    margin-bottom: var(--space-m);
+    position: relative;
+    box-shadow: 0 8px 20px -8px rgba(59, 130, 246, 0.5);
+  }
+  .icon::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), transparent 40%);
+    mix-blend-mode: overlay;
+  }
+  .feature-title { margin: 0 0 var(--space-s); color: var(--color-on-surface-high); }
+  .feature-body  { margin: 0; }
+</style>

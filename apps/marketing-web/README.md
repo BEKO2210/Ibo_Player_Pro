@@ -4,9 +4,24 @@ Static marketing + legal site for the Premium TV Player app. Built with [Astro](
 
 ## Status
 
-- **Run 1 (current): Grundgerüst** — routes, BaseLayout, page stubs, build succeeds. No styling, no real copy.
-- Run 2: visual design system (mirrors `packages/ui-tokens`: dark theme, AccentBlue, DisplayHero typography)
-- Run 3: real copy (EN + DE), SEO meta, Open Graph, sitemap, Play Store link, privacy/imprint text
+- Run 1: Grundgerüst — routes, BaseLayout, page stubs. ✅
+- **Run 2 (current): Design-System** — tokens mirror `packages/ui-tokens`, dark theme, AccentBlue gradient, Header/Footer/Hero/Section/FeatureCard/PageHeader/Button, responsive, reduced-motion aware. ✅
+- Run 3: real copy (EN + DE), SEO meta, Open Graph, sitemap, Play Store link, privacy/imprint text.
+
+## Components (Run 2)
+
+| Component | Purpose |
+|---|---|
+| `BaseLayout` | Shell: `<html>`, header, main slot, footer, global CSS |
+| `Header` | Sticky, blurred backdrop, brand mark + nav + CTA |
+| `Footer` | Brand, product + legal columns, copyright |
+| `Hero` | Display-hero headline + decorative TV frame placeholder |
+| `PageHeader` | Inner-page header (eyebrow + title + lede) |
+| `Section` | Uniform vertical padding + optional section heading |
+| `FeatureCard` | Gradient-icon + title + body, hover lift |
+| `Button` | `primary` / `secondary` / `ghost` variants |
+
+Tokens live in `src/styles/tokens.css` (mirror of `packages/ui-tokens/src/index.ts`).
 
 ## Routes (Run 1)
 

@@ -1,7 +1,33 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHeader from "../components/PageHeader.astro";
+import Section from "../components/Section.astro";
+import FeatureCard from "../components/FeatureCard.astro";
 ---
 <BaseLayout title="Features — Premium TV Player">
-  <h1>Features</h1>
-  <p>Placeholder — feature grid lands in Run 2 (layout) and Run 3 (copy).</p>
+  <PageHeader
+    eyebrow="Features"
+    title="Placeholder features title."
+    lede="Placeholder lede. Real feature copy lands in Run 3."
+  />
+  <Section>
+    <div class="grid">
+      <FeatureCard title="Placeholder one" body="Placeholder feature description." />
+      <FeatureCard title="Placeholder two" body="Placeholder feature description." />
+      <FeatureCard title="Placeholder three" body="Placeholder feature description." />
+      <FeatureCard title="Placeholder four" body="Placeholder feature description." />
+      <FeatureCard title="Placeholder five" body="Placeholder feature description." />
+      <FeatureCard title="Placeholder six" body="Placeholder feature description." />
+    </div>
+  </Section>
 </BaseLayout>
+
+<style>
+  .grid {
+    display: grid;
+    gap: var(--space-l);
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 960px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+</style>
