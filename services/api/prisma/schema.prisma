@@ -1,0 +1,410 @@
+// Premium TV Player — Prisma schema (V1 skeleton)
+// Aligned with docs/architecture/data-model.md (Run 3).
+// NOTE: initial migration will be generated in a later run; this file is the
+// source of truth for subsequent module work (auth, entitlement, etc.).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // Extensions (pgcrypto, citext) are installed via the init migration
+  // SQL and infra/postgres/init/01-extensions.sql, so the Prisma
+  // `extensions` preview feature is not required here.
+}
+
+// ============================================================================
+// Enums
+// ============================================================================
+
+enum EntitlementState {
+  none
+  trial
+  lifetime_single
+  lifetime_family
+  expired
+  revoked
+}
+
+enum SourceKind {
+  m3u
+  xmltv
+  m3u_plus_epg
+}
+
+enum DevicePlatform {
+  android_tv
+  android_mobile
+  web
+  ios
+  tvos
+  tizen
+  webos
+  unknown
+}
+
+enum PlaybackState {
+  starting
+  playing
+  paused
+  buffering
+  stopped
+  error
+}
+
+// ============================================================================
+// Accounts / Access
+// ============================================================================
+
+model Account {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firebaseUid    String   @unique @map("firebase_uid")
+  email          String   @unique @db.Citext
+  emailVerified  Boolean  @default(false) @map("email_verified")
+  locale         String   @default("en") @db.VarChar(16)
+  trialConsumed  Boolean  @default(false) @map("trial_consumed")
+  status         String   @default("active")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  devices           Device[]
+  entitlement       Entitlement?
+  purchases         Purchase[]
+  profiles          Profile[]
+  sources           Source[]
+  watchHistory      WatchHistory[]
+  continueWatching  ContinueWatching[]
+  favorites         Favorite[]
+  playbackSessions  PlaybackSession[]
+  auditLogs         AuditLog[]
+
+  @@map("accounts")
+}
+
+model Device {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId        String    @map("account_id") @db.Uuid
+  deviceTokenHash  String    @unique @map("device_token_hash")
+  deviceName       String    @map("device_name")
+  platform         DevicePlatform
+  appVersion       String?   @map("app_version")
+  osVersion        String?   @map("os_version")
+  lastIp           String?   @map("last_ip") @db.Inet
+  lastSeenAt       DateTime? @map("last_seen_at") @db.Timestamptz(6)
+  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  account          Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  playbackSessions PlaybackSession[]
+
+  @@index([accountId, revokedAt, deletedAt], map: "idx_devices_account_active")
+  @@map("devices")
+}
+
+// ============================================================================
+// Household
+// ============================================================================
+
+model Profile {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId  String   @map("account_id") @db.Uuid
+  name       String   @db.VarChar(50)
+  avatarKey  String?  @map("avatar_key")
+  isKids     Boolean  @default(false) @map("is_kids")
+  ageLimit   Int?     @map("age_limit") @db.SmallInt
+  isDefault  Boolean  @default(false) @map("is_default")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  account           Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  pin               ProfilePin?
+  sources           Source[]
+  watchHistory      WatchHistory[]
+  continueWatching  ContinueWatching[]
+  favorites         Favorite[]
+  playbackSessions  PlaybackSession[]
+
+  @@index([accountId, deletedAt], map: "idx_profiles_account_active")
+  @@map("profiles")
+}
+
+model ProfilePin {
+  profileId          String   @id @map("profile_id") @db.Uuid
+  pinHash            String   @map("pin_hash")
+  pinAlgo            String   @default("argon2id") @map("pin_algo")
+  pinUpdatedAt       DateTime @default(now()) @map("pin_updated_at") @db.Timestamptz(6)
+  failedAttemptCount Int      @default(0) @map("failed_attempt_count")
+  lockUntil          DateTime? @map("lock_until") @db.Timestamptz(6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("profile_pins")
+}
+
+// ============================================================================
+// Entitlement / Billing
+// ============================================================================
+
+model Entitlement {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId        String           @unique @map("account_id") @db.Uuid
+  state            EntitlementState @default(none)
+  trialStartedAt   DateTime?        @map("trial_started_at") @db.Timestamptz(6)
+  trialEndsAt      DateTime?        @map("trial_ends_at") @db.Timestamptz(6)
+  activatedAt      DateTime?        @map("activated_at") @db.Timestamptz(6)
+  expiresAt        DateTime?        @map("expires_at") @db.Timestamptz(6)
+  revokedAt        DateTime?        @map("revoked_at") @db.Timestamptz(6)
+  revokeReason     String?          @map("revoke_reason")
+  sourcePurchaseId String?          @map("source_purchase_id") @db.Uuid
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  account        Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  sourcePurchase Purchase? @relation(fields: [sourcePurchaseId], references: [id], onDelete: SetNull)
+
+  @@index([state], map: "idx_entitlements_state")
+  @@map("entitlements")
+}
+
+model Purchase {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId       String   @map("account_id") @db.Uuid
+  provider        String   @default("google_play")
+  productId       String   @map("product_id")
+  purchaseToken   String   @map("purchase_token")
+  orderId         String?  @map("order_id")
+  purchaseState   String   @map("purchase_state")
+  purchasedAt     DateTime? @map("purchased_at") @db.Timestamptz(6)
+  acknowledgedAt  DateTime? @map("acknowledged_at") @db.Timestamptz(6)
+  rawPayload      Json?    @map("raw_payload")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  account      Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  entitlements Entitlement[]
+
+  @@unique([provider, purchaseToken], map: "purchases_token_unique")
+  @@index([accountId, createdAt(sort: Desc)], map: "idx_purchases_account_created_at")
+  @@map("purchases")
+}
+
+// ============================================================================
+// Sources / EPG
+// ============================================================================
+
+model Source {
+  id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId          String     @map("account_id") @db.Uuid
+  profileId          String?    @map("profile_id") @db.Uuid
+  name               String     @db.VarChar(120)
+  kind               SourceKind
+  isActive           Boolean    @default(true) @map("is_active")
+  validationStatus   String     @default("pending") @map("validation_status")
+  lastValidatedAt    DateTime?  @map("last_validated_at") @db.Timestamptz(6)
+  itemCountEstimate  Int?       @map("item_count_estimate")
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime?  @map("deleted_at") @db.Timestamptz(6)
+
+  account          Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  profile          Profile?           @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  credentials      SourceCredential?
+  epgChannels      EpgChannel[]
+  epgPrograms      EpgProgram[]
+  watchHistory     WatchHistory[]
+  continueWatching ContinueWatching[]
+  favorites        Favorite[]
+  playbackSessions PlaybackSession[]
+
+  @@index([accountId, isActive, deletedAt], map: "idx_sources_account_active")
+  @@index([profileId, isActive, deletedAt], map: "idx_sources_profile_active")
+  @@map("sources")
+}
+
+model SourceCredential {
+  sourceId           String   @id @map("source_id") @db.Uuid
+  encryptedUrl       Bytes    @map("encrypted_url")
+  encryptedUsername  Bytes?   @map("encrypted_username")
+  encryptedPassword  Bytes?   @map("encrypted_password")
+  encryptedHeaders   Bytes?   @map("encrypted_headers")
+  kmsKeyId           String   @map("kms_key_id")
+  encryptionVersion  Int      @default(1) @map("encryption_version") @db.SmallInt
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  source Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@map("source_credentials")
+}
+
+model EpgChannel {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceId           String   @map("source_id") @db.Uuid
+  externalChannelId  String   @map("external_channel_id")
+  displayName        String   @map("display_name")
+  iconUrl            String?  @map("icon_url")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  source   Source       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  programs EpgProgram[]
+
+  @@unique([sourceId, externalChannelId], map: "epg_channels_unique")
+  @@index([sourceId, displayName], map: "idx_epg_channels_source_name")
+  @@map("epg_channels")
+}
+
+model EpgProgram {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  channelId          String   @map("channel_id") @db.Uuid
+  sourceId           String   @map("source_id") @db.Uuid
+  externalProgramId  String?  @map("external_program_id")
+  title              String
+  subtitle           String?
+  description        String?
+  category           String?
+  rating             String?
+  startsAt           DateTime @map("starts_at") @db.Timestamptz(6)
+  endsAt             DateTime @map("ends_at") @db.Timestamptz(6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  channel EpgChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  source  Source     @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, startsAt, endsAt], map: "idx_epg_programs_channel_time")
+  @@index([sourceId, startsAt, endsAt], map: "idx_epg_programs_source_time")
+  @@map("epg_programs")
+}
+
+// ============================================================================
+// Playback / Personalization
+// ============================================================================
+
+model WatchHistory {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId        String   @map("account_id") @db.Uuid
+  profileId        String   @map("profile_id") @db.Uuid
+  sourceId         String?  @map("source_id") @db.Uuid
+  itemId           String   @map("item_id")
+  itemType         String   @map("item_type")
+  watchedSeconds   Int      @default(0) @map("watched_seconds")
+  durationSeconds  Int?     @map("duration_seconds")
+  completed        Boolean  @default(false)
+  occurredAt       DateTime @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  account Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  profile Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  source  Source?  @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@index([profileId, occurredAt(sort: Desc)], map: "idx_watch_history_profile_time")
+  @@index([accountId, occurredAt(sort: Desc)], map: "idx_watch_history_account_time")
+  @@map("watch_history")
+}
+
+model ContinueWatching {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId              String   @map("account_id") @db.Uuid
+  profileId              String   @map("profile_id") @db.Uuid
+  sourceId               String?  @map("source_id") @db.Uuid
+  itemId                 String   @map("item_id")
+  itemType               String   @map("item_type")
+  resumePositionSeconds  Int      @default(0) @map("resume_position_seconds")
+  durationSeconds        Int?     @map("duration_seconds")
+  lastPlayedAt           DateTime @default(now()) @map("last_played_at") @db.Timestamptz(6)
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt              DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  account Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  profile Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  source  Source?  @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@unique([profileId, itemId], map: "continue_watching_unique")
+  @@index([profileId, lastPlayedAt(sort: Desc)], map: "idx_continue_watching_profile_last_played")
+  @@map("continue_watching")
+}
+
+model Favorite {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId       String   @map("account_id") @db.Uuid
+  profileId       String   @map("profile_id") @db.Uuid
+  sourceId        String?  @map("source_id") @db.Uuid
+  itemId          String   @map("item_id")
+  itemType        String   @map("item_type")
+  titleCache      String?  @map("title_cache")
+  posterUrlCache  String?  @map("poster_url_cache")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  account Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  profile Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  source  Source?  @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@unique([profileId, itemId], map: "favorites_unique")
+  @@index([profileId, createdAt(sort: Desc)], map: "idx_favorites_profile_created")
+  @@map("favorites")
+}
+
+model PlaybackSession {
+  id                     String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId              String        @map("account_id") @db.Uuid
+  profileId              String        @map("profile_id") @db.Uuid
+  deviceId               String?       @map("device_id") @db.Uuid
+  sourceId               String?       @map("source_id") @db.Uuid
+  itemId                 String        @map("item_id")
+  itemType               String        @map("item_type")
+  sessionStartedAt       DateTime      @default(now()) @map("session_started_at") @db.Timestamptz(6)
+  lastHeartbeatAt        DateTime?     @map("last_heartbeat_at") @db.Timestamptz(6)
+  stoppedAt              DateTime?     @map("stopped_at") @db.Timestamptz(6)
+  latestPositionSeconds  Int           @default(0) @map("latest_position_seconds")
+  state                  PlaybackState @default(starting)
+  errorCode              String?       @map("error_code")
+  createdAt              DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  account Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  profile Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  device  Device?  @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  source  Source?  @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@index([profileId, sessionStartedAt(sort: Desc)], map: "idx_playback_sessions_profile_time")
+  @@index([deviceId, sessionStartedAt(sort: Desc)], map: "idx_playback_sessions_device_time")
+  @@map("playback_sessions")
+}
+
+// ============================================================================
+// Governance
+// ============================================================================
+
+model AuditLog {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId    String?  @map("account_id") @db.Uuid
+  actorType    String   @map("actor_type")
+  actorId      String?  @map("actor_id")
+  action       String
+  targetTable  String?  @map("target_table")
+  targetId     String?  @map("target_id")
+  requestId    String?  @map("request_id")
+  ipAddress    String?  @map("ip_address") @db.Inet
+  userAgent    String?  @map("user_agent")
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  account Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@index([accountId, createdAt(sort: Desc)], map: "idx_audit_log_account_created")
+  @@index([action, createdAt(sort: Desc)], map: "idx_audit_log_action_created")
+  @@map("audit_log")
+}

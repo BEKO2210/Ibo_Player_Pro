@@ -1,0 +1,74 @@
+---
+import {
+  locales,
+  localeShort,
+  localeLabels,
+  logicalPath,
+  type Locale,
+} from "../utils/i18n";
+import { link } from "../utils/link";
+
+interface Props {
+  current: Locale;
+  pathname: string;
+}
+const { current, pathname } = Astro.props;
+const logical = logicalPath(pathname);
+
+const switcherAriaLabel: Record<Locale, string> = {
+  de: "Sprache wählen",
+  en: "Choose language",
+  sq: "Zgjidhni gjuhën",
+};
+---
+<div class="locale-switcher" role="group" aria-label={switcherAriaLabel[current]}>
+  {locales.map((loc) => {
+    const href = link(logical, loc);
+    const isCurrent = loc === current;
+    return (
+      <a
+        class:list={["loc-pill", { "is-current": isCurrent }]}
+        href={href}
+        hreflang={loc}
+        aria-current={isCurrent ? "true" : undefined}
+        aria-label={localeLabels[loc]}
+        title={localeLabels[loc]}
+      >
+        {localeShort[loc]}
+      </a>
+    );
+  })}
+</div>
+
+<style>
+  .locale-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .loc-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    color: var(--color-on-surface-muted);
+    transition:
+      color var(--dur-short) var(--easing-premium),
+      background var(--dur-short) var(--easing-premium);
+  }
+  .loc-pill:hover { color: var(--color-on-surface-high); }
+  .loc-pill.is-current {
+    color: var(--color-on-surface-high);
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.28), rgba(139, 92, 246, 0.2));
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.35);
+  }
+</style>

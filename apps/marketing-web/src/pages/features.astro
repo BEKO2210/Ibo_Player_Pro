@@ -1,0 +1,91 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHeader from "../components/PageHeader.astro";
+import Section from "../components/Section.astro";
+import FeatureCard from "../components/FeatureCard.astro";
+import IconPlayback from "../components/icons/IconPlayback.astro";
+import IconSources from "../components/icons/IconSources.astro";
+import IconEncrypted from "../components/icons/IconEncrypted.astro";
+import IconEpgGrid from "../components/icons/IconEpgGrid.astro";
+import IconProfiles from "../components/icons/IconProfiles.astro";
+import IconKidsShield from "../components/icons/IconKidsShield.astro";
+import IconDevice from "../components/icons/IconDevice.astro";
+import IconPrivacyLock from "../components/icons/IconPrivacyLock.astro";
+import IconLifetime from "../components/icons/IconLifetime.astro";
+---
+<BaseLayout
+  title="Features — Premium TV Player"
+  description="Was Premium TV Player auf Android TV mitbringt: Quellen, EPG, Profile, Kinderschutz, Abrechnung, Wiedergabe und Cloud-Sync."
+>
+  <PageHeader
+    eyebrow="Was drinsteckt"
+    title="Gemacht, um sich wie eine Flagship-Streaming-App anzufühlen."
+    lede="Premium TV Player ist bewusst leer, wenn du ihn startest — du bringst deine eigenen autorisierten Quellen mit. Alles andere ist so gebaut, dass die Nutzung am Fernseher so gut ist wie bei den großen Streaming-Apps."
+  />
+
+  <Section eyebrow="Wiedergabe" title="Filmreif, sofort, zuverlässig.">
+    <div class="grid">
+      <FeatureCard title="Media3 / ExoPlayer als Basis" body="HLS, DASH und progressives MP4. Hardware-beschleunigte Dekodierung auf jedem modernen Android-TV-Gerät.">
+        <IconPlayback slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Untertitel & Audiospuren" body="Alle eingebetteten und externen Spuren sind per Fernbedienung erreichbar. Die Wiedergabe-Position wird pro Profil synchronisiert.">
+        <IconSources slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Heartbeat-Sync" body="Alle 10 Sekunden wird die Position aktualisiert. Zuletzt-gesehen erwischt auf jedem Gerät genau die richtige Folge.">
+        <IconLifetime slot="icon" />
+      </FeatureCard>
+    </div>
+  </Section>
+
+  <Section eyebrow="Bibliothek" title="Deine Quellen, sauber präsentiert.">
+    <div class="grid">
+      <FeatureCard title="M3U / M3U8 / XMLTV" body="Einfach die URL einfügen, die du bekommen hast. Wir parsen sie, ziehen die EPG-Metadaten und präsentieren alles in Premium-Reihen und -Rastern.">
+        <IconSources slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Verschlüsselt gespeichert" body="Jede URL, jeder Benutzername, jedes Passwort und jeder benutzerdefinierte Header wird mit AES-256-GCM und einem frischen IV pro Speichervorgang verschlüsselt.">
+        <IconEncrypted slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="EPG mit 48-Stunden-Fenster" body="Senderführer mit Logos, Programm-Beschreibungen und einem einzigen Tastendruck in die Sendung, die dich interessiert.">
+        <IconEpgGrid slot="icon" />
+      </FeatureCard>
+    </div>
+  </Section>
+
+  <Section eyebrow="Haushalt" title="Bis zu 5 Profile, 5 Geräte.">
+    <div class="grid">
+      <FeatureCard title="Profil-spezifische Sync" body="Wiedergabeverlauf, Favoriten, Zuletzt-gesehen und deine Quellenliste sind an das jeweilige Profil gebunden.">
+        <IconProfiles slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Kinder-Profil + PIN" body="Eigener Kinder-Modus, Altersfreigabe-Filter und eine PIN-Sperre, mit Argon2id gehasht und serverseitig gegen Brute-Force geschützt.">
+        <IconKidsShield slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Geräte-Slot-Verwaltung" body="Geräte-Slots sind ans Konto gebunden. Du kannst jedes Gerät von jedem anderen Gerät aus abmelden — keine MAC-Bindung, kein Hersteller-Lock-in.">
+        <IconDevice slot="icon" />
+      </FeatureCard>
+    </div>
+  </Section>
+
+  <Section eyebrow="Vertrauen" title="Minimum an Daten, Maximum an Privatsphäre.">
+    <div class="grid">
+      <FeatureCard title="Keine Werbung, kein Tracking" body="Wir schalten keine Werbung, wir verkaufen deine Daten nicht, wir bauen keine Verhaltensprofile. Punkt.">
+        <IconPrivacyLock slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Nur Firebase-Auth" body="E-Mail, Firebase-UID und Lizenz-Status sind die einzigen Kennungen, die deinen Fernseher verlassen. Das komplette Daten-Inventar steht in der Datenschutzerklärung.">
+        <IconEncrypted slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Deine Zugangsdaten bleiben deine" body="Quellen-Zugangsdaten erreichen keinen Dritten. Du rotierst den Verschlüsselungs-Schlüssel auf deinem Server — beim nächsten Speichern wird automatisch neu verschlüsselt.">
+        <IconPrivacyLock slot="icon" />
+      </FeatureCard>
+    </div>
+  </Section>
+</BaseLayout>
+
+<style>
+  .grid {
+    display: grid;
+    gap: clamp(16px, 2.4vw, 26px);
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 960px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+</style>

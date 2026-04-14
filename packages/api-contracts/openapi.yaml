@@ -1,0 +1,939 @@
+openapi: 3.1.0
+info:
+  title: Premium TV Player API Contracts
+  version: 0.2.0
+  description: |
+    V1 contract baseline for backend and clients.
+
+    **Auth model (V1 — reconciled in Run 8):** all protected endpoints require
+    `Authorization: Bearer <firebase_id_token>`. The server verifies the token
+    via Firebase Admin on every request. There is no custom access/refresh
+    token layer — clients obtain and refresh Firebase ID tokens via the
+    Firebase Auth SDK directly.
+
+    **Device model:** a device slot is a separate concept from auth. Endpoints
+    that require an active device (playback, source mutations) additionally
+    require `X-Device-Token: <plaintext>` — issued exactly once by
+    `POST /devices/register`.
+servers:
+  - url: https://api.premium-tv-player.example/v1
+
+security:
+  - FirebaseBearer: []
+
+tags:
+  - name: Auth
+  - name: Entitlement
+  - name: Devices
+  - name: Profiles
+  - name: Sources
+  - name: Playback
+  - name: Billing
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      operationId: register
+      security: []
+      description: |
+        First sync after Firebase signup. Verifies the Firebase ID token,
+        creates the local `accounts` row (keyed on `firebase_uid`) and an
+        empty `entitlements` row with `state=none`. Idempotent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FirebaseTokenRequest'
+      responses:
+        '200':
+          description: Registered / synced.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountSnapshotResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      security: []
+      description: |
+        Verify the Firebase ID token and return the current account snapshot.
+        Account row is upserted (idempotent).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FirebaseTokenRequest'
+      responses:
+        '200':
+          description: Authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountSnapshotResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshSession
+      security: []
+      description: |
+        Re-verify the Firebase ID token with revocation check enabled and
+        return a fresh account snapshot. Clients call this after a Firebase
+        token refresh to surface any server-side state drift.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FirebaseTokenRequest'
+      responses:
+        '200':
+          description: Session re-verified; fresh account snapshot returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountSnapshotResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /entitlement/status:
+    get:
+      tags: [Entitlement]
+      operationId: entitlementStatus
+      responses:
+        '200':
+          description: Current account entitlement.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntitlementStatusResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /entitlement/trial/start:
+    post:
+      tags: [Entitlement]
+      operationId: startTrial
+      description: |
+        Start a 14-day server-side trial. Consume-once: any prior trial
+        (regardless of expiry) blocks this endpoint with
+        `402 ENTITLEMENT_REQUIRED`. On success the account's
+        `trial_consumed` flag is flipped atomically.
+      responses:
+        '200':
+          description: Trial started.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntitlementStatusResponse'
+        '402':
+          description: Trial already consumed for this account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /devices:
+    get:
+      tags: [Devices]
+      operationId: listDevices
+      responses:
+        '200':
+          description: Device slots for the account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceListResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /devices/register:
+    post:
+      tags: [Devices]
+      operationId: registerDevice
+      description: |
+        Register a new device slot for the account. Enforces the slot cap
+        derived from entitlement state (1 for `trial`/`lifetime_single`, 5
+        for `lifetime_family`, 0 for `none`/`expired`/`revoked`).
+
+        The returned `deviceToken` is the ONE-TIME plaintext value; the server
+        stores only its sha256 hash. Clients must persist this token locally
+        and send it on subsequent device-bound requests via
+        `X-Device-Token`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterDeviceRequest'
+      responses:
+        '201':
+          description: Device slot registered; plaintext token returned once.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterDeviceResponse'
+        '402':
+          description: Entitlement does not permit device registration.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Active device slot cap reached for current entitlement.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /devices/{deviceId}/revoke:
+    parameters:
+      - $ref: '#/components/parameters/DeviceId'
+    post:
+      tags: [Devices]
+      operationId: revokeDevice
+      description: |
+        Soft-revoke a device slot owned by the caller. The device's
+        `revoked_at` is set; its stored token hash becomes invalid. Existing
+        playback sessions on that device will receive `401 UNAUTHORIZED` on
+        next heartbeat.
+      responses:
+        '200':
+          description: Device revoked.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [device]
+                properties:
+                  device:
+                    $ref: '#/components/schemas/Device'
+        '404':
+          description: Device not found for this account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /profiles:
+    get:
+      tags: [Profiles]
+      operationId: listProfiles
+      responses:
+        '200':
+          description: Profiles for account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileListResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      tags: [Profiles]
+      operationId: createProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProfileRequest'
+      responses:
+        '201':
+          description: Profile created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /profiles/{profileId}:
+    parameters:
+      - $ref: '#/components/parameters/ProfileId'
+    put:
+      tags: [Profiles]
+      operationId: updateProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      tags: [Profiles]
+      operationId: deleteProfile
+      responses:
+        '204':
+          description: Profile soft deleted.
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /profiles/{profileId}/verify-pin:
+    post:
+      tags: [Profiles]
+      operationId: verifyProfilePin
+      parameters:
+        - $ref: '#/components/parameters/ProfileId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyPinRequest'
+      responses:
+        '200':
+          description: PIN check result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyPinResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /sources:
+    get:
+      tags: [Sources]
+      operationId: listSources
+      responses:
+        '200':
+          description: Sources for account/profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceListResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      tags: [Sources]
+      operationId: createSource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSourceRequest'
+      responses:
+        '201':
+          description: Source created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /sources/{sourceId}:
+    parameters:
+      - $ref: '#/components/parameters/SourceId'
+    put:
+      tags: [Sources]
+      operationId: updateSource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSourceRequest'
+      responses:
+        '200':
+          description: Source updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      tags: [Sources]
+      operationId: deleteSource
+      responses:
+        '204':
+          description: Source deleted.
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /playback/start:
+    post:
+      tags: [Playback]
+      operationId: startPlayback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaybackStartRequest'
+      responses:
+        '200':
+          description: Playback session started.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaybackSessionResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /playback/heartbeat:
+    post:
+      tags: [Playback]
+      operationId: playbackHeartbeat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaybackHeartbeatRequest'
+      responses:
+        '204':
+          description: Heartbeat accepted.
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /playback/stop:
+    post:
+      tags: [Playback]
+      operationId: stopPlayback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaybackStopRequest'
+      responses:
+        '204':
+          description: Session stopped and resume state synced.
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /billing/verify:
+    post:
+      tags: [Billing]
+      operationId: verifyPurchase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillingVerifyRequest'
+      responses:
+        '200':
+          description: Purchase verified and entitlement evaluated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntitlementStatusResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+  /billing/restore:
+    post:
+      tags: [Billing]
+      operationId: restorePurchase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillingRestoreRequest'
+      responses:
+        '200':
+          description: Restored entitlement status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntitlementStatusResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+components:
+  securitySchemes:
+    FirebaseBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Firebase ID Token
+      description: |
+        Firebase ID token from the Firebase Auth SDK. Verified server-side
+        on every request via Firebase Admin. Short-lived (1h) — clients must
+        refresh via the Firebase SDK.
+    DeviceToken:
+      type: apiKey
+      in: header
+      name: X-Device-Token
+      description: |
+        Plaintext device token returned exactly once by
+        `POST /devices/register`. Required on endpoints that require an
+        active device slot (playback, source mutations). Never returned by
+        the server again; lose it and you must re-register.
+
+  parameters:
+    DeviceId:
+      name: deviceId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProfileId:
+      name: profileId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SourceId:
+      name: sourceId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    ErrorResponse:
+      description: Error response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+  schemas:
+    EntitlementState:
+      type: string
+      enum: [none, trial, lifetime_single, lifetime_family, expired, revoked]
+
+    ErrorCode:
+      type: string
+      enum: [UNAUTHORIZED, SLOT_FULL, PIN_INVALID, ENTITLEMENT_REQUIRED, VALIDATION_ERROR]
+
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              $ref: '#/components/schemas/ErrorCode'
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+            requestId:
+              type: string
+
+    DeviceInfo:
+      type: object
+      description: |
+        Reserved for future client hints. Not used by Run 8 auth flow — use
+        `/devices/register` for device slot creation.
+      properties:
+        platform:
+          type: string
+          enum: [android_tv, android_mobile, web, ios, tvos, tizen, webos]
+        appVersion:
+          type: string
+        osVersion:
+          type: string
+        deviceName:
+          type: string
+
+    Entitlement:
+      type: object
+      required: [state]
+      properties:
+        state:
+          $ref: '#/components/schemas/EntitlementState'
+        trialStartedAt:
+          type: string
+          format: date-time
+          nullable: true
+        trialEndsAt:
+          type: string
+          format: date-time
+          nullable: true
+        activatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        revokedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Account:
+      type: object
+      required: [id, email, emailVerified, locale, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        emailVerified:
+          type: boolean
+        locale:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    FirebaseTokenRequest:
+      type: object
+      required: [firebaseIdToken]
+      properties:
+        firebaseIdToken:
+          type: string
+          description: Firebase ID token from the client-side Firebase Auth SDK.
+        locale:
+          type: string
+          description: |
+            Optional locale hint (e.g. `de`, `en-US`). When provided, the
+            server updates `accounts.locale`. When omitted, the server
+            preserves the existing value.
+          maxLength: 16
+
+    AccountSnapshotResponse:
+      type: object
+      required: [account, entitlement]
+      properties:
+        account:
+          $ref: '#/components/schemas/Account'
+        entitlement:
+          $ref: '#/components/schemas/Entitlement'
+
+    EntitlementStatusResponse:
+      type: object
+      required: [entitlement]
+      properties:
+        entitlement:
+          $ref: '#/components/schemas/Entitlement'
+
+    Device:
+      type: object
+      required: [id, name, platform, isCurrent, isRevoked, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        platform:
+          type: string
+          enum: [android_tv, android_mobile, web, ios, tvos, tizen, webos, unknown]
+        appVersion:
+          type: string
+          nullable: true
+        osVersion:
+          type: string
+          nullable: true
+        isCurrent:
+          type: boolean
+        isRevoked:
+          type: boolean
+        lastSeenAt:
+          type: string
+          format: date-time
+          nullable: true
+        revokedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    DeviceListResponse:
+      type: object
+      required: [devices]
+      properties:
+        devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/Device'
+
+    RegisterDeviceRequest:
+      type: object
+      required: [name, platform]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        platform:
+          type: string
+          enum: [android_tv, android_mobile, web, ios, tvos, tizen, webos, unknown]
+        appVersion:
+          type: string
+          maxLength: 64
+        osVersion:
+          type: string
+          maxLength: 64
+        lastIp:
+          type: string
+          format: ipv4
+
+    RegisterDeviceResponse:
+      type: object
+      required: [device, deviceToken]
+      properties:
+        device:
+          $ref: '#/components/schemas/Device'
+        deviceToken:
+          type: string
+          description: |
+            Plaintext device token — returned exactly once. Client MUST
+            persist locally; server stores only sha256 hash.
+
+    Profile:
+      type: object
+      required: [id, name, isKids]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        isKids:
+          type: boolean
+        ageLimit:
+          type: integer
+          nullable: true
+        isDefault:
+          type: boolean
+
+    ProfileListResponse:
+      type: object
+      required: [items, maxProfiles]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Profile'
+        maxProfiles:
+          type: integer
+          minimum: 1
+
+    CreateProfileRequest:
+      type: object
+      required: [name, isKids]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        isKids:
+          type: boolean
+        ageLimit:
+          type: integer
+          minimum: 0
+          maximum: 21
+          nullable: true
+        pin:
+          type: string
+          minLength: 4
+          maxLength: 10
+          nullable: true
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        ageLimit:
+          type: integer
+          minimum: 0
+          maximum: 21
+          nullable: true
+        pin:
+          type: string
+          minLength: 4
+          maxLength: 10
+          nullable: true
+
+    VerifyPinRequest:
+      type: object
+      required: [pin]
+      properties:
+        pin:
+          type: string
+          minLength: 4
+          maxLength: 10
+
+    VerifyPinResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+
+    SourceKind:
+      type: string
+      enum: [m3u, xmltv, m3u_plus_epg]
+
+    Source:
+      type: object
+      required: [id, name, kind, isActive, validationStatus]
+      properties:
+        id:
+          type: string
+          format: uuid
+        profileId:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+        kind:
+          $ref: '#/components/schemas/SourceKind'
+        isActive:
+          type: boolean
+        validationStatus:
+          type: string
+          enum: [pending, valid, invalid]
+        itemCountEstimate:
+          type: integer
+          nullable: true
+
+    SourceListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Source'
+
+    CreateSourceRequest:
+      type: object
+      required: [name, kind, url]
+      properties:
+        profileId:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        kind:
+          $ref: '#/components/schemas/SourceKind'
+        url:
+          type: string
+          format: uri
+        username:
+          type: string
+          nullable: true
+        password:
+          type: string
+          nullable: true
+
+    UpdateSourceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        isActive:
+          type: boolean
+
+    PlaybackState:
+      type: string
+      enum: [starting, playing, paused, buffering, stopped, error]
+
+    PlaybackStartRequest:
+      type: object
+      required: [profileId, sourceId, itemId, itemType]
+      properties:
+        profileId:
+          type: string
+          format: uuid
+        sourceId:
+          type: string
+          format: uuid
+        itemId:
+          type: string
+        itemType:
+          type: string
+          enum: [live, vod, series_episode]
+
+    PlaybackSessionResponse:
+      type: object
+      required: [sessionId]
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+
+    PlaybackHeartbeatRequest:
+      type: object
+      required: [sessionId, positionSeconds, state]
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        positionSeconds:
+          type: integer
+          minimum: 0
+        state:
+          $ref: '#/components/schemas/PlaybackState'
+
+    PlaybackStopRequest:
+      type: object
+      required: [sessionId, finalPositionSeconds]
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        finalPositionSeconds:
+          type: integer
+          minimum: 0
+
+    BillingVerifyRequest:
+      type: object
+      required: [purchaseToken, productId]
+      properties:
+        purchaseToken:
+          type: string
+        productId:
+          type: string
+
+    BillingRestoreRequest:
+      type: object
+      description: |
+        Restores prior Google Play purchase. Authenticated via Firebase
+        Bearer token only; no extra body fields required for V1.
+      properties:
+        # Intentionally empty — body reserved for future hints.

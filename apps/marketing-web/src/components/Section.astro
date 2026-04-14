@@ -1,0 +1,49 @@
+---
+interface Props {
+  eyebrow?: string;
+  title?: string;
+  lede?: string;
+  align?: "left" | "center";
+  id?: string;
+}
+const { eyebrow, title, lede, align = "left", id } = Astro.props;
+---
+<section class:list={["section", `align-${align}`]} id={id}>
+  <div class="container">
+    {(eyebrow || title || lede) && (
+      <header class="section-head">
+        {eyebrow && <p class="t-label-small eyebrow">{eyebrow}</p>}
+        {title && <h2 class="t-display section-title">{title}</h2>}
+        {lede && <p class="section-lede">{lede}</p>}
+      </header>
+    )}
+    <slot />
+  </div>
+</section>
+
+<style>
+  /* Padding comes from global .section rule (clamped responsive) */
+  .section-head {
+    max-width: 760px;
+    margin-bottom: clamp(24px, 4vw, 48px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-m);
+  }
+  .align-center .section-head {
+    margin-inline: auto;
+    text-align: center;
+    align-items: center;
+  }
+  .eyebrow {
+    margin: 0;
+    color: var(--color-accent-cyan);
+  }
+  .section-title { margin: 0; color: var(--color-on-surface-high); }
+  .section-lede {
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--color-on-surface-muted);
+  }
+</style>

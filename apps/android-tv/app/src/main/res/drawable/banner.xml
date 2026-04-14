@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android TV banner — 320x180.
+  Placeholder vector with the brand gradient backdrop and a centered
+  play-button glyph. The real banner (rendered from
+  `assets/logo/logo-no_background.png`) is wired in Run 12 once the
+  design system has the proper banner generator.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+
+    <!-- Background gradient -->
+    <path android:pathData="M0,0h320v180h-320z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="0"
+                android:startY="0"
+                android:endX="320"
+                android:endY="180"
+                android:startColor="#0E1322"
+                android:endColor="#050608" />
+        </aapt:attr>
+    </path>
+
+    <!-- Brand circle -->
+    <path
+        android:pathData="M160,90 m-32,0 a32,32 0 1,0 64,0 a32,32 0 1,0 -64,0z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="128"
+                android:startY="58"
+                android:endX="192"
+                android:endY="122"
+                android:startColor="#60A5FA"
+                android:endColor="#2563EB" />
+        </aapt:attr>
+    </path>
+
+    <!-- Play triangle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M152,75 L152,105 L180,90 Z" />
+</vector>

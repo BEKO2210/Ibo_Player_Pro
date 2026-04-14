@@ -1,0 +1,159 @@
+# ─────────────────────────────────────────────────────────────────────
+#  Premium TV Player — CI gate
+#
+#  Runs the doc-drift check + every backend test suite on every push
+#  and every pull request. A failure here blocks merging (when the
+#  branch is protected).
+#
+#  Three parallel jobs:
+#    • drift-check  — the 8 invariants from scripts/check-drift.sh,
+#                     finishes in <30 s
+#    • backend-tests — parsers + api + billing-worker + epg-worker
+#                      (143 tests today, ~4-6 min on ubuntu-latest)
+#
+#  Android JVM unit tests run in a dedicated job below so failures
+#  are visible independently from backend tests. The dedicated
+#  android-debug-apk.yml workflow still handles on-demand APK artifact
+#  builds and Leanback verification.
+# ─────────────────────────────────────────────────────────────────────
+
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+# Cancel superseded runs on the same ref so a quick second push
+# doesn't keep the first build burning minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── 1 ────────────────────────────────────────────────────────────
+  drift-check:
+    name: Doc-drift check (8 invariants)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run check-drift.sh
+        run: ./scripts/check-drift.sh
+
+  # ── 2 ────────────────────────────────────────────────────────────
+  backend-tests:
+    name: Backend tests (parsers + api + 2 workers)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Single npm cache covers all four package-lock.json files —
+      # they share the bulk of their dependency tree.
+      - name: Cache ~/.npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
+
+      # ── parsers (must build first; epg-worker imports its dist) ──
+      - name: parsers — install + build + test
+        id: parsers_tests
+        continue-on-error: true
+        working-directory: packages/parsers
+        run: |
+          npm ci
+          npm run build
+          npm test
+
+      # ── api ──
+      - name: api — install + prisma generate + test
+        id: api_tests
+        continue-on-error: true
+        working-directory: services/api
+        run: |
+          npm ci
+          npm run prisma:generate
+          npm test
+
+      # ── billing-worker (pretest hook handles its own prisma:generate) ──
+      - name: billing-worker — install + test
+        id: billing_worker_tests
+        continue-on-error: true
+        working-directory: services/billing-worker
+        run: |
+          npm ci
+          npm test
+
+      # ── epg-worker (pretest hook handles its own prisma:generate) ──
+      - name: epg-worker — install + test
+        id: epg_worker_tests
+        continue-on-error: true
+        working-directory: services/epg-worker
+        run: |
+          npm ci
+          npm test
+
+      - name: Test summary
+        if: always()
+        run: |
+          {
+            echo "## Backend test results"
+            echo ""
+            echo "| Package | Status |"
+            echo "|---|---|"
+            echo "| parsers | ${{ steps.parsers_tests.outcome }} |"
+            echo "| api | ${{ steps.api_tests.outcome }} |"
+            echo "| billing-worker | ${{ steps.billing_worker_tests.outcome }} |"
+            echo "| epg-worker | ${{ steps.epg_worker_tests.outcome }} |"
+            echo ""
+            echo "Total expected: 143 tests across the four packages."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail if any backend suite failed
+        if: ${{ steps.parsers_tests.outcome == 'failure' || steps.api_tests.outcome == 'failure' || steps.billing_worker_tests.outcome == 'failure' || steps.epg_worker_tests.outcome == 'failure' }}
+        run: |
+          echo "At least one backend test suite failed. See the package-level outcomes above."
+          exit 1
+
+
+  # ── 3 ────────────────────────────────────────────────────────────
+  android-jvm-tests:
+    name: Android JVM tests (:app:testDebugUnitTest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-34 build-tools;34.0.0 platform-tools'
+
+      - name: Bootstrap Gradle wrapper
+        run: gradle -p apps/android-tv wrapper --gradle-version 8.11 --no-daemon
+
+      - name: Run Android JVM unit tests
+        run: ./apps/android-tv/gradlew -p apps/android-tv :app:testDebugUnitTest --no-daemon --stacktrace

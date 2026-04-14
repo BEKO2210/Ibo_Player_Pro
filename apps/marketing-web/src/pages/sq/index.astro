@@ -1,0 +1,120 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Hero from "../../components/Hero.astro";
+import Section from "../../components/Section.astro";
+import FeatureCard from "../../components/FeatureCard.astro";
+import Button from "../../components/Button.astro";
+import IconSources from "../../components/icons/IconSources.astro";
+import IconProfiles from "../../components/icons/IconProfiles.astro";
+import IconKidsShield from "../../components/icons/IconKidsShield.astro";
+import IconEpgGrid from "../../components/icons/IconEpgGrid.astro";
+import IconLifetime from "../../components/icons/IconLifetime.astro";
+import IconPrivacyLock from "../../components/icons/IconPrivacyLock.astro";
+import { link, waitlistMailto } from "../../utils/link";
+const WAITLIST = waitlistMailto("sq");
+---
+<BaseLayout
+  title="Premium TV Player — së shpejti për Android TV"
+  description="Një luajtës premium për burimet e tua M3U, M3U8 dhe XMLTV. Pagesë një herë, pa abonim, profile të sinkronizuara në renë kompjuterike, modaliteti për fëmijë. Së shpejti në Google Play — regjistrohu në listën e pritjes."
+>
+  <Hero
+    eyebrow="Së shpejti në Google Play"
+    title="Burimet e tua. Biblioteka jote. Riprodhim premium."
+    subtitle="Premium TV Player është një luajtës neutral dhe premium për burimet M3U, M3U8 dhe XMLTV që zotëron tashmë. Pagesë një herë, pa abonim, pa reklama, pa ndjekje. Përgatitjet e fundit janë në rrugë — regjistrohu dhe do të jesh i pari që do të dijë kur aplikacioni të dalë në Google Play."
+    primaryCta={{ href: WAITLIST, label: "Më njofto në nisje" }}
+    secondaryCta={{ href: link("/features", "sq"), label: "Shih çfarë përmban" }}
+  />
+
+  <Section
+    eyebrow="Pse ndjehet ndryshe"
+    title="Ndërtuar si një aplikacion streaming flamurtar."
+    lede="Gjendje fokusi kinematografike, nisje e menjëhershme, animacione 60 fps dhe një paletë e errët e përshtatur për televizorët e dhomës së ndenjes — duke ekzekutuar burimet që ke autorizuar vetë."
+  >
+    <div class="feature-grid">
+      <FeatureCard
+        title="Sill burimet e tua"
+        body="Shto çdo URL M3U, M3U8 ose XMLTV që ke të drejtë ta përdorësh. Kredencialet ruhen të enkriptuara me AES-256-GCM; vetëm luajtësi mund t'i deshifrojë."
+      >
+        <IconSources slot="icon" />
+      </FeatureCard>
+      <FeatureCard
+        title="Deri në 5 profile"
+        body="Profile të ndara për çdo anëtar të familjes. Historiku, të preferuarat dhe 'Vazhdo shikimin' sinkronizohen në renë kompjuterike për çdo profil."
+      >
+        <IconProfiles slot="icon" />
+      </FeatureCard>
+      <FeatureCard
+        title="I sigurt për fëmijët që nga dizajni"
+        body="Një profil i dedikuar për fëmijët me filtër të klasifikimit të moshës dhe bllokim me PIN. Hash-i Argon2id dhe bllokimi në server e mbajnë portën të sigurt."
+      >
+        <IconKidsShield slot="icon" />
+      </FeatureCard>
+      <FeatureCard
+        title="TV Live me EPG të vërtetë"
+        body="Udhëzues elektronik i programeve me dritare 48-orëshe, lista e kanaleve me logo dhe fokus me një shtypje në programin që të intereson."
+      >
+        <IconEpgGrid slot="icon" />
+      </FeatureCard>
+      <FeatureCard
+        title="Licencë e përjetshme"
+        body="Paguaj një herë në nisje. Pa tarifa mujore. 19,99 € për një pajisje / një profil, 39,99 € për planin Family me 5 profile dhe 5 pajisje."
+      >
+        <IconLifetime slot="icon" />
+      </FeatureCard>
+      <FeatureCard
+        title="Pa reklama. Pa ndjekje."
+        body="Nuk shfaqim reklama, nuk shesim profile dhe nuk ndërtojmë grafe reklamuese. Vetëm email-i yt, një Firebase UID dhe statusi i licencës tënde arrijnë serverin tonë."
+      >
+        <IconPrivacyLock slot="icon" />
+      </FeatureCard>
+    </div>
+  </Section>
+
+  <Section eyebrow="Si do të funksionojë" title="Tre hapa nga instalimi te riprodhimi." align="center">
+    <ol class="steps">
+      <li>
+        <span class="step-num">01</span>
+        <h3 class="t-title">Instalo &amp; identifikohu</h3>
+        <p class="t-body-small">Në nisje, merr aplikacionin nga Google Play në Android TV-në tënde. Krijo një llogari — provimi 14-ditor nis automatikisht me identifikimin e parë.</p>
+      </li>
+      <li>
+        <span class="step-num">02</span>
+        <h3 class="t-title">Shto burimin tënd</h3>
+        <p class="t-body-small">Ngjit URL-në M3U, M3U8 ose XMLTV që të ka dhënë ofruesi yt. Kredencialet enkriptohen dhe nuk i kalohen kurrë palëve të treta.</p>
+      </li>
+      <li>
+        <span class="step-num">03</span>
+        <h3 class="t-title">Luaj</h3>
+        <p class="t-body-small">Ekrani yt kryesor mbushet me rreshta hero, Vazhdo shikimin, Të preferuarat dhe një rrjet të plotë EPG. Dorëzoja telekomandës divanit.</p>
+      </li>
+    </ol>
+  </Section>
+
+  <Section>
+    <div class="cta-panel">
+      <div class="cta-copy">
+        <h2 class="t-headline">Ji i pari që do të dijë.</h2>
+        <p class="t-body-small cta-body">Jemi në lustrimin e fundit. Na shkruaj dhe do të të njoftojmë në momentin që aplikacioni del live në Google Play.</p>
+      </div>
+      <Button href={WAITLIST} label="Më njofto në nisje" variant="primary" external />
+    </div>
+  </Section>
+</BaseLayout>
+
+<style>
+  .feature-grid { display: grid; grid-template-columns: 1fr; gap: clamp(16px, 2.4vw, 26px); }
+  @media (min-width: 640px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 960px) { .feature-grid { grid-template-columns: repeat(3, 1fr); } }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: clamp(16px, 2.4vw, 26px); max-width: 960px; margin-inline: auto; }
+  @media (min-width: 800px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+  .steps li { padding: clamp(20px, 2.8vw, 32px); border-radius: var(--radius-l); background: linear-gradient(180deg, rgba(29, 33, 40, 0.72), rgba(20, 23, 28, 0.72)); border: 1px solid rgba(255, 255, 255, 0.06); display: flex; flex-direction: column; gap: var(--space-s); }
+  .step-num { display: inline-block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; letter-spacing: 1px; color: var(--color-accent-cyan); }
+  .steps h3 { margin: 0; color: var(--color-on-surface-high); }
+  .steps p  { margin: 0; }
+  .cta-panel { display: grid; grid-template-columns: 1fr; gap: clamp(16px, 2.4vw, 28px); align-items: center; padding: clamp(24px, 3.2vw, 48px); border-radius: var(--radius-l); background: linear-gradient(135deg, rgba(37, 99, 235, 0.28), rgba(139, 92, 246, 0.16)); border: 1px solid rgba(96, 165, 250, 0.32); }
+  @media (min-width: 800px) { .cta-panel { grid-template-columns: 1.618fr 1fr; } }
+  .cta-copy h2 { margin: 0; color: var(--color-on-surface-high); }
+  .cta-body { margin: var(--space-s) 0 0; }
+  .cta-panel :global(.btn) { justify-self: start; }
+  @media (min-width: 800px) { .cta-panel :global(.btn) { justify-self: end; } }
+</style>

@@ -1,0 +1,168 @@
+---
+import { link, isActive, asset } from "../utils/link";
+import LocaleSwitcher from "./LocaleSwitcher.astro";
+import { getLocaleFromPath } from "../utils/i18n";
+
+const path = Astro.url.pathname;
+const locale = getLocaleFromPath(path);
+
+// Nav labels switch with the current locale.
+const navByLocale = {
+  de: [
+    { href: "/features", label: "Features" },
+    { href: "/pricing", label: "Preise" },
+    { href: "/download", label: "Download" },
+  ],
+  en: [
+    { href: "/features", label: "Features" },
+    { href: "/pricing", label: "Pricing" },
+    { href: "/download", label: "Download" },
+  ],
+  sq: [
+    { href: "/features", label: "Veçoritë" },
+    { href: "/pricing", label: "Çmimet" },
+    { href: "/download", label: "Shkarko" },
+  ],
+} as const;
+const nav = navByLocale[locale];
+const logoHref = asset("/logo.png");
+const homeHref = link("/", locale);
+
+const homeAriaByLocale = {
+  de: "Premium TV Player – Startseite",
+  en: "Premium TV Player – Home",
+  sq: "Premium TV Player – Ballina",
+} as const;
+const primaryNavLabelByLocale = {
+  de: "Hauptnavigation",
+  en: "Primary",
+  sq: "Navigimi kryesor",
+} as const;
+const mobileNavLabelByLocale = {
+  de: "Mobile-Navigation",
+  en: "Mobile",
+  sq: "Navigimi mobil",
+} as const;
+const homeAria = homeAriaByLocale[locale];
+const primaryNavLabel = primaryNavLabelByLocale[locale];
+const mobileNavLabel = mobileNavLabelByLocale[locale];
+---
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href={homeHref} aria-label={homeAria}>
+      <img class="brand-mark" src={logoHref} alt="" width="36" height="36" />
+      <span class="brand-wordmark">Premium TV Player</span>
+    </a>
+    <nav class="primary-nav" aria-label={primaryNavLabel}>
+      {nav.map((n) => (
+        <a class:list={["nav-link", { "is-active": isActive(path, n.href, locale) }]} href={link(n.href, locale)}>{n.label}</a>
+      ))}
+    </nav>
+    <div class="header-tail">
+      <LocaleSwitcher current={locale} pathname={path} />
+    </div>
+  </div>
+  {/* Mobile nav row — only below 800px */}
+  <nav class="mobile-nav" aria-label={mobileNavLabel}>
+    <div class="container mobile-nav-inner">
+      {nav.map((n) => (
+        <a class:list={["mobile-nav-link", { "is-active": isActive(path, n.href, locale) }]} href={link(n.href, locale)}>{n.label}</a>
+      ))}
+    </div>
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    background: rgba(5, 6, 8, 0.82);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-m);
+    min-height: var(--header-height);
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: clamp(8px, 1.2vw, 12px);
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    color: var(--color-on-surface-high);
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+  .brand-mark {
+    flex-shrink: 0;
+    width: clamp(28px, 4.5vw, 36px);
+    height: clamp(28px, 4.5vw, 36px);
+    object-fit: contain;
+    filter: drop-shadow(0 4px 14px rgba(59, 130, 246, 0.35));
+  }
+  .brand-wordmark {
+    font-size: clamp(13px, 1.9vw, 16px);
+    white-space: nowrap;
+    line-height: 1.2;
+    letter-spacing: 0.15px;
+  }
+
+  /* Desktop primary nav */
+  .primary-nav {
+    display: none;
+    gap: var(--space-l);
+  }
+  @media (min-width: 800px) {
+    .primary-nav { display: inline-flex; }
+  }
+  .nav-link {
+    font-size: 15px;
+    color: var(--color-on-surface-muted);
+    padding: 8px 4px;
+    transition: color var(--dur-short) var(--easing-premium);
+  }
+  .nav-link:hover { color: var(--color-on-surface-high); }
+  .nav-link.is-active { color: var(--color-on-surface-high); }
+
+  .header-tail {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Mobile secondary nav — visible below 800px only */
+  .mobile-nav {
+    display: block;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    background: rgba(5, 6, 8, 0.6);
+  }
+  @media (min-width: 800px) {
+    .mobile-nav { display: none; }
+  }
+  .mobile-nav-inner {
+    display: flex;
+    justify-content: space-around;
+    gap: var(--space-s);
+    padding-block: 8px;
+    overflow-x: auto;
+  }
+  .mobile-nav-link {
+    font-size: 13px;
+    color: var(--color-on-surface-muted);
+    padding: 6px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+    transition: color var(--dur-short) var(--easing-premium),
+                background var(--dur-short) var(--easing-premium);
+  }
+  .mobile-nav-link.is-active {
+    color: var(--color-on-surface-high);
+    background: rgba(96, 165, 250, 0.15);
+  }
+</style>

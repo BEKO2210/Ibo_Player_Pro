@@ -1,0 +1,108 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import PageHeader from "../../../components/PageHeader.astro";
+import Section from "../../../components/Section.astro";
+import { link } from "../../../utils/link";
+
+const LAST_UPDATED = "14.04.2026";
+const IMPRINT_HREF = link("/legal/imprint", "sq");
+---
+<BaseLayout
+  title="Politika e privatësisë — Premium TV Player"
+  description="Çfarë të dhënash mbledh Premium TV Player, pse, ku ruhen dhe si mund t'i fshish."
+>
+  <PageHeader
+    eyebrow="Ligjore"
+    title="Politika e privatësisë"
+    lede={`Përditësuar: ${LAST_UPDATED}. Kjo faqe është një përmbledhje e qartë e asaj që mbledhim, pse dhe si mund ta fshish. Teksti i plotë ligjërisht detyrues do të finalizohet nga një avokat përpara nisjes.`}
+  />
+
+  <Section>
+    <article class="legal-body">
+      <p class="legal-callout">
+        <strong>Shkurt.</strong> Mbledhim minimumin e nevojshëm për të drejtuar aplikacionin:
+        email-in tënd, një Firebase user ID, statusin e licencës tënde dhe URL-të e burimeve
+        që shton (të enkriptuara). Nuk shfaqim reklama, nuk shesim të dhëna dhe nuk ndërtojmë
+        profile reklamimi.
+      </p>
+
+      <h2 class="t-title-large">1. Kush jemi</h2>
+      <p>
+        Premium TV Player („aplikacioni", „ne") është një projekt i pavarur,
+        i drejtuar nga <strong>Belkis Aslani</strong> („Ofruesja"), me seli në
+        Freiberg am Neckar, Gjermani. Regjistrimi i një biznesi individual është
+        aktualisht në përgatitje. Detajet e plota të kontaktit gjenden në
+        <a href={IMPRINT_HREF}>Të dhënat ligjore</a>.
+      </p>
+
+      <h2 class="t-title-large">2. Cilat të dhëna mbledhim</h2>
+      <ul>
+        <li><strong>Të dhënat e llogarisë.</strong> Adresa email dhe një Firebase UID, që përdoren për identifikim dhe për të lidhur blerjet me llogarinë tënde.</li>
+        <li><strong>Statusi i licencës.</strong> Nëse llogaria jote është në provim, Lifetime Single, Lifetime Family, e skaduar ose e revokuar, plus token-i i blerjes Google Play për trajtimin e rimbursimeve dhe revokimeve.</li>
+        <li><strong>Profilet.</strong> Emri i profilit, flamuri Kids, kufiri i klasifikimit të moshës dhe një PIN opsional (ruhet vetëm si Argon2id hash).</li>
+        <li><strong>Burimet.</strong> URL-të, emrat e përdoruesve, fjalëkalimet dhe header-ët e personalizuar për feed-et M3U / M3U8 / XMLTV që shton. Të gjitha fushat e kredencialeve enkriptohen me AES-256-GCM dhe një IV të freskët për çdo shkrim.</li>
+        <li><strong>Gjendja e bibliotekës.</strong> Historia e shikimit, të preferuarat dhe pozicionet e 'Vazhdo shikimin' — të kufizuara në profilin aktiv.</li>
+        <li><strong>Metadata të pajisjes.</strong> Një token i hash-uar i pajisjes, modeli i pajisjes, versioni i OS-it dhe stampa kohore e 'parë së fundmi', për menaxhimin e slotëve të pajisjeve.</li>
+      </ul>
+
+      <h2 class="t-title-large">3. Çfarë nuk mbledhim</h2>
+      <ul>
+        <li><strong>Nuk</strong> përdorim SDK reklamimi. Pa shfaqje reklamash, pa ndjekje klikimesh, pa identifikues ndër-aplikacionësh.</li>
+        <li><strong>Nuk</strong> e lidhim llogarinë tënde me një adresë MAC ose identifikues harduerik që OS-i nuk na e jep në mënyrë të qartë.</li>
+        <li><strong>Nuk</strong> regjistrojmë transmetimet ose programet specifike që shikon — regjistrojmë titullin që ishe duke shikuar për profilin, që 'Vazhdo shikimin' të funksionojë, dhe një histori të agreguar. Asgjë nga kjo nuk shitet, ndahet ose eksportohet.</li>
+        <li><strong>Nuk</strong> kemi qasje në përmbajtjen e burimeve të tua. Ne analizojmë strukturën e playlist-it dhe EPG-së, asgjë më shumë.</li>
+      </ul>
+
+      <h2 class="t-title-large">4. Nën-procesorët</h2>
+      <ul>
+        <li><strong>Google (Firebase Authentication).</strong> Trajton regjistrim / identifikim / rivendosje fjalëkalimi. Rregulluar nga Kushtet e Përpunimit të Të Dhënave të Firebase.</li>
+        <li><strong>Google (Play Billing).</strong> Përpunon blerjet dhe ngjarjet e rimbursimit. Rregulluar nga Play Developer Distribution Agreement.</li>
+        <li><strong>Infrastruktura jonë e pritur.</strong> PostgreSQL + Redis në BE. Nuk ka asnjë përpunues tjetër të dhënash palë e tretë në zinxhir.</li>
+      </ul>
+
+      <h2 class="t-title-large">5. Ruajtja</h2>
+      <p>
+        Të dhënat e llogarisë dhe bibliotekës ruhen për aq kohë sa llogaria jote ekziston.
+        Kur fshin llogarinë nga brenda aplikacionit, profilet, burimet, historia e shikimit dhe
+        PIN-et fshihen brenda 30 ditëve. Regjistrimet e identifikimit Firebase fshihen në të
+        njëjtën kohë përmes Firebase Admin SDK. Rezervat e enkriptuara mund të mbajnë një kopje
+        të hash-uar deri në 90 ditë për rikuperim në rast fatkeqësie, pas të cilave pastrohen.
+      </p>
+
+      <h2 class="t-title-large">6. Të drejtat e tua (GDPR)</h2>
+      <p>
+        Nëse je në BE / EEA / Mbretërinë e Bashkuar, ke të drejtën e qasjes, korrigjimit,
+        transferueshmërisë dhe fshirjes së të dhënave të tua personale sipas GDPR. Të gjitha
+        këto të drejta mund t'i ushtrosh drejtpërdrejt nga ekrani <em>Cilësimet → Llogaria</em>
+        në aplikacion. Për gjithçka që nuk është vetë-shërbim, dërgo email në adresën e
+        <a href={IMPRINT_HREF}>Të dhënat ligjore</a>.
+      </p>
+
+      <h2 class="t-title-large">7. Fëmijët</h2>
+      <p>
+        Premium TV Player është i klasifikuar për audienca të përgjithshme, por nuk është
+        i drejtuar te fëmijë nën 13 vjeç. Profili për fëmijë është një veçori kontrolli prindëror —
+        nuk do të thotë se shërbimi është krijuar për fëmijët si audiencë kryesore. Llogaritë
+        krijohen nga pronari i pajisjes, jo nga fëmijët.
+      </p>
+
+      <h2 class="t-title-large">8. Ndryshimet</h2>
+      <p>
+        Kur përditësojmë këtë politikë, përditësojmë datën „Përditësuar" më lart. Për ndryshime
+        të rëndësishme, shfaqim një njoftim në aplikacion herën tjetër që e hap.
+      </p>
+
+      <p class="legal-footer">Përditësuar: {LAST_UPDATED}.</p>
+    </article>
+  </Section>
+</BaseLayout>
+
+<style>
+  .legal-body { max-width: 780px; display: flex; flex-direction: column; gap: var(--space-l); }
+  .legal-body h2 { margin: var(--space-l) 0 0; color: var(--color-on-surface-high); }
+  .legal-body p, .legal-body li { margin: 0; color: var(--color-on-surface); }
+  .legal-body ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: var(--space-s); }
+  .legal-body a { color: var(--color-accent-cyan); text-decoration: underline; text-underline-offset: 3px; }
+  .legal-callout { padding: var(--space-l); border-radius: var(--radius-m); border: 1px solid rgba(96, 165, 250, 0.3); background: rgba(59, 130, 246, 0.08); }
+  .legal-footer { color: var(--color-on-surface-muted); }
+</style>

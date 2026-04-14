@@ -1,0 +1,87 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHeader from "../../components/PageHeader.astro";
+import Section from "../../components/Section.astro";
+import FeatureCard from "../../components/FeatureCard.astro";
+import IconPlayback from "../../components/icons/IconPlayback.astro";
+import IconSources from "../../components/icons/IconSources.astro";
+import IconEncrypted from "../../components/icons/IconEncrypted.astro";
+import IconEpgGrid from "../../components/icons/IconEpgGrid.astro";
+import IconProfiles from "../../components/icons/IconProfiles.astro";
+import IconKidsShield from "../../components/icons/IconKidsShield.astro";
+import IconDevice from "../../components/icons/IconDevice.astro";
+import IconPrivacyLock from "../../components/icons/IconPrivacyLock.astro";
+import IconLifetime from "../../components/icons/IconLifetime.astro";
+---
+<BaseLayout
+  title="Features — Premium TV Player"
+  description="Everything Premium TV Player ships with on Android TV: sources, EPG, profiles, kids mode, billing, playback and cloud sync."
+>
+  <PageHeader
+    eyebrow="What's inside"
+    title="Designed to feel like a flagship streaming app."
+    lede="Premium TV Player ships empty on purpose — you bring your own authorized sources. Everything else is built around making the 10-foot experience as good as the apps you already pay for."
+  />
+
+  <Section eyebrow="Playback" title="Cinematic, instant, reliable.">
+    <div class="grid">
+      <FeatureCard title="Media3 / ExoPlayer core" body="HLS, DASH and progressive MP4. Hardware-accelerated decoding on every modern Android TV device.">
+        <IconPlayback slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Subtitles & audio tracks" body="Every embedded and sidecar track is discoverable from the remote. Resume position syncs per profile.">
+        <IconSources slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Heartbeat sync" body="Position updates every 10 seconds. Continue Watching picks up the right episode on whichever device you grab next.">
+        <IconLifetime slot="icon" />
+      </FeatureCard>
+    </div>
+  </Section>
+
+  <Section eyebrow="Library" title="Your sources, presented properly.">
+    <div class="grid">
+      <FeatureCard title="M3U / M3U8 / XMLTV" body="Paste the URL you were given. We parse it, pull EPG metadata, and lay it out in premium rails and grids.">
+        <IconSources slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Encrypted at rest" body="Every URL, username, password and custom header is encrypted with AES-256-GCM and a fresh IV per write.">
+        <IconEncrypted slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="EPG with 48-hour window" body="Channel guide with logos, programme descriptions and one-press focus into the programme you care about.">
+        <IconEpgGrid slot="icon" />
+      </FeatureCard>
+    </div>
+  </Section>
+
+  <Section eyebrow="Household" title="Up to 5 profiles, 5 devices.">
+    <div class="grid">
+      <FeatureCard title="Per-profile sync" body="Watch history, favorites, Continue Watching and your source list are scoped to the profile.">
+        <IconProfiles slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Kids profile + PIN" body="A dedicated Kids flag, an age-rating filter, and a PIN gate hashed with Argon2id and rate-limited on the server.">
+        <IconKidsShield slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Device slot management" body="Account-bound device slots. Revoke a device from any other device — no MAC binding, no vendor lock-in.">
+        <IconDevice slot="icon" />
+      </FeatureCard>
+    </div>
+  </Section>
+
+  <Section eyebrow="Trust" title="Minimal data, maximum privacy.">
+    <div class="grid">
+      <FeatureCard title="No ads, no tracking" body="We don't serve ads, we don't sell your data, we don't build behavioural profiles. Full stop.">
+        <IconPrivacyLock slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Firebase auth only" body="Email, Firebase UID and entitlement status are the only identifiers leaving your TV. See the Privacy page for the full data inventory.">
+        <IconEncrypted slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Own your credentials" body="Source credentials never reach any third party. Rotate your encryption key on your server and ours re-encrypts on the next write.">
+        <IconPrivacyLock slot="icon" />
+      </FeatureCard>
+    </div>
+  </Section>
+</BaseLayout>
+
+<style>
+  .grid { display: grid; gap: clamp(16px, 2.4vw, 26px); grid-template-columns: 1fr; }
+  @media (min-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 960px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+</style>

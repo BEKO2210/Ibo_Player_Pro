@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker exec premium-player-postgres:*)",
+      "Bash(npx prisma:*)",
+      "Bash(DATABASE_URL=\"postgresql://premium:premium@127.0.0.1:5432/premium_player?schema=public\" npx prisma migrate deploy)",
+      "Bash(DATABASE_URL=\"postgresql://premium:premium@127.0.0.1:5432/premium_player?schema=public&sslmode=disable\" npx prisma migrate deploy)",
+      "Bash(docker cp:*)",
+      "Bash(docker exec:*)",
+      "Bash(timeout 15 npm run start:dev)",
+      "Bash(netstat -ano)",
+      "Bash(powershell:*)",
+      "Bash(xargs grep:*)"
+    ]
+  }
+}

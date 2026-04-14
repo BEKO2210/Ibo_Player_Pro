@@ -1,0 +1,159 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Hero from "../components/Hero.astro";
+import Section from "../components/Section.astro";
+import FeatureCard from "../components/FeatureCard.astro";
+import Button from "../components/Button.astro";
+import IconSources from "../components/icons/IconSources.astro";
+import IconProfiles from "../components/icons/IconProfiles.astro";
+import IconKidsShield from "../components/icons/IconKidsShield.astro";
+import IconEpgGrid from "../components/icons/IconEpgGrid.astro";
+import IconLifetime from "../components/icons/IconLifetime.astro";
+import IconPrivacyLock from "../components/icons/IconPrivacyLock.astro";
+import { link, waitlistMailto } from "../utils/link";
+const WAITLIST = waitlistMailto("de");
+---
+<BaseLayout
+  title="Premium TV Player — demnächst für Android TV"
+  description="Ein Premium-Player für deine eigenen M3U-, M3U8- und XMLTV-Quellen. Einmalzahlung, kein Abo, Profile in der Cloud synchronisiert, Kinderschutz. Demnächst im Google Play Store — trag dich in die Warteliste ein."
+>
+  <Hero
+    eyebrow="Bald im Google Play Store"
+    title="Deine Quellen. Deine Mediathek. Premium-Wiedergabe."
+    subtitle="Premium TV Player ist ein neutraler, hochwertiger Player für die M3U-, M3U8- und XMLTV-Quellen, die du selbst mitbringst. Einmal zahlen, kein Abo, keine Werbung, kein Tracking. Der letzte Schliff ist in Arbeit — trag dich ein und du bekommst Bescheid, sobald die App live geht."
+    primaryCta={{ href: WAITLIST, label: "Zum Start benachrichtigen" }}
+    secondaryCta={{ href: link("/features", "de"), label: "Was drinsteckt" }}
+  />
+
+  <Section
+    eyebrow="Warum es sich anders anfühlt"
+    title="Gebaut wie eine Flagship-Streaming-App."
+    lede="Filmreife Fokus-Zustände, sofortiger Start, 60-fps-Animationen und eine dunkle Farbpalette, die aufs Wohnzimmer-TV abgestimmt ist — und das alles mit den Quellen, die du selbst autorisiert hast."
+  >
+    <div class="feature-grid">
+      <FeatureCard
+        title="Deine Quellen – du bringst sie mit"
+        body="Füge jede M3U-, M3U8- oder XMLTV-URL hinzu, die du nutzen darfst. Zugangsdaten werden mit AES-256-GCM verschlüsselt gespeichert — nur der Player selbst kann sie entschlüsseln."
+      >
+        <IconSources slot="icon" />
+      </FeatureCard>
+      <FeatureCard
+        title="Bis zu 5 Profile"
+        body="Für jeden im Haushalt ein eigenes Profil. Wiedergabeverlauf, Favoriten und Zuletzt-gesehen werden pro Profil in der Cloud synchronisiert."
+      >
+        <IconProfiles slot="icon" />
+      </FeatureCard>
+      <FeatureCard
+        title="Kinderschutz ab Werk"
+        body="Ein eigenes Kinder-Profil mit Altersfreigabe-Filter und PIN-Sperre. Die PIN wird mit Argon2id gehasht und serverseitig gegen Brute-Force geschützt."
+      >
+        <IconKidsShield slot="icon" />
+      </FeatureCard>
+      <FeatureCard
+        title="Live-TV mit echtem EPG"
+        body="Elektronischer Programmführer mit 48-Stunden-Fenster, Senderliste mit Logos und direktem Sprung in die Sendung, die dich interessiert."
+      >
+        <IconEpgGrid slot="icon" />
+      </FeatureCard>
+      <FeatureCard
+        title="Lifetime-Lizenz"
+        body="Einmal zahlen beim Start. Keine Monatsgebühren. 19,99 € für ein Gerät und ein Profil, 39,99 € für den Family-Tarif mit 5 Profilen und 5 Geräten."
+      >
+        <IconLifetime slot="icon" />
+      </FeatureCard>
+      <FeatureCard
+        title="Keine Werbung. Kein Tracking."
+        body="Wir schalten keine Werbung, verkaufen keine Profile und bauen keine Werbe-Graphen. Nur deine E-Mail, eine Firebase-UID und dein Lizenz-Status verlassen jemals das Gerät."
+      >
+        <IconPrivacyLock slot="icon" />
+      </FeatureCard>
+    </div>
+  </Section>
+
+  <Section eyebrow="So wird es laufen" title="Drei Schritte von der Installation bis zur Wiedergabe." align="center">
+    <ol class="steps">
+      <li>
+        <span class="step-num">01</span>
+        <h3 class="t-title">Installieren &amp; anmelden</h3>
+        <p class="t-body-small">Zum Start holst du dir die App aus dem Google Play Store auf dein Android TV. Konto anlegen — die 14-tägige Testphase startet automatisch bei der ersten Anmeldung.</p>
+      </li>
+      <li>
+        <span class="step-num">02</span>
+        <h3 class="t-title">Quelle hinzufügen</h3>
+        <p class="t-body-small">Füge die M3U-, M3U8- oder XMLTV-URL ein, die du von deinem Anbieter bekommen hast. Zugangsdaten werden verschlüsselt gespeichert und an niemanden weitergegeben.</p>
+      </li>
+      <li>
+        <span class="step-num">03</span>
+        <h3 class="t-title">Abspielen</h3>
+        <p class="t-body-small">Dein Startbildschirm füllt sich mit Hero-Reihen, Zuletzt-gesehen, Favoriten und einem richtigen EPG-Raster. Fernbedienung zur Couch geben, fertig.</p>
+      </li>
+    </ol>
+  </Section>
+
+  <Section>
+    <div class="cta-panel">
+      <div class="cta-copy">
+        <h2 class="t-headline">Sei als erstes dabei.</h2>
+        <p class="t-body-small cta-body">Wir sind im letzten Feinschliff. Schreib uns kurz und wir melden uns, sobald die App im Google Play Store live geht.</p>
+      </div>
+      <Button href={WAITLIST} label="Zum Start benachrichtigen" variant="primary" external />
+    </div>
+  </Section>
+</BaseLayout>
+
+<style>
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(16px, 2.4vw, 26px);
+  }
+  @media (min-width: 640px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 960px) { .feature-grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(16px, 2.4vw, 26px);
+    max-width: 960px;
+    margin-inline: auto;
+  }
+  @media (min-width: 800px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+  .steps li {
+    padding: clamp(20px, 2.8vw, 32px);
+    border-radius: var(--radius-l);
+    background: linear-gradient(180deg, rgba(29, 33, 40, 0.72), rgba(20, 23, 28, 0.72));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex; flex-direction: column; gap: var(--space-s);
+  }
+  .step-num {
+    display: inline-block;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: var(--color-accent-cyan);
+  }
+  .steps h3 { margin: 0; color: var(--color-on-surface-high); }
+  .steps p  { margin: 0; }
+
+  /* Goldener Schnitt im CTA-Panel ab 800px: 1.618fr : 1fr */
+  .cta-panel {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(16px, 2.4vw, 28px);
+    align-items: center;
+    padding: clamp(24px, 3.2vw, 48px);
+    border-radius: var(--radius-l);
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.28), rgba(139, 92, 246, 0.16));
+    border: 1px solid rgba(96, 165, 250, 0.32);
+  }
+  @media (min-width: 800px) {
+    .cta-panel { grid-template-columns: 1.618fr 1fr; }
+  }
+  .cta-copy h2 { margin: 0; color: var(--color-on-surface-high); }
+  .cta-body { margin: var(--space-s) 0 0; }
+  .cta-panel :global(.btn) { justify-self: start; }
+  @media (min-width: 800px) { .cta-panel :global(.btn) { justify-self: end; } }
+</style>

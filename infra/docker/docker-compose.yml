@@ -1,0 +1,48 @@
+# Premium TV Player — local development stack
+# Spins up Postgres 16 and Redis 7 for services/api.
+# Usage:
+#   docker compose -f infra/docker/docker-compose.yml up -d
+#   docker compose -f infra/docker/docker-compose.yml down
+#
+# The API (services/api) connects via DATABASE_URL and REDIS_URL in .env.
+
+name: premium-player-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: premium-player-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: premium
+      POSTGRES_PASSWORD: premium
+      POSTGRES_DB: premium_player
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U premium -d premium_player"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: premium-player-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,95 @@
+---
+import "../styles/global.css";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { asset } from "../utils/link";
+import { getLocaleFromPath, ogLocaleTag } from "../utils/i18n";
+
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  noIndex?: boolean;
+}
+
+const locale = getLocaleFromPath(Astro.url.pathname);
+
+const defaultDescriptions: Record<typeof locale, string> = {
+  de: "Ein Premium-Player für deine eigenen M3U-, M3U8- und XMLTV-Quellen. Einmalzahlung, kein Abo, Profile in der Cloud synchronisiert. Demnächst im Google Play Store.",
+  en: "A premium player for your own M3U, M3U8 and XMLTV sources. Lifetime license, cloud-synced profiles, kids mode. Launching soon on Google Play.",
+  sq: "Një luajtës premium për burimet e tua M3U, M3U8 dhe XMLTV. Pagesë një herë, pa abonim, profile të sinkronizuara në renë kompjuterike. Së shpejti në Google Play Store.",
+};
+
+const skipLabelByLocale: Record<typeof locale, string> = {
+  de: "Zum Inhalt springen",
+  en: "Skip to content",
+  sq: "Kalo te përmbajtja",
+};
+
+const {
+  title,
+  description = defaultDescriptions[locale],
+  ogImage = "/og-default.png",
+  noIndex = false,
+} = Astro.props;
+
+const siteOrigin = Astro.site?.origin ?? "https://premiumtvplayer.app";
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? siteOrigin).toString();
+const ogImageUrl = new URL(asset(ogImage), Astro.site ?? siteOrigin).toString();
+const faviconHref = asset("/favicon.svg");
+const sitemapHref = asset("/sitemap-index.xml");
+
+const ogLocale = ogLocaleTag[locale];
+const skipLabel = skipLabelByLocale[locale];
+---
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#050608" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+    {noIndex && <meta name="robots" content="noindex,nofollow" />}
+
+    <meta property="og:site_name" content="Premium TV Player" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:locale" content={ogLocale} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <link rel="icon" type="image/svg+xml" href={faviconHref} />
+    <link rel="sitemap" href={sitemapHref} />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{skipLabel}</a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>
+
+<style>
+  .skip-link {
+    position: absolute;
+    top: -100px;
+    left: 16px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--color-accent-blue);
+    color: #fff;
+    z-index: 100;
+    transition: top 0.2s ease;
+  }
+  .skip-link:focus { top: 12px; }
+</style>

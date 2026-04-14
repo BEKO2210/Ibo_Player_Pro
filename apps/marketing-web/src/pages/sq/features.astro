@@ -1,0 +1,87 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHeader from "../../components/PageHeader.astro";
+import Section from "../../components/Section.astro";
+import FeatureCard from "../../components/FeatureCard.astro";
+import IconPlayback from "../../components/icons/IconPlayback.astro";
+import IconSources from "../../components/icons/IconSources.astro";
+import IconEncrypted from "../../components/icons/IconEncrypted.astro";
+import IconEpgGrid from "../../components/icons/IconEpgGrid.astro";
+import IconProfiles from "../../components/icons/IconProfiles.astro";
+import IconKidsShield from "../../components/icons/IconKidsShield.astro";
+import IconDevice from "../../components/icons/IconDevice.astro";
+import IconPrivacyLock from "../../components/icons/IconPrivacyLock.astro";
+import IconLifetime from "../../components/icons/IconLifetime.astro";
+---
+<BaseLayout
+  title="Veçoritë — Premium TV Player"
+  description="Çfarë ofron Premium TV Player në Android TV: burime, EPG, profile, modaliteti për fëmijët, faturimi, riprodhimi dhe sinkronizimi në renë kompjuterike."
+>
+  <PageHeader
+    eyebrow="Çfarë përmban"
+    title="Dizajnuar të ndihet si një aplikacion streaming flamurtar."
+    lede="Premium TV Player niset i zbrazët me qëllim — ti sjell burimet e tua të autorizuara. Gjithçka tjetër është ndërtuar që përvoja në televizor të jetë po aq e mirë sa aplikacionet që po paguan tashmë."
+  />
+
+  <Section eyebrow="Riprodhim" title="Kinematografik, i menjëhershëm, i besueshëm.">
+    <div class="grid">
+      <FeatureCard title="Media3 / ExoPlayer në bazë" body="HLS, DASH dhe MP4 progresiv. Dekodim i përshpejtuar nga hardueri në çdo pajisje moderne Android TV.">
+        <IconPlayback slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Titra dhe pista zëri" body="Çdo pistë e integruar ose e jashtme është e zgjedhshme nga telekomanda. Pozicioni i riprodhimit sinkronizohet për çdo profil.">
+        <IconSources slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Sinkronizim me puls" body="Pozicioni përditësohet çdo 10 sekonda. 'Vazhdo shikimin' gjen episodin e duhur në cilëndo pajisje që merr më pas.">
+        <IconLifetime slot="icon" />
+      </FeatureCard>
+    </div>
+  </Section>
+
+  <Section eyebrow="Biblioteka" title="Burimet e tua, të prezantuara si duhet.">
+    <div class="grid">
+      <FeatureCard title="M3U / M3U8 / XMLTV" body="Ngjit URL-në që ke marrë. E analizojmë, tërheqim metadatat EPG dhe i shfaqim në rreshta dhe rrjeta premium.">
+        <IconSources slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Të enkriptuara në ruajtje" body="Çdo URL, emër përdoruesi, fjalëkalim dhe header i personalizuar enkriptohet me AES-256-GCM dhe një IV të freskët për çdo shkrim.">
+        <IconEncrypted slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="EPG me dritare 48-orëshe" body="Udhëzues i kanaleve me logo, përshkrime programesh dhe fokus me një shtypje në programin që të intereson.">
+        <IconEpgGrid slot="icon" />
+      </FeatureCard>
+    </div>
+  </Section>
+
+  <Section eyebrow="Familja" title="Deri në 5 profile, 5 pajisje.">
+    <div class="grid">
+      <FeatureCard title="Sinkronizim për çdo profil" body="Historia e shikimit, të preferuarat, 'Vazhdo shikimin' dhe lista jote e burimeve lidhen me profilin.">
+        <IconProfiles slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Profil për fëmijë + PIN" body="Një flamur i dedikuar Kids, një filtër i klasifikimit të moshës dhe një portë PIN me hash Argon2id dhe kufizime në server.">
+        <IconKidsShield slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Menaxhim i slotëve të pajisjeve" body="Slotet e pajisjeve lidhen me llogarinë. Mund të çaktivizosh një pajisje nga çdo pajisje tjetër — pa lidhje me adresë MAC, pa bllokim nga shitësi.">
+        <IconDevice slot="icon" />
+      </FeatureCard>
+    </div>
+  </Section>
+
+  <Section eyebrow="Besim" title="Minimum të dhëna, maksimum privatësie.">
+    <div class="grid">
+      <FeatureCard title="Pa reklama, pa ndjekje" body="Nuk shfaqim reklama, nuk shesim të dhënat e tua, nuk ndërtojmë profile sjelljeje. Pikë.">
+        <IconPrivacyLock slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Vetëm autentifikimi Firebase" body="Email, Firebase UID dhe statusi i licencës janë të vetmet identifikues që largohen nga televizori yt. Inventari i plotë i të dhënave gjendet te faqja e privatësisë.">
+        <IconEncrypted slot="icon" />
+      </FeatureCard>
+      <FeatureCard title="Kredencialet mbeten të tuat" body="Kredencialet e burimeve nuk arrijnë kurrë palë të treta. Rrotullo çelësin e enkriptimit në server — shkrimi tjetër i enkripton përsëri automatikisht.">
+        <IconPrivacyLock slot="icon" />
+      </FeatureCard>
+    </div>
+  </Section>
+</BaseLayout>
+
+<style>
+  .grid { display: grid; gap: clamp(16px, 2.4vw, 26px); grid-template-columns: 1fr; }
+  @media (min-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 960px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+</style>

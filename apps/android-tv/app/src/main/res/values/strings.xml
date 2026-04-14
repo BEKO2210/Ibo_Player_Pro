@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
+    <!--
+      Premium TV Player — English string catalogue (baseline).
+      Every user-visible string lives here. German translations ship in
+      `values-de/strings.xml`; adding another locale is a single file.
+      See Run 19 entry in CLAUDE.md for the migration plan.
+    -->
+
+    <string name="app_name">Premium TV Player</string>
+
+    <!-- ── Common ────────────────────────────────────────────────── -->
+    <string name="common_back">Back</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_continue">Continue</string>
+    <string name="common_retry">Try Again</string>
+    <string name="common_save">Save</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_add">Add</string>
+    <string name="common_sign_out">Sign Out</string>
+    <string name="common_not_now">Not Now</string>
+    <string name="common_loading">Loading…</string>
+    <string name="common_dash">—</string>
+
+    <!-- ── Welcome + Onboarding ───────────────────────────────────── -->
+    <string name="welcome_title">Welcome to Premium TV Player</string>
+    <string name="welcome_subtitle">Bring your own sources. We give them a home worthy of your TV.</string>
+    <string name="welcome_sign_in">Sign In</string>
+    <string name="welcome_create_account">Create Account</string>
+
+    <string name="signup_title">Create your account</string>
+    <string name="signup_subtitle">A 14-day trial starts right after sign-up. No payment needed.</string>
+    <string name="signup_primary">Create Account</string>
+    <string name="signup_switch">I already have an account</string>
+
+    <string name="login_title">Sign in</string>
+    <string name="login_subtitle">Welcome back. Continue where you left off.</string>
+    <string name="login_primary">Sign In</string>
+    <string name="login_switch">Create a new account</string>
+
+    <string name="auth_email">Email</string>
+    <string name="auth_email_placeholder">you@example.com</string>
+    <string name="auth_password">Password</string>
+    <string name="auth_password_placeholder">At least 8 characters</string>
+    <string name="auth_validation_email">Please enter a valid email.</string>
+    <string name="auth_validation_password">Password must be at least 8 characters.</string>
+    <string name="auth_validation_password_empty">Enter your password.</string>
+
+    <!-- ── Trial ──────────────────────────────────────────────────── -->
+    <string name="trial_chip_fourteen_day">14-day trial</string>
+    <string name="trial_chip_no_payment">No payment</string>
+    <string name="trial_title">Start your 14-day trial</string>
+    <string name="trial_subtitle">Full access to every feature. Cancel anytime — or let it roll into a one-time lifetime plan when you\'re ready.</string>
+    <string name="trial_start">Start 14-day Trial</string>
+    <string name="trial_starting">Starting…</string>
+    <string name="trial_skip">Skip</string>
+    <string name="trial_already_consumed">This account has already used its trial. You can still pick a profile and continue.</string>
+
+    <!-- ── Profiles ───────────────────────────────────────────────── -->
+    <string name="profile_picker_title">Who\'s watching?</string>
+    <string name="profile_picker_subtitle">Choose a profile to continue.</string>
+    <string name="profile_picker_empty">No profiles yet. Add one to start watching.</string>
+    <string name="profile_add">Add Profile</string>
+    <string name="profile_management_title">Profile settings</string>
+    <string name="profile_kids">Kids</string>
+    <string name="profile_adult">Adult</string>
+    <string name="profile_default">Default</string>
+    <string name="profile_has_pin">PIN</string>
+    <string name="profile_name_label">Name</string>
+    <string name="profile_age_limit_label">Age limit (0–21) — leave empty for adult</string>
+    <string name="profile_pin_new">New PIN (4–10 digits)</string>
+    <string name="profile_pin_set">Set PIN (4–10 digits)</string>
+    <string name="profile_save_name">Save Name</string>
+    <string name="profile_save_age_limit">Save Age Limit</string>
+    <string name="profile_change_pin">Change PIN</string>
+    <string name="profile_set_pin">Set PIN</string>
+    <string name="profile_clear_pin">Clear PIN</string>
+    <string name="profile_make_default">Make Default</string>
+    <string name="profile_delete_title">Delete \"%1$s\"?</string>
+    <string name="profile_delete_body">This removes the profile from every device on this account. Watch history, favorites, and Continue Watching tied to it will be lost.</string>
+
+    <!-- ── PIN Gate ───────────────────────────────────────────────── -->
+    <string name="pin_gate_chip_protected">Protected Profile</string>
+    <string name="pin_gate_subtitle">Enter the PIN for this profile. Five wrong tries lock it for 15 minutes.</string>
+    <string name="pin_gate_pin_label">PIN</string>
+    <string name="pin_gate_pin_placeholder">4–10 digits</string>
+    <string name="pin_gate_unlock">Unlock</string>
+    <string name="pin_gate_checking">Checking…</string>
+    <string name="pin_gate_err_too_short">PIN must be at least 4 digits.</string>
+    <string name="pin_gate_err_wrong">Wrong PIN.</string>
+    <string name="pin_gate_err_locked">Too many wrong tries. Try again later.</string>
+    <string name="pin_gate_err_still_locked">Profile is locked. Try again later.</string>
+    <string name="pin_gate_unlocked_label">Unlocked</string>
+    <string name="pin_gate_locked_label">Locked · %1$s</string>
+
+    <!-- ── Home ───────────────────────────────────────────────────── -->
+    <string name="home_row_continue_watching">Continue Watching</string>
+    <string name="home_row_favorites">Favorites</string>
+    <string name="home_row_suggested">Suggested for you</string>
+    <string name="home_row_your_sources">Your Sources</string>
+    <string name="home_header_profiles">Profiles</string>
+    <string name="home_header_devices">Devices</string>
+
+    <!-- ── Source picker rail ────────────────────────────────────── -->
+    <string name="source_rail_step">Step 1 of 1</string>
+    <string name="source_rail_kinds">M3U · XMLTV · M3U + EPG</string>
+    <string name="source_rail_title">Add your first source</string>
+    <string name="source_rail_body">Premium TV Player ships empty — you bring the content. Paste a playlist or EPG URL and we\'ll turn it into a beautifully navigable library in seconds.</string>
+    <string name="source_rail_cta">Add Source</string>
+    <string name="source_rail_footer">Your sources stay on your account — not tied to any one device.</string>
+
+    <!-- ── Sources management ────────────────────────────────────── -->
+    <string name="sources_title">Your sources</string>
+    <string name="sources_subtitle">Add, rename, pause, or remove the providers that power your home.</string>
+    <string name="sources_add_button">Add Source</string>
+    <string name="sources_chip_active">Active</string>
+    <string name="sources_chip_paused">Paused</string>
+    <string name="sources_action_pause">Pause</string>
+    <string name="sources_action_resume">Resume</string>
+    <string name="sources_action_epg">EPG</string>
+    <string name="sources_delete_title">Delete \"%1$s\"?</string>
+    <string name="sources_delete_body">This removes the source from your account across every device. You can re-add it later — but any Continue-Watching rows linked to it will disappear.</string>
+
+    <!-- ── Paywall ────────────────────────────────────────────────── -->
+    <string name="paywall_chip_one_time">One-time</string>
+    <string name="paywall_chip_no_subscription">No subscription</string>
+    <string name="paywall_title">Premium for life</string>
+    <string name="paywall_subtitle">Two lifetime plans. Pay once, keep it. Cancel the trial whenever or let it roll into the plan that fits your household.</string>
+    <string name="paywall_restore">Restore Purchases</string>
+    <string name="paywall_recommended">Recommended</string>
+    <string name="paywall_success">You\'re in. Welcome to Premium.</string>
+
+    <!-- ── Player ─────────────────────────────────────────────────── -->
+    <string name="player_exit">Exit</string>
+    <string name="player_state_starting">Starting</string>
+    <string name="player_state_buffering">Buffering</string>
+    <string name="player_state_playing">Playing</string>
+    <string name="player_state_paused">Paused</string>
+    <string name="player_state_stopped">Stopped</string>
+    <string name="player_state_error">Error</string>
+    <string name="player_error_title">Playback error</string>
+
+    <!-- ── Devices ────────────────────────────────────────────────── -->
+    <string name="devices_title">Your devices</string>
+    <string name="devices_subtitle">Revoke any device to immediately sign it out across the network.</string>
+    <string name="devices_this_device_chip">This device</string>
+    <string name="devices_revoked_chip">Revoked</string>
+    <string name="devices_revoke">Revoke</string>
+    <string name="devices_signout_current">Sign Out This Device</string>
+    <string name="devices_revoke_title_current">Sign out \"%1$s\"?</string>
+    <string name="devices_revoke_title_other">Revoke \"%1$s\"?</string>
+    <string name="devices_revoke_body_current">Signing out this device will end any playback session and return you to the sign-in screen.</string>
+    <string name="devices_revoke_body_other">The device will be signed out immediately. It won\'t appear on the EPG or consume a device slot.</string>
+    <string name="devices_empty">No devices yet. When you sign in on a TV or phone, it\'ll show up here.</string>
+
+    <!-- ── Errors (keyed to ApiErrorCopy ErrorCode) ──────────────── -->
+    <string name="error_unauthorized">Your session expired. Please sign in again.</string>
+    <string name="error_entitlement_required">Your entitlement doesn\'t allow this action.</string>
+    <string name="error_slot_full">You\'ve reached the device or profile limit for your plan.</string>
+    <string name="error_pin_invalid">Wrong PIN. Try again.</string>
+    <string name="error_validation">Something\'s off with the request. Please try again.</string>
+    <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="error_network">Couldn\'t reach the server. Check your connection and try again.</string>
+
+    <!-- ── Diagnostics ────────────────────────────────────────────── -->
+    <string name="diagnostics_title">Diagnostics</string>
+    <string name="diagnostics_subtitle">Build, connectivity, and recent errors. Share this screen with support to help us help you.</string>
+    <string name="diagnostics_build_label">Build</string>
+    <string name="diagnostics_api_base">API base URL</string>
+    <string name="diagnostics_firebase_project">Firebase project</string>
+    <string name="diagnostics_health">Server health</string>
+    <string name="diagnostics_health_ok">OK</string>
+    <string name="diagnostics_health_down">Unreachable</string>
+    <string name="diagnostics_recent_errors">Recent errors</string>
+    <string name="diagnostics_refresh">Refresh</string>
+    <string name="diagnostics_empty_errors">No recent errors.</string>
+</resources>

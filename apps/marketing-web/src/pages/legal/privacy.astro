@@ -1,0 +1,136 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHeader from "../../components/PageHeader.astro";
+import Section from "../../components/Section.astro";
+import { link } from "../../utils/link";
+
+const LAST_UPDATED = "14.04.2026";
+const IMPRINT_HREF = link("/legal/imprint", "de");
+---
+<BaseLayout
+  title="Datenschutzerklärung — Premium TV Player"
+  description="Welche Daten Premium TV Player erhebt, warum, wo sie gespeichert werden und wie du sie löschen kannst."
+>
+  <PageHeader
+    eyebrow="Rechtliches"
+    title="Datenschutzerklärung"
+    lede={`Stand: ${LAST_UPDATED}. Diese Seite ist eine klar formulierte Zusammenfassung dessen, was erhoben wird, warum, und wie du es löschen kannst. Die endgültige, rechtsverbindliche Fassung wird vor dem Start juristisch geprüft.`}
+  />
+
+  <Section>
+    <article class="legal-body">
+      <p class="legal-callout">
+        <strong>Kurzfassung.</strong> Wir erheben nur das Nötigste, um die App zu betreiben:
+        deine E-Mail-Adresse, eine Firebase-User-ID, deinen Lizenz-Status und die URLs der
+        Quellen, die du hinzufügst (verschlüsselt). Wir schalten keine Werbung, wir
+        verkaufen keine Daten, und wir bauen keine Werbeprofile.
+      </p>
+
+      <h2 class="t-title-large">1. Wer wir sind</h2>
+      <p>
+        Premium TV Player („die App", „wir", „uns") ist ein unabhängiges Projekt,
+        betrieben von <strong>Belkis Aslani</strong> (der „Anbieter") mit Sitz in
+        Freiberg am Neckar, Deutschland. Die Anmeldung eines Einzelunternehmens ist
+        derzeit in Vorbereitung. Die vollständigen Kontaktdaten findest du im
+        <a href={IMPRINT_HREF}>Impressum</a>.
+      </p>
+
+      <h2 class="t-title-large">2. Welche Daten wir erheben</h2>
+      <ul>
+        <li><strong>Kontodaten.</strong> E-Mail-Adresse und Firebase-UID, damit du dich
+          einloggen kannst und deine Käufe deinem Konto zugeordnet werden.</li>
+        <li><strong>Lizenz-Status.</strong> Ob dein Konto in der Testphase, Lifetime Single,
+          Lifetime Family, abgelaufen oder widerrufen ist, sowie das Google-Play-Kauf-Token
+          für die Erstattungs- und Widerrufsabwicklung.</li>
+        <li><strong>Profile.</strong> Profilname, Kinder-Flag, Altersfreigabe-Cap und eine
+          optionale PIN (ausschließlich als Argon2id-Hash gespeichert).</li>
+        <li><strong>Quellen.</strong> Die URLs, Benutzernamen, Passwörter und benutzerdefinierten
+          Header für die M3U-, M3U8- oder XMLTV-Feeds, die du hinzufügst. Alle Anmeldefelder
+          werden mit AES-256-GCM und einem frischen IV pro Speichervorgang verschlüsselt.</li>
+        <li><strong>Bibliotheks-Status.</strong> Wiedergabeverlauf, Favoriten und
+          Zuletzt-gesehen-Positionen — jeweils auf das aktive Profil beschränkt.</li>
+        <li><strong>Geräte-Metadaten.</strong> Ein gehashtes Geräte-Token, Gerätemodell,
+          OS-Version und Last-Seen-Zeitstempel, damit die Geräte-Slot-Verwaltung funktioniert.</li>
+      </ul>
+
+      <h2 class="t-title-large">3. Was wir nicht erheben</h2>
+      <ul>
+        <li>Wir nutzen <strong>keine</strong> Werbe-SDKs. Keine Werbe-Impressionen, kein
+          Klick-Tracking, keine App-übergreifenden Kennungen.</li>
+        <li>Wir binden dein Konto <strong>nicht</strong> an eine MAC-Adresse oder einen
+          Hardware-Identifier, den uns das Betriebssystem nicht explizit gibt.</li>
+        <li>Wir speichern <strong>keine</strong> konkrete Liste dessen, was du schaust —
+          wir merken uns, in welchem Titel du in welchem Profil warst (damit Zuletzt-gesehen
+          funktioniert) und halten einen aggregierten Wiedergabeverlauf. Nichts davon wird
+          verkauft, geteilt oder exportiert.</li>
+        <li>Wir haben <strong>keinen</strong> Zugriff auf die Inhalte deiner Quellen. Wir
+          parsen die Playlist- und EPG-Struktur, das war's.</li>
+      </ul>
+
+      <h2 class="t-title-large">4. Auftragsverarbeiter</h2>
+      <ul>
+        <li><strong>Google (Firebase Authentication).</strong> Registrierung, Anmeldung und
+          Passwort-Reset. Abgedeckt durch Googles Firebase-Auftragsverarbeitungsvertrag.</li>
+        <li><strong>Google (Play Billing).</strong> Verarbeitet Käufe und
+          Erstattungs-Ereignisse. Abgedeckt durch Googles Play-Developer-Distribution-Agreement.</li>
+        <li><strong>Eigene Hosting-Infrastruktur.</strong> PostgreSQL und Redis in der EU.
+          Kein weiterer Dritt-Auftragsverarbeiter ist in die Verarbeitung eingebunden.</li>
+      </ul>
+
+      <h2 class="t-title-large">5. Aufbewahrung</h2>
+      <p>
+        Konto- und Bibliotheksdaten werden solange gespeichert, wie dein Konto existiert.
+        Wenn du dein Konto in der App löschst, werden Profile, Quellen, Wiedergabeverlauf
+        und PINs innerhalb von 30 Tagen gelöscht. Die Firebase-Anmeldedaten werden im gleichen
+        Schritt über das Firebase Admin SDK entfernt. Verschlüsselte Backups können eine
+        gehashte Kopie für bis zu 90 Tage zur Wiederherstellung vorhalten, danach werden sie
+        unwiderruflich entfernt.
+      </p>
+
+      <h2 class="t-title-large">6. Deine Rechte (DSGVO)</h2>
+      <p>
+        In der EU, dem EWR und dem Vereinigten Königreich hast du nach der DSGVO das Recht
+        auf Auskunft, Berichtigung, Datenübertragbarkeit und Löschung deiner
+        personenbezogenen Daten. Alle diese Rechte kannst du direkt in der App unter
+        <em>Einstellungen → Konto</em> ausüben. Alles, was nicht über die Selbstbedienung
+        geht, erreichst du über die E-Mail-Adresse im <a href={IMPRINT_HREF}>Impressum</a>.
+      </p>
+
+      <h2 class="t-title-large">7. Kinder</h2>
+      <p>
+        Premium TV Player ist für die Nutzung durch Erwachsene gedacht und nicht primär an
+        Kinder unter 13 Jahren gerichtet. Das Kinder-Profil ist eine Kindersicherungs-Funktion
+        und bedeutet nicht, dass der Dienst an Kinder als primäre Zielgruppe gerichtet ist.
+        Konten werden vom Gerätebesitzer angelegt, nicht von Kindern.
+      </p>
+
+      <h2 class="t-title-large">8. Änderungen</h2>
+      <p>
+        Wenn wir diese Richtlinie aktualisieren, passen wir den Stand oben auf dieser Seite
+        an. Bei wesentlichen Änderungen blenden wir beim nächsten App-Start einen Hinweis ein.
+      </p>
+
+      <p class="legal-footer">
+        Stand: {LAST_UPDATED}.
+      </p>
+    </article>
+  </Section>
+</BaseLayout>
+
+<style>
+  .legal-body {
+    max-width: 780px;
+    display: flex; flex-direction: column; gap: var(--space-l);
+  }
+  .legal-body h2 { margin: var(--space-l) 0 0; color: var(--color-on-surface-high); }
+  .legal-body p, .legal-body li { margin: 0; color: var(--color-on-surface); }
+  .legal-body ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: var(--space-s); }
+  .legal-body a { color: var(--color-accent-cyan); text-decoration: underline; text-underline-offset: 3px; }
+  .legal-callout {
+    padding: var(--space-l);
+    border-radius: var(--radius-m);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    background: rgba(59, 130, 246, 0.08);
+  }
+  .legal-footer { color: var(--color-on-surface-muted); }
+</style>
