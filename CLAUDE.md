@@ -26,6 +26,7 @@
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
 - **applicationId:** ✅ locked in Run 11 — `com.premiumtvplayer.app` (matches `BILLING_ANDROID_PACKAGE_NAME`)
+- **CI status:** ✅ `CI` workflow now runs `drift-check`, `backend-tests`, and `android-jvm-tests` on every push/PR
 
 ---
 
@@ -40,7 +41,7 @@ Final ship-ready run. Wrap up Phase D so the project can be handed over to a rel
 - [ ] Release build verifies via `./gradlew :app:assembleRelease`; documented in README
 - [ ] `docs/launch/store-listing.md` — Play Console asset checklist: app title, short + long descriptions, feature graphic, screenshots (TV banner + 4 in-app), categorization, content rating questionnaire answers, privacy policy URL placeholder, data safety form answers (we don't collect PII beyond email + Firebase UID)
 - [ ] `docs/launch/handover.md` — what's done vs. parked, where each layer lives, runbook entries (rotate Firebase keys, rotate `SOURCE_ENCRYPTION_KEY`, recover from a corrupt EPG row, etc.)
-- [ ] Stretch: GitHub Actions workflow that runs `npm test` (api + workers + parsers) on PR
+- [x] Stretch: GitHub Actions workflows now cover backend test suites + Android JVM unit tests on push/PR
 
 ### Acceptance criteria
 - `./infra/e2e/smoke.sh` passes locally on a fresh clone with `docker compose` available
@@ -209,7 +210,7 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
    ```bash
    ./scripts/check-drift.sh                                    # 8 invariants
    cd services/api && npm test                                 # 143 backend tests
-   # cd apps/android-tv && ./gradlew :app:testDebugUnitTest    # local only (Android SDK)
+   ./apps/android-tv/gradlew -p apps/android-tv :app:testDebugUnitTest   # run locally when Android SDK is available (always enforced in CI)
    ```
 6. **Update CLAUDE.md**:
    - Tick the just-finished run in the Full Roadmap

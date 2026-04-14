@@ -113,9 +113,13 @@ Every component has at least one `@Preview` exercising it under
 
 ## Build + run
 
-> Tooling required (cannot be run in this repo's CI sandbox — Android SDK
-> absent): Android Studio Hedgehog or newer, JDK 17, an Android TV emulator
-> (Google TV image, API 30+ recommended).
+> Tooling required for local development: Android Studio Hedgehog or newer,
+> JDK 17, an Android TV emulator (Google TV image, API 30+ recommended).
+>
+> CI note: `.github/workflows/ci.yml` runs `:app:testDebugUnitTest` on every
+> push/PR via the dedicated `android-jvm-tests` job. The separate
+> `android-debug-apk.yml` workflow remains manual/on-demand for APK artifacts
+> and device sideload testing.
 
 ```bash
 # First checkout: generate the wrapper jar (Studio does this for you on import)
