@@ -160,12 +160,19 @@ ErrorEnvelope mapping, every ViewModel state transition.
 Phase A — Foundation & Specs                ✓ Run 1–5
 Phase B — Backend V1                        ✓ Run 6–10
 Phase C — Android TV Client                 ✓ Run 11–18
-Phase D — Polish & Ship-Ready               ⏳ Run 19 done · Run 20 pending
-
+Phase D — Polish & Ship-Ready               ✓ Run 19–20
+─────────────────────────────────────────────────────
+Extra Runs (21+)                            ⏳ ongoing
+  · Recording / scheduler
+  · Admin web portal
+  · Android Mobile client
+  · Playback URL resolver
+  · i18n sweep
+  · Marketing site launch
 ```
 
-The full 20+-run plan, locked product decisions, and per-run protocol live
-in [`CLAUDE.md`](./CLAUDE.md).
+The full 20-run history, locked product decisions, per-run protocol, and
+Extra Runs candidate list live in [`CLAUDE.md`](./CLAUDE.md).
 
 ---
 
