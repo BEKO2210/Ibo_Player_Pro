@@ -6,67 +6,67 @@ import Button from "../components/Button.astro";
 import { WAITLIST_MAILTO } from "../utils/link";
 ---
 <BaseLayout
-  title="Download — Premium TV Player (launching soon)"
-  description="Premium TV Player is launching soon on Google Play for Android TV and Google TV. Android 8.0 Oreo (API 26) or later. Join the waitlist to be notified."
+  title="Download — Premium TV Player (demnächst)"
+  description="Premium TV Player kommt demnächst in den Google Play Store für Android TV und Google TV. Android 8.0 Oreo (API 26) oder neuer. Trag dich in die Warteliste ein."
 >
   <PageHeader
     eyebrow="Download"
-    title="Launching soon on Google Play."
-    lede="Premium TV Player is in final preparation for Google Play. Once approved, you'll be able to install it on any Google TV or Android TV device in under a minute. Sign up to be notified the moment the listing goes live."
+    title="Demnächst im Google Play Store."
+    lede="Premium TV Player ist in der letzten Vorbereitungsphase für den Google Play Store. Sobald die App freigegeben ist, installierst du sie in unter einer Minute auf jedem Google-TV- oder Android-TV-Gerät. Trag dich ein und du bekommst eine Mail, sobald der Store-Eintrag live ist."
   />
 
   <Section>
     <div class="download">
       <div class="download-card">
         <p class="t-label-small platform">Android TV · Google TV</p>
-        <h2 class="t-headline download-title">Not on Google Play yet.</h2>
+        <h2 class="t-headline download-title">Noch nicht im Play Store.</h2>
         <p class="t-body">
-          Premium TV Player is currently being finalized for submission to Google Play. When the
-          listing is approved, search for <strong>Premium TV Player</strong> on your TV, or open
-          Google Play in a browser and push the install to your TV from there.
+          Premium TV Player wird gerade final für die Einreichung vorbereitet. Sobald der
+          Eintrag freigegeben ist, suchst du auf deinem TV nach <strong>Premium TV Player</strong>,
+          oder du öffnest Google Play im Browser und schickst die Installation direkt auf dein TV.
         </p>
-        <Button href={WAITLIST_MAILTO} label="Notify me at launch" variant="primary" external />
+        <Button href={WAITLIST_MAILTO} label="Zum Start benachrichtigen" variant="primary" external />
         <p class="t-body-small store-note">
-          Future package: <code>com.premiumtvplayer.app</code>
+          Zukünftiges Package: <code>com.premiumtvplayer.app</code>
         </p>
       </div>
 
       <aside class="requirements">
-        <h3 class="t-title">System requirements</h3>
+        <h3 class="t-title">Systemvoraussetzungen</h3>
         <ul>
-          <li><strong>Android 8.0 Oreo</strong> (API 26) or later</li>
-          <li>Android TV or Google TV hardware with a Leanback launcher</li>
-          <li>Active internet connection for sign-in, EPG sync &amp; billing</li>
-          <li>At least 100 MB of free storage</li>
-          <li>A Google account (for Play Billing)</li>
+          <li><strong>Android 8.0 Oreo</strong> (API 26) oder neuer</li>
+          <li>Android-TV- oder Google-TV-Gerät mit Leanback-Launcher</li>
+          <li>Aktive Internetverbindung für Anmeldung, EPG-Sync &amp; Abrechnung</li>
+          <li>Mindestens 100 MB freier Speicher</li>
+          <li>Google-Konto (für Play Billing)</li>
         </ul>
 
-        <h3 class="t-title">Tested on</h3>
+        <h3 class="t-title">Getestet auf</h3>
         <ul>
-          <li>Google TV Streamer, Chromecast with Google TV, NVIDIA Shield TV</li>
+          <li>Google TV Streamer, Chromecast mit Google TV, NVIDIA Shield TV</li>
           <li>Sony BRAVIA Google TV, TCL Google TV, Hisense Google TV</li>
-          <li>Android TV emulator (API 30+)</li>
+          <li>Android-TV-Emulator (API 30+)</li>
         </ul>
       </aside>
     </div>
   </Section>
 
-  <Section eyebrow="Other platforms" title="Coming after launch.">
+  <Section eyebrow="Weitere Plattformen" title="Kommt nach dem Start.">
     <div class="roadmap">
       <div class="roadmap-card">
-        <p class="t-label-small stage">Launch</p>
+        <p class="t-label-small stage">Start</p>
         <h3 class="t-title">Android TV</h3>
-        <p class="t-body-small">First on Google Play — currently in final preparation.</p>
+        <p class="t-body-small">Zuerst im Google Play Store — gerade in der finalen Vorbereitung.</p>
       </div>
       <div class="roadmap-card">
-        <p class="t-label-small stage">Next</p>
+        <p class="t-label-small stage">Als nächstes</p>
         <h3 class="t-title">Android Mobile</h3>
-        <p class="t-body-small">Companion app for managing sources, profiles and devices on the go.</p>
+        <p class="t-body-small">Begleit-App zum Verwalten von Quellen, Profilen und Geräten unterwegs.</p>
       </div>
       <div class="roadmap-card">
-        <p class="t-label-small stage">Planned</p>
+        <p class="t-label-small stage">Geplant</p>
         <h3 class="t-title">Apple TV · Samsung · LG</h3>
-        <p class="t-body-small">tvOS, Tizen and webOS clients are on the roadmap. Same account, same entitlement, same cloud sync.</p>
+        <p class="t-body-small">tvOS-, Tizen- und webOS-Clients sind auf der Roadmap. Gleiches Konto, gleiche Lizenz, gleicher Cloud-Sync.</p>
       </div>
     </div>
   </Section>

@@ -4,95 +4,114 @@ import PageHeader from "../../components/PageHeader.astro";
 import Section from "../../components/Section.astro";
 import { link } from "../../utils/link";
 
-const LAST_UPDATED = "2026-04-14";
+const LAST_UPDATED = "14.04.2026";
 const IMPRINT_HREF = link("/legal/imprint");
 ---
 <BaseLayout
-  title="Privacy Policy — Premium TV Player"
-  description="What Premium TV Player collects, why, where it's stored, and how you can delete it."
+  title="Datenschutzerklärung — Premium TV Player"
+  description="Welche Daten Premium TV Player erhebt, warum, wo sie gespeichert werden und wie du sie löschen kannst."
 >
   <PageHeader
-    eyebrow="Legal"
-    title="Privacy Policy"
-    lede={`Last updated: ${LAST_UPDATED}. This page is a plain-language summary of what we collect, why, and how to remove it. Our legal team will finalize the binding text before launch.`}
+    eyebrow="Rechtliches"
+    title="Datenschutzerklärung"
+    lede={`Stand: ${LAST_UPDATED}. Diese Seite ist eine klar formulierte Zusammenfassung dessen, was erhoben wird, warum, und wie du es löschen kannst. Die endgültige, rechtsverbindliche Fassung wird vor dem Start juristisch geprüft.`}
   />
 
   <Section>
     <article class="legal-body">
       <p class="legal-callout">
-        <strong>TL;DR.</strong> We collect the bare minimum needed to run the app:
-        your email, a Firebase user ID, your entitlement status, and the URLs
-        of the sources you add (encrypted). We don't serve ads, we don't sell
-        data, and we don't build advertising profiles.
+        <strong>Kurzfassung.</strong> Wir erheben nur das Nötigste, um die App zu betreiben:
+        deine E-Mail-Adresse, eine Firebase-User-ID, deinen Lizenz-Status und die URLs der
+        Quellen, die du hinzufügst (verschlüsselt). Wir schalten keine Werbung, wir
+        verkaufen keine Daten, und wir bauen keine Werbeprofile.
       </p>
 
-      <h2 class="t-title-large">1. Who we are</h2>
+      <h2 class="t-title-large">1. Wer wir sind</h2>
       <p>
-        Premium TV Player ("the App", "we", "us") is an independent project
-        operated by <strong>Belkis Aslani</strong> (the "Operator"),
-        based in Freiberg am Neckar, Germany. A sole-proprietor business
-        registration is currently in progress. Full contact details are
-        published on the <a href={IMPRINT_HREF}>Imprint</a> page.
+        Premium TV Player („die App", „wir", „uns") ist ein unabhängiges Projekt,
+        betrieben von <strong>Belkis Aslani</strong> (der „Anbieter") mit Sitz in
+        Freiberg am Neckar, Deutschland. Die Anmeldung eines Einzelunternehmens ist
+        derzeit in Vorbereitung. Die vollständigen Kontaktdaten findest du im
+        <a href={IMPRINT_HREF}>Impressum</a>.
       </p>
 
-      <h2 class="t-title-large">2. Data we collect</h2>
+      <h2 class="t-title-large">2. Welche Daten wir erheben</h2>
       <ul>
-        <li><strong>Account data.</strong> Email address and a Firebase UID, used to sign you in and associate your purchases with your account.</li>
-        <li><strong>Entitlement status.</strong> Whether your account is on trial, Lifetime Single, Lifetime Family, expired or revoked, plus the Google Play purchase token for refund / revocation handling.</li>
-        <li><strong>Profiles.</strong> Profile name, whether it is a Kids profile, age-rating cap, and an optional PIN (stored only as an Argon2id hash).</li>
-        <li><strong>Sources.</strong> The URLs, usernames, passwords and custom headers for the M3U / M3U8 / XMLTV feeds you add. All credential fields are encrypted at rest with AES-256-GCM and a fresh IV per write.</li>
-        <li><strong>Library state.</strong> Your watch history, favorites, and Continue Watching positions — scoped to the profile you're using.</li>
-        <li><strong>Device metadata.</strong> A hashed device token, device model, OS version, and last-seen timestamp, used for device-slot management.</li>
+        <li><strong>Kontodaten.</strong> E-Mail-Adresse und Firebase-UID, damit du dich
+          einloggen kannst und deine Käufe deinem Konto zugeordnet werden.</li>
+        <li><strong>Lizenz-Status.</strong> Ob dein Konto in der Testphase, Lifetime Single,
+          Lifetime Family, abgelaufen oder widerrufen ist, sowie das Google-Play-Kauf-Token
+          für die Erstattungs- und Widerrufsabwicklung.</li>
+        <li><strong>Profile.</strong> Profilname, Kinder-Flag, Altersfreigabe-Cap und eine
+          optionale PIN (ausschließlich als Argon2id-Hash gespeichert).</li>
+        <li><strong>Quellen.</strong> Die URLs, Benutzernamen, Passwörter und benutzerdefinierten
+          Header für die M3U-, M3U8- oder XMLTV-Feeds, die du hinzufügst. Alle Anmeldefelder
+          werden mit AES-256-GCM und einem frischen IV pro Speichervorgang verschlüsselt.</li>
+        <li><strong>Bibliotheks-Status.</strong> Wiedergabeverlauf, Favoriten und
+          Zuletzt-gesehen-Positionen — jeweils auf das aktive Profil beschränkt.</li>
+        <li><strong>Geräte-Metadaten.</strong> Ein gehashtes Geräte-Token, Gerätemodell,
+          OS-Version und Last-Seen-Zeitstempel, damit die Geräte-Slot-Verwaltung funktioniert.</li>
       </ul>
 
-      <h2 class="t-title-large">3. What we do not collect</h2>
+      <h2 class="t-title-large">3. Was wir nicht erheben</h2>
       <ul>
-        <li>We do <strong>not</strong> use advertising SDKs. No ad impressions, no click tracking, no cross-app identifiers.</li>
-        <li>We do <strong>not</strong> bind your account to a MAC address or to any hardware identifier the OS hasn't explicitly handed us.</li>
-        <li>We do <strong>not</strong> record the specific streams or programmes you watch — we record the show you were watching per profile, so Continue Watching works, and we record aggregate watch history. We do not sell, share or export this.</li>
-        <li>We do <strong>not</strong> have access to the content of your sources. We parse the playlist / EPG structure, that's it.</li>
+        <li>Wir nutzen <strong>keine</strong> Werbe-SDKs. Keine Werbe-Impressionen, kein
+          Klick-Tracking, keine App-übergreifenden Kennungen.</li>
+        <li>Wir binden dein Konto <strong>nicht</strong> an eine MAC-Adresse oder einen
+          Hardware-Identifier, den uns das Betriebssystem nicht explizit gibt.</li>
+        <li>Wir speichern <strong>keine</strong> konkrete Liste dessen, was du schaust —
+          wir merken uns, in welchem Titel du in welchem Profil warst (damit Zuletzt-gesehen
+          funktioniert) und halten einen aggregierten Wiedergabeverlauf. Nichts davon wird
+          verkauft, geteilt oder exportiert.</li>
+        <li>Wir haben <strong>keinen</strong> Zugriff auf die Inhalte deiner Quellen. Wir
+          parsen die Playlist- und EPG-Struktur, das war's.</li>
       </ul>
 
-      <h2 class="t-title-large">4. Sub-processors</h2>
+      <h2 class="t-title-large">4. Auftragsverarbeiter</h2>
       <ul>
-        <li><strong>Google (Firebase Authentication).</strong> Handles sign-up / sign-in / password reset. Governed by Google's Firebase Data Processing Terms.</li>
-        <li><strong>Google (Play Billing).</strong> Processes purchases and refund events. Governed by Google's Play Developer Distribution Agreement.</li>
-        <li><strong>Our own hosted infrastructure.</strong> PostgreSQL + Redis in the EU. No other third-party data processor is in the loop.</li>
+        <li><strong>Google (Firebase Authentication).</strong> Registrierung, Anmeldung und
+          Passwort-Reset. Abgedeckt durch Googles Firebase-Auftragsverarbeitungsvertrag.</li>
+        <li><strong>Google (Play Billing).</strong> Verarbeitet Käufe und
+          Erstattungs-Ereignisse. Abgedeckt durch Googles Play-Developer-Distribution-Agreement.</li>
+        <li><strong>Eigene Hosting-Infrastruktur.</strong> PostgreSQL und Redis in der EU.
+          Kein weiterer Dritt-Auftragsverarbeiter ist in die Verarbeitung eingebunden.</li>
       </ul>
 
-      <h2 class="t-title-large">5. Retention</h2>
+      <h2 class="t-title-large">5. Aufbewahrung</h2>
       <p>
-        Account and library data is kept while your account exists. When you delete your
-        account from inside the app, profiles, sources, watch history and PINs are deleted
-        within 30 days. Firebase sign-in records are deleted at the same time via the
-        Firebase Admin SDK. Encrypted backups may retain a hashed copy for up to 90 days
-        for disaster recovery, after which they are purged.
+        Konto- und Bibliotheksdaten werden solange gespeichert, wie dein Konto existiert.
+        Wenn du dein Konto in der App löschst, werden Profile, Quellen, Wiedergabeverlauf
+        und PINs innerhalb von 30 Tagen gelöscht. Die Firebase-Anmeldedaten werden im gleichen
+        Schritt über das Firebase Admin SDK entfernt. Verschlüsselte Backups können eine
+        gehashte Kopie für bis zu 90 Tage zur Wiederherstellung vorhalten, danach werden sie
+        unwiderruflich entfernt.
       </p>
 
-      <h2 class="t-title-large">6. Your rights (GDPR)</h2>
+      <h2 class="t-title-large">6. Deine Rechte (DSGVO)</h2>
       <p>
-        If you are in the EU / EEA / UK, you have the right to access, correct, port and
-        delete your personal data under the GDPR. You can exercise all of these rights
-        directly from the <em>Settings → Account</em> screen in the app. For anything that
-        isn't self-service, email the address on the <a href={IMPRINT_HREF}>Imprint</a> page.
+        In der EU, dem EWR und dem Vereinigten Königreich hast du nach der DSGVO das Recht
+        auf Auskunft, Berichtigung, Datenübertragbarkeit und Löschung deiner
+        personenbezogenen Daten. Alle diese Rechte kannst du direkt in der App unter
+        <em>Einstellungen → Konto</em> ausüben. Alles, was nicht über die Selbstbedienung
+        geht, erreichst du über die E-Mail-Adresse im <a href={IMPRINT_HREF}>Impressum</a>.
       </p>
 
-      <h2 class="t-title-large">7. Children</h2>
+      <h2 class="t-title-large">7. Kinder</h2>
       <p>
-        Premium TV Player is rated for general audiences but is not directed at children
-        under 13. The Kids profile is a parental-controls feature — it does not imply the
-        service is designed for children as its primary audience. Accounts are created by
-        the device owner, not by children.
+        Premium TV Player ist für die Nutzung durch Erwachsene gedacht und nicht primär an
+        Kinder unter 13 Jahren gerichtet. Das Kinder-Profil ist eine Kindersicherungs-Funktion
+        und bedeutet nicht, dass der Dienst an Kinder als primäre Zielgruppe gerichtet ist.
+        Konten werden vom Gerätebesitzer angelegt, nicht von Kindern.
       </p>
 
-      <h2 class="t-title-large">8. Changes</h2>
+      <h2 class="t-title-large">8. Änderungen</h2>
       <p>
-        When we update this policy, we bump the "Last updated" date at the top of this page
-        and, for material changes, surface an in-app notice the next time you open the app.
+        Wenn wir diese Richtlinie aktualisieren, passen wir den Stand oben auf dieser Seite
+        an. Bei wesentlichen Änderungen blenden wir beim nächsten App-Start einen Hinweis ein.
       </p>
 
       <p class="legal-footer">
-        Last updated: {LAST_UPDATED}.
+        Stand: {LAST_UPDATED}.
       </p>
     </article>
   </Section>

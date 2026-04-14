@@ -2,7 +2,6 @@
 import "../styles/global.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
-import ComingSoonBanner from "../components/ComingSoonBanner.astro";
 import { link } from "../utils/link";
 
 interface Props {
@@ -13,7 +12,7 @@ interface Props {
 }
 const {
   title,
-  description = "A premium player for your own M3U, M3U8 and XMLTV sources. Lifetime license, no subscriptions, cloud-synced profiles. Launching soon on Google Play.",
+  description = "Ein Premium-Player für deine eigenen M3U-, M3U8- und XMLTV-Quellen. Einmalzahlung, kein Abo, Profile in der Cloud synchronisiert. Demnächst im Google Play Store.",
   ogImage = "/og-default.png",
   noIndex = false,
 } = Astro.props;
@@ -25,7 +24,7 @@ const faviconHref = link("/favicon.svg");
 const sitemapHref = link("/sitemap-index.xml");
 ---
 <!doctype html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -41,7 +40,7 @@ const sitemapHref = link("/sitemap-index.xml");
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={ogImageUrl} />
-    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale" content="de_DE" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
@@ -52,8 +51,7 @@ const sitemapHref = link("/sitemap-index.xml");
     <link rel="sitemap" href={sitemapHref} />
   </head>
   <body>
-    <a class="skip-link" href="#main">Skip to content</a>
-    <ComingSoonBanner />
+    <a class="skip-link" href="#main">Zum Inhalt springen</a>
     <Header />
     <main id="main">
       <slot />

@@ -13,78 +13,78 @@ import IconPrivacyLock from "../components/icons/IconPrivacyLock.astro";
 import { link, WAITLIST_MAILTO } from "../utils/link";
 ---
 <BaseLayout
-  title="Premium TV Player — coming soon to Android TV"
-  description="A premium player for your own M3U, M3U8 and XMLTV sources. Lifetime license, cloud-synced profiles, kids mode. Launching soon on Google Play — join the waitlist."
+  title="Premium TV Player — demnächst für Android TV"
+  description="Ein Premium-Player für deine eigenen M3U-, M3U8- und XMLTV-Quellen. Einmalzahlung, kein Abo, Profile in der Cloud synchronisiert, Kinderschutz. Demnächst im Google Play Store — trag dich in die Warteliste ein."
 >
   <Hero
-    eyebrow="Launching soon on Google Play"
-    title="Your sources. Your library. Premium playback."
-    subtitle="Premium TV Player is a neutral, premium player for the M3U, M3U8 and XMLTV sources you already own. One-time payment, no subscriptions, no ads, no tracking. Final preparations are underway — sign up to be the first to know when it hits Google Play."
-    primaryCta={{ href: WAITLIST_MAILTO, label: "Notify me at launch" }}
-    secondaryCta={{ href: link("/features"), label: "See what's inside" }}
+    eyebrow="Bald im Google Play Store"
+    title="Deine Quellen. Deine Mediathek. Premium-Wiedergabe."
+    subtitle="Premium TV Player ist ein neutraler, hochwertiger Player für die M3U-, M3U8- und XMLTV-Quellen, die du selbst mitbringst. Einmal zahlen, kein Abo, keine Werbung, kein Tracking. Der letzte Schliff ist in Arbeit — trag dich ein und du bekommst Bescheid, sobald die App live geht."
+    primaryCta={{ href: WAITLIST_MAILTO, label: "Zum Start benachrichtigen" }}
+    secondaryCta={{ href: link("/features"), label: "Was drinsteckt" }}
   />
 
   <Section
-    eyebrow="Why it feels different"
-    title="Built like a flagship streaming app."
-    lede="Cinematic focus states, instant launch, 60fps focus animations, and a dark palette tuned for living-room TVs — running on the sources you authorize yourself."
+    eyebrow="Warum es sich anders anfühlt"
+    title="Gebaut wie eine Flagship-Streaming-App."
+    lede="Filmreife Fokus-Zustände, sofortiger Start, 60-fps-Animationen und eine dunkle Farbpalette, die aufs Wohnzimmer-TV abgestimmt ist — und das alles mit den Quellen, die du selbst autorisiert hast."
   >
     <div class="feature-grid">
       <FeatureCard
-        title="Bring your own sources"
-        body="Add any M3U, M3U8 or XMLTV URL you are authorized to use. Credentials are encrypted at rest with AES-256-GCM; only the player can decrypt them."
+        title="Deine Quellen – du bringst sie mit"
+        body="Füge jede M3U-, M3U8- oder XMLTV-URL hinzu, die du nutzen darfst. Zugangsdaten werden mit AES-256-GCM verschlüsselt gespeichert — nur der Player selbst kann sie entschlüsseln."
       >
         <IconSources slot="icon" />
       </FeatureCard>
       <FeatureCard
-        title="Up to 5 profiles"
-        body="Separate profiles for everyone in the household. Watch history, favorites and Continue Watching sync to the cloud per profile."
+        title="Bis zu 5 Profile"
+        body="Für jeden im Haushalt ein eigenes Profil. Wiedergabeverlauf, Favoriten und Zuletzt-gesehen werden pro Profil in der Cloud synchronisiert."
       >
         <IconProfiles slot="icon" />
       </FeatureCard>
       <FeatureCard
-        title="Kids-safe by design"
-        body="A dedicated Kids profile with age-rating filter and PIN gate. Argon2id hashing and server-side lockout keep the gate honest."
+        title="Kinderschutz ab Werk"
+        body="Ein eigenes Kinder-Profil mit Altersfreigabe-Filter und PIN-Sperre. Die PIN wird mit Argon2id gehasht und serverseitig gegen Brute-Force geschützt."
       >
         <IconKidsShield slot="icon" />
       </FeatureCard>
       <FeatureCard
-        title="Live TV with a proper EPG"
-        body="Electronic programme guide with a 48-hour window, channel list with logos, and a one-press focus into the programme you care about."
+        title="Live-TV mit echtem EPG"
+        body="Elektronischer Programmführer mit 48-Stunden-Fenster, Senderliste mit Logos und direktem Sprung in die Sendung, die dich interessiert."
       >
         <IconEpgGrid slot="icon" />
       </FeatureCard>
       <FeatureCard
-        title="Lifetime license"
-        body="Pay once at launch. No monthly fees. €19.99 for one device / one profile, €39.99 for the Family plan with 5 profiles and 5 devices."
+        title="Lifetime-Lizenz"
+        body="Einmal zahlen beim Start. Keine Monatsgebühren. 19,99 € für ein Gerät und ein Profil, 39,99 € für den Family-Tarif mit 5 Profilen und 5 Geräten."
       >
         <IconLifetime slot="icon" />
       </FeatureCard>
       <FeatureCard
-        title="No ads. No tracking."
-        body="We don't serve ads, sell profiles or build advertising graphs. Only your email, a Firebase UID and your entitlement status ever reach our server."
+        title="Keine Werbung. Kein Tracking."
+        body="Wir schalten keine Werbung, verkaufen keine Profile und bauen keine Werbe-Graphen. Nur deine E-Mail, eine Firebase-UID und dein Lizenz-Status verlassen jemals das Gerät."
       >
         <IconPrivacyLock slot="icon" />
       </FeatureCard>
     </div>
   </Section>
 
-  <Section eyebrow="How it will work" title="Three steps from install to playback." align="center">
+  <Section eyebrow="So wird es laufen" title="Drei Schritte von der Installation bis zur Wiedergabe." align="center">
     <ol class="steps">
       <li>
         <span class="step-num">01</span>
-        <h3 class="t-title">Install &amp; sign in</h3>
-        <p class="t-body-small">At launch, grab the app from Google Play on your Android TV. Create an account — your 14-day trial starts on first login.</p>
+        <h3 class="t-title">Installieren &amp; anmelden</h3>
+        <p class="t-body-small">Zum Start holst du dir die App aus dem Google Play Store auf dein Android TV. Konto anlegen — die 14-tägige Testphase startet automatisch bei der ersten Anmeldung.</p>
       </li>
       <li>
         <span class="step-num">02</span>
-        <h3 class="t-title">Add your source</h3>
-        <p class="t-body-small">Paste the M3U, M3U8 or XMLTV URL you were given by your provider. Credentials are encrypted and never exposed to third parties.</p>
+        <h3 class="t-title">Quelle hinzufügen</h3>
+        <p class="t-body-small">Füge die M3U-, M3U8- oder XMLTV-URL ein, die du von deinem Anbieter bekommen hast. Zugangsdaten werden verschlüsselt gespeichert und an niemanden weitergegeben.</p>
       </li>
       <li>
         <span class="step-num">03</span>
-        <h3 class="t-title">Play</h3>
-        <p class="t-body-small">Your home screen populates with hero rails, Continue Watching, Favorites, and a proper EPG grid. Hand the remote to the couch.</p>
+        <h3 class="t-title">Abspielen</h3>
+        <p class="t-body-small">Dein Startbildschirm füllt sich mit Hero-Reihen, Zuletzt-gesehen, Favoriten und einem richtigen EPG-Raster. Fernbedienung zur Couch geben, fertig.</p>
       </li>
     </ol>
   </Section>
@@ -92,19 +92,15 @@ import { link, WAITLIST_MAILTO } from "../utils/link";
   <Section>
     <div class="cta-panel">
       <div class="cta-copy">
-        <h2 class="t-headline">Be the first to know.</h2>
-        <p class="t-body-small cta-body">We're wrapping up the final polish. Drop us a line and we'll ping you the moment the app goes live on Google Play.</p>
+        <h2 class="t-headline">Sei als erstes dabei.</h2>
+        <p class="t-body-small cta-body">Wir sind im letzten Feinschliff. Schreib uns kurz und wir melden uns, sobald die App im Google Play Store live geht.</p>
       </div>
-      <Button href={WAITLIST_MAILTO} label="Notify me at launch" variant="primary" external />
+      <Button href={WAITLIST_MAILTO} label="Zum Start benachrichtigen" variant="primary" external />
     </div>
   </Section>
 </BaseLayout>
 
 <style>
-  /*
-    Feature grid follows phi in column rhythm: 1 → 2 → 3 cols.
-    Gap uses a phi-proportional value (base gap × 1.618 on wide viewports).
-  */
   .feature-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -141,7 +137,7 @@ import { link, WAITLIST_MAILTO } from "../utils/link";
   .steps h3 { margin: 0; color: var(--color-on-surface-high); }
   .steps p  { margin: 0; }
 
-  /* Golden-ratio split in the CTA panel at wide widths: 1.618fr : 1fr */
+  /* Goldener Schnitt im CTA-Panel ab 800px: 1.618fr : 1fr */
   .cta-panel {
     display: grid;
     grid-template-columns: 1fr;

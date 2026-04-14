@@ -15,65 +15,65 @@ import IconLifetime from "../components/icons/IconLifetime.astro";
 ---
 <BaseLayout
   title="Features — Premium TV Player"
-  description="Everything Premium TV Player ships with on Android TV: sources, EPG, profiles, kids mode, billing, playback and cloud sync."
+  description="Was Premium TV Player auf Android TV mitbringt: Quellen, EPG, Profile, Kinderschutz, Abrechnung, Wiedergabe und Cloud-Sync."
 >
   <PageHeader
-    eyebrow="What's inside"
-    title="Designed to feel like a flagship streaming app."
-    lede="Premium TV Player ships empty on purpose — you bring your own authorized sources. Everything else is built around making the 10-foot experience as good as the apps you already pay for."
+    eyebrow="Was drinsteckt"
+    title="Gemacht, um sich wie eine Flagship-Streaming-App anzufühlen."
+    lede="Premium TV Player ist bewusst leer, wenn du ihn startest — du bringst deine eigenen autorisierten Quellen mit. Alles andere ist so gebaut, dass die Nutzung am Fernseher so gut ist wie bei den großen Streaming-Apps."
   />
 
-  <Section eyebrow="Playback" title="Cinematic, instant, reliable.">
+  <Section eyebrow="Wiedergabe" title="Filmreif, sofort, zuverlässig.">
     <div class="grid">
-      <FeatureCard title="Media3 / ExoPlayer core" body="HLS, DASH and progressive MP4. Hardware-accelerated decoding on every modern Android TV device.">
+      <FeatureCard title="Media3 / ExoPlayer als Basis" body="HLS, DASH und progressives MP4. Hardware-beschleunigte Dekodierung auf jedem modernen Android-TV-Gerät.">
         <IconPlayback slot="icon" />
       </FeatureCard>
-      <FeatureCard title="Subtitles & audio tracks" body="Every embedded and sidecar track is discoverable from the remote. Resume position syncs per profile.">
+      <FeatureCard title="Untertitel & Audiospuren" body="Alle eingebetteten und externen Spuren sind per Fernbedienung erreichbar. Die Wiedergabe-Position wird pro Profil synchronisiert.">
         <IconSources slot="icon" />
       </FeatureCard>
-      <FeatureCard title="Heartbeat sync" body="Position updates every 10 seconds. Continue Watching picks up the right episode on whichever device you grab next.">
+      <FeatureCard title="Heartbeat-Sync" body="Alle 10 Sekunden wird die Position aktualisiert. Zuletzt-gesehen erwischt auf jedem Gerät genau die richtige Folge.">
         <IconLifetime slot="icon" />
       </FeatureCard>
     </div>
   </Section>
 
-  <Section eyebrow="Library" title="Your sources, presented properly.">
+  <Section eyebrow="Bibliothek" title="Deine Quellen, sauber präsentiert.">
     <div class="grid">
-      <FeatureCard title="M3U / M3U8 / XMLTV" body="Paste the URL you were given. We parse it, pull EPG metadata, and lay it out in premium rails and grids.">
+      <FeatureCard title="M3U / M3U8 / XMLTV" body="Einfach die URL einfügen, die du bekommen hast. Wir parsen sie, ziehen die EPG-Metadaten und präsentieren alles in Premium-Reihen und -Rastern.">
         <IconSources slot="icon" />
       </FeatureCard>
-      <FeatureCard title="Encrypted at rest" body="Every URL, username, password and custom header is encrypted with AES-256-GCM and a fresh IV per write.">
+      <FeatureCard title="Verschlüsselt gespeichert" body="Jede URL, jeder Benutzername, jedes Passwort und jeder benutzerdefinierte Header wird mit AES-256-GCM und einem frischen IV pro Speichervorgang verschlüsselt.">
         <IconEncrypted slot="icon" />
       </FeatureCard>
-      <FeatureCard title="EPG with 48-hour window" body="Channel guide with logos, programme descriptions and one-press focus into the programme you care about.">
+      <FeatureCard title="EPG mit 48-Stunden-Fenster" body="Senderführer mit Logos, Programm-Beschreibungen und einem einzigen Tastendruck in die Sendung, die dich interessiert.">
         <IconEpgGrid slot="icon" />
       </FeatureCard>
     </div>
   </Section>
 
-  <Section eyebrow="Household" title="Up to 5 profiles, 5 devices.">
+  <Section eyebrow="Haushalt" title="Bis zu 5 Profile, 5 Geräte.">
     <div class="grid">
-      <FeatureCard title="Per-profile sync" body="Watch history, favorites, Continue Watching and your source list are scoped to the profile.">
+      <FeatureCard title="Profil-spezifische Sync" body="Wiedergabeverlauf, Favoriten, Zuletzt-gesehen und deine Quellenliste sind an das jeweilige Profil gebunden.">
         <IconProfiles slot="icon" />
       </FeatureCard>
-      <FeatureCard title="Kids profile + PIN" body="A dedicated Kids flag, an age-rating filter, and a PIN gate hashed with Argon2id and rate-limited on the server.">
+      <FeatureCard title="Kinder-Profil + PIN" body="Eigener Kinder-Modus, Altersfreigabe-Filter und eine PIN-Sperre, mit Argon2id gehasht und serverseitig gegen Brute-Force geschützt.">
         <IconKidsShield slot="icon" />
       </FeatureCard>
-      <FeatureCard title="Device slot management" body="Account-bound device slots. Revoke a device from any other device — no MAC binding, no vendor lock-in.">
+      <FeatureCard title="Geräte-Slot-Verwaltung" body="Geräte-Slots sind ans Konto gebunden. Du kannst jedes Gerät von jedem anderen Gerät aus abmelden — keine MAC-Bindung, kein Hersteller-Lock-in.">
         <IconDevice slot="icon" />
       </FeatureCard>
     </div>
   </Section>
 
-  <Section eyebrow="Trust" title="Minimal data, maximum privacy.">
+  <Section eyebrow="Vertrauen" title="Minimum an Daten, Maximum an Privatsphäre.">
     <div class="grid">
-      <FeatureCard title="No ads, no tracking" body="We don't serve ads, we don't sell your data, we don't build behavioural profiles. Full stop.">
+      <FeatureCard title="Keine Werbung, kein Tracking" body="Wir schalten keine Werbung, wir verkaufen deine Daten nicht, wir bauen keine Verhaltensprofile. Punkt.">
         <IconPrivacyLock slot="icon" />
       </FeatureCard>
-      <FeatureCard title="Firebase auth only" body="Email, Firebase UID and entitlement status are the only identifiers leaving your TV. See the Privacy page for the full data inventory.">
+      <FeatureCard title="Nur Firebase-Auth" body="E-Mail, Firebase-UID und Lizenz-Status sind die einzigen Kennungen, die deinen Fernseher verlassen. Das komplette Daten-Inventar steht in der Datenschutzerklärung.">
         <IconEncrypted slot="icon" />
       </FeatureCard>
-      <FeatureCard title="Own your credentials" body="Source credentials never reach any third party. Rotate your encryption key on your server and ours re-encrypts on the next write.">
+      <FeatureCard title="Deine Zugangsdaten bleiben deine" body="Quellen-Zugangsdaten erreichen keinen Dritten. Du rotierst den Verschlüsselungs-Schlüssel auf deinem Server — beim nächsten Speichern wird automatisch neu verschlüsselt.">
         <IconPrivacyLock slot="icon" />
       </FeatureCard>
     </div>

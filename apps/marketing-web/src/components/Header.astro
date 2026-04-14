@@ -4,25 +4,25 @@ import { link, isActive } from "../utils/link";
 const path = Astro.url.pathname;
 const nav = [
   { href: "/features", label: "Features" },
-  { href: "/pricing", label: "Pricing" },
+  { href: "/pricing", label: "Preise" },
   { href: "/download", label: "Download" },
 ];
 const logoHref = link("/logo.png");
 ---
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href={link("/")} aria-label="Premium TV Player home">
+    <a class="brand" href={link("/")} aria-label="Premium TV Player – Startseite">
       <img class="brand-mark" src={logoHref} alt="" width="36" height="36" />
       <span class="brand-wordmark">Premium TV Player</span>
     </a>
-    <nav class="primary-nav" aria-label="Primary">
+    <nav class="primary-nav" aria-label="Hauptnavigation">
       {nav.map((n) => (
         <a class:list={["nav-link", { "is-active": isActive(path, n.href) }]} href={link(n.href)}>{n.label}</a>
       ))}
     </nav>
   </div>
   {/* Mobile nav row — only below 800px */}
-  <nav class="mobile-nav" aria-label="Mobile">
+  <nav class="mobile-nav" aria-label="Mobile-Navigation">
     <div class="container mobile-nav-inner">
       {nav.map((n) => (
         <a class:list={["mobile-nav-link", { "is-active": isActive(path, n.href) }]} href={link(n.href)}>{n.label}</a>

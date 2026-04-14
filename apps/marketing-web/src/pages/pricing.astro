@@ -6,13 +6,13 @@ import Button from "../components/Button.astro";
 import { WAITLIST_MAILTO } from "../utils/link";
 ---
 <BaseLayout
-  title="Pricing — Premium TV Player (coming soon)"
-  description="One-time payment at launch, no subscriptions. 14-day trial, then Lifetime Single (€19.99) or Lifetime Family (€39.99). Available on Google Play shortly — join the waitlist."
+  title="Preise — Premium TV Player (demnächst)"
+  description="Zum Start Einmalzahlung, kein Abo. 14-tägige Testphase, danach Lifetime Single (19,99 €) oder Lifetime Family (39,99 €). Demnächst im Google Play Store — trag dich in die Warteliste ein."
 >
   <PageHeader
-    eyebrow="Pricing at launch"
-    title="Pay once. Keep it forever."
-    lede="At launch, every account starts with a 14-day trial. When you're ready, unlock the full experience with a one-time purchase — handled securely through Google Play Billing. Pricing below is final."
+    eyebrow="Preise zum Start"
+    title="Einmal zahlen. Für immer behalten."
+    lede="Zum Start bekommt jedes Konto eine 14-tägige Testphase. Wenn du dann bleiben willst, schaltest du die App mit einem einmaligen Kauf frei — sicher abgewickelt über Google Play Billing. Die unten stehenden Preise sind final."
   />
 
   <Section>
@@ -20,80 +20,81 @@ import { WAITLIST_MAILTO } from "../utils/link";
       <article class="plan">
         <h3 class="t-title-large plan-name">Lifetime Single</h3>
         <p class="plan-price">
-          <span class="t-display">€19.99</span>
-          <span class="plan-price-note"> one-time</span>
+          <span class="t-display">19,99 €</span>
+          <span class="plan-price-note"> einmalig</span>
         </p>
         <ul class="plan-list">
-          <li><strong>1 device</strong> slot</li>
-          <li><strong>1 profile</strong></li>
-          <li>Unlimited sources</li>
-          <li>Full EPG &amp; Continue Watching</li>
-          <li>Cloud-synced watch history</li>
-          <li>All future updates included</li>
+          <li><strong>1 Geräte-Slot</strong></li>
+          <li><strong>1 Profil</strong></li>
+          <li>Unbegrenzte Quellen</li>
+          <li>Voller EPG &amp; Zuletzt-gesehen</li>
+          <li>Wiedergabeverlauf in der Cloud</li>
+          <li>Alle zukünftigen Updates inklusive</li>
         </ul>
-        <Button href={WAITLIST_MAILTO} label="Notify me at launch" variant="secondary" external />
+        <Button href={WAITLIST_MAILTO} label="Zum Start benachrichtigen" variant="secondary" external />
       </article>
 
       <article class="plan plan--featured">
-        <p class="t-label-small plan-tag">Recommended for households</p>
+        <p class="t-label-small plan-tag">Empfohlen für Haushalte</p>
         <h3 class="t-title-large plan-name">Lifetime Family</h3>
         <p class="plan-price">
-          <span class="t-display">€39.99</span>
-          <span class="plan-price-note"> one-time</span>
+          <span class="t-display">39,99 €</span>
+          <span class="plan-price-note"> einmalig</span>
         </p>
         <ul class="plan-list">
-          <li><strong>5 device</strong> slots</li>
-          <li><strong>5 profiles</strong> (incl. Kids profile)</li>
-          <li>PIN gate &amp; age-rating filter</li>
-          <li>Unlimited sources</li>
-          <li>Full EPG &amp; Continue Watching</li>
-          <li>Cloud-synced watch history</li>
-          <li>All future updates included</li>
+          <li><strong>5 Geräte-Slots</strong></li>
+          <li><strong>5 Profile</strong> (inkl. Kinder-Profil)</li>
+          <li>PIN-Sperre &amp; Altersfreigabe-Filter</li>
+          <li>Unbegrenzte Quellen</li>
+          <li>Voller EPG &amp; Zuletzt-gesehen</li>
+          <li>Wiedergabeverlauf in der Cloud</li>
+          <li>Alle zukünftigen Updates inklusive</li>
         </ul>
-        <Button href={WAITLIST_MAILTO} label="Notify me at launch" variant="primary" external />
+        <Button href={WAITLIST_MAILTO} label="Zum Start benachrichtigen" variant="primary" external />
       </article>
     </div>
   </Section>
 
-  <Section eyebrow="Trial" title="14 days on the house.">
+  <Section eyebrow="Testphase" title="14 Tage auf's Haus.">
     <div class="trial">
       <p class="t-body">
-        At launch, every new account will get a 14-day trial that starts on first login. Nothing is
-        charged, no card is required, and we won't auto-renew — the trial simply ends, and you can
-        upgrade to Lifetime any time from inside the app.
+        Zum Start bekommt jedes neue Konto automatisch eine 14-tägige Testphase, die mit der
+        ersten Anmeldung beginnt. Es wird nichts abgebucht, keine Kreditkarte nötig, und es
+        verlängert sich nichts automatisch — die Testphase endet schlicht, und wenn du willst,
+        schaltest du jederzeit von der App aus die Lifetime-Lizenz frei.
       </p>
       <p class="t-body-small">
-        Upgraded to Single but need Family later? Upgrade from the same billing flow — the difference is
-        applied, and your device + profile caps are lifted instantly.
+        Mit Single gestartet, später Family gebraucht? Das Upgrade läuft im gleichen Bezahl-Flow —
+        der Aufpreis wird verrechnet, und die Geräte- und Profil-Grenzen werden sofort gelockert.
       </p>
     </div>
   </Section>
 
-  <Section eyebrow="FAQ" title="Before you buy.">
+  <Section eyebrow="FAQ" title="Bevor du kaufst.">
     <dl class="faq">
       <div>
-        <dt class="t-title">When does the app launch?</dt>
-        <dd class="t-body-small">We're in final preparation for Google Play. Sign up via the "Notify me" button above and we'll email you the moment the listing goes live.</dd>
+        <dt class="t-title">Wann geht die App live?</dt>
+        <dd class="t-body-small">Wir sind im letzten Feinschliff für den Google Play Store. Trag dich über „Zum Start benachrichtigen" ein und du bekommst eine Mail, sobald der Store-Eintrag online ist.</dd>
       </div>
       <div>
-        <dt class="t-title">Is this a subscription?</dt>
-        <dd class="t-body-small">No. Both tiers are one-time payments handled by Google Play. You own the license for the life of the product — there's no monthly billing, ever.</dd>
+        <dt class="t-title">Ist das ein Abo?</dt>
+        <dd class="t-body-small">Nein. Beide Tarife sind Einmalzahlungen, abgewickelt über Google Play. Du besitzt die Lizenz so lange das Produkt lebt — keine monatliche Abrechnung, nie.</dd>
       </div>
       <div>
-        <dt class="t-title">Does Premium TV Player include any content or channels?</dt>
-        <dd class="t-body-small">No. The app ships empty. You bring your own M3U, M3U8 or XMLTV URLs from a provider you are authorized to use. We're a neutral player — not a content provider.</dd>
+        <dt class="t-title">Kommt Premium TV Player mit Inhalten oder Sendern?</dt>
+        <dd class="t-body-small">Nein. Die App startet leer. Du bringst deine eigenen M3U-, M3U8- oder XMLTV-URLs von einem Anbieter mit, den du nutzen darfst. Wir sind ein neutraler Player — kein Content-Anbieter.</dd>
       </div>
       <div>
-        <dt class="t-title">Can I use one license on multiple devices?</dt>
-        <dd class="t-body-small">Lifetime Single is bound to 1 device slot. Lifetime Family unlocks 5 device slots — you can revoke a device from the app at any time to free up a slot.</dd>
+        <dt class="t-title">Kann ich eine Lizenz auf mehreren Geräten nutzen?</dt>
+        <dd class="t-body-small">Lifetime Single ist an einen Geräte-Slot gebunden. Lifetime Family schaltet 5 Geräte-Slots frei — ein Gerät kannst du jederzeit aus der App heraus abmelden, um einen Slot freizumachen.</dd>
       </div>
       <div>
-        <dt class="t-title">What about refunds?</dt>
-        <dd class="t-body-small">Refunds are handled by Google Play's standard refund policy. When Google refunds a purchase, our backend revokes the entitlement automatically, no support ticket needed.</dd>
+        <dt class="t-title">Wie läuft eine Rückerstattung?</dt>
+        <dd class="t-body-small">Rückerstattungen laufen über die Standard-Rückerstattungsrichtlinie von Google Play. Wenn Google einen Kauf erstattet, widerruft unser Backend die Lizenz automatisch — ohne Support-Ticket.</dd>
       </div>
       <div>
-        <dt class="t-title">Is my account tied to a specific TV?</dt>
-        <dd class="t-body-small">No. Device slots are account-bound, not MAC-bound. Replacing a TV is a matter of revoking the old slot and installing on the new one — your purchase stays with you.</dd>
+        <dt class="t-title">Ist mein Konto an einen bestimmten Fernseher gebunden?</dt>
+        <dd class="t-body-small">Nein. Geräte-Slots sind ans Konto gebunden, nicht an eine MAC-Adresse. TV-Wechsel heißt: alten Slot abmelden, auf dem neuen Gerät installieren — dein Kauf bleibt dir erhalten.</dd>
       </div>
     </dl>
   </Section>

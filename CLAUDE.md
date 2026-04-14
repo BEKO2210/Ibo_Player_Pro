@@ -21,12 +21,14 @@
 ## 🎯 Current State
 
 - **Phase:** D — Polish & Ship-Ready
-- **Last completed run:** Run 19 — i18n + Premium error states + Diagnostics
-- **Current branch:** `claude/fix-api-timeout-vFqPP`
-- **Push target:** same branch (`-u origin claude/fix-api-timeout-vFqPP`)
-- **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Dark/light variants optional follow-up.
+- **Last completed run (app roadmap):** Run 19 — i18n + Premium error states + Diagnostics
+- **Last completed run (marketing-web):** MW-3 — de-DE localisation + banner removal
+- **Current branch:** `claude/fix-api-timeout-7AYxm`
+- **Push target:** same branch (`-u origin claude/fix-api-timeout-7AYxm`)
+- **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Animated variant `assets/logo/Logo_ani.gif` consumed by marketing-web hero (MW-2).
 - **applicationId:** ✅ locked in Run 11 — `com.premiumtvplayer.app` (matches `BILLING_ANDROID_PACKAGE_NAME`)
-- **CI status:** ✅ `CI` workflow now runs `drift-check`, `backend-tests`, and `android-jvm-tests` on every push/PR
+- **CI status:** ✅ `CI` workflow runs `drift-check`, `backend-tests`, `android-jvm-tests`. `deploy-marketing-web` workflow publishes `apps/marketing-web/` to GitHub Pages on pushes to `main` that touch `apps/marketing-web/**`.
+- **Marketing site:** `apps/marketing-web/` (Astro, static). Pre-launch state, de-DE, deploys to `https://beko2210.github.io/Ibo_Player_Pro/`. Waitlist CTA points at `mailto:belkis.aslani@gmail.com`.
 
 ---
 
@@ -278,6 +280,7 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - **Playback URL resolver (from Run 16):** Run 16 passes the playback `mediaUrl` through the nav graph because the server doesn't yet have a dedicated resolver that decrypts source credentials + signs short-lived playback URLs. Home deep-links fall back to public test streams (Apple BipBop HLS / Big Buck Bunny MP4) so the playback path is exercisable today. Proper resolver (likely `POST /v1/playback/resolve`) is a Run 18.5 / 20 security hardening item; would also allow the server to enforce device-bound playback tokens and per-device concurrent-stream caps.
 - **EPG duplicate handling (from Run 16):** the EPG worker inserts programmes without a natural unique key (no provider consistently emits an id). Providers that re-emit the same programme window will create duplicates. A companion dedupe/cleanup job (on `(channel_id, starts_at)`) can be added if storage becomes an issue; defer until observability tells us it matters.
 - **i18n migration of remaining screens (from Run 19):** the string catalogue + `UserErrorMessage` infrastructure are in place; every key for every screen exists in `values/strings.xml` (and `values-de/strings.xml`). Many existing screens still have inline `Text(text = "...")` literals — swapping them to `stringResource(R.string.*)` is mechanical work that doesn't change behaviour. Touch each screen as part of the next time it's edited; full sweep can also be a single Run 19.5 if anyone wants the locale switch to be 100% complete before launch.
+- **marketing-web sub-project (from MW-1..3):** separate workstream at `apps/marketing-web/` (Astro, static). Owns its own README, Pages deploy workflow (`.github/workflows/deploy-marketing-web.yml`) and design tokens mirrored from `packages/ui-tokens`. Currently pre-launch / de-DE. Open items tracked in `apps/marketing-web/README.md` (Gewerbe-registration → update imprint, OG image, optional GIF → MP4/WebM conversion for payload reduction, optional `/en/` locale once launch is announced internationally).
 
 ---
 
@@ -563,3 +566,40 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added unit tests for `AccountsService` (5 cases) and `AuthGuard` (6 cases), both with Firebase + Prisma mocked
 - Extended `.env.example` with both Firebase credential options; updated `services/api/README.md` with auth + env + migration sections
 - **Deviation logged in Parking Lot:** auth endpoints return `AccountSnapshot`, not the OpenAPI `AuthResponse` — reconciliation deferred to Run 8 when device slots + token issuance land
+
+---
+
+## 📝 Marketing-Web Log
+
+Separate workstream from the app roadmap. Lives at `apps/marketing-web/`
+(Astro static site, deploys to GitHub Pages). Does **not** count against the
+20-run app roadmap above.
+
+### MW-1 — 2026-04-14 — Marketing-Web scaffolding, design system, content
+- Scaffolded `apps/marketing-web/` with Astro 5 (static output, kept lean to avoid Stream-idle timeouts). 6 routes: `/`, `/features`, `/pricing`, `/download`, `/legal/privacy`, `/legal/imprint`
+- Ported `packages/ui-tokens` to CSS custom properties (`src/styles/tokens.css`) — same Dark palette, AccentBlue gradient, type scale, radii, motion
+- Built 8 layout components (`Header`, `Footer`, `Hero`, `Section`, `PageHeader`, `FeatureCard`, `Button`, `BaseLayout`) + matching `<Preview>` composition
+- Wrote real EN copy across all 6 pages, SEO plumbing (OG + Twitter Card + canonical), favicon SVG, `robots.txt`, sitemap via `@astrojs/sitemap`
+
+### MW-2 — 2026-04-14 — Pre-launch state, GH Pages CI, a11y + mobile-first polish, visual overhaul
+- Added `.github/workflows/deploy-marketing-web.yml` — uses `actions/configure-pages@v5` with `enablement: true` so Pages is auto-enabled on first deploy; `SITE` + `BASE_PATH` env vars handle custom-domain vs. project-site switch
+- Moved site into pre-launch "Coming Soon" state: top dismissible `ComingSoonBanner` with localStorage persistence; all primary CTAs route to a waitlist `mailto:belkis.aslani@gmail.com` via `WAITLIST_MAILTO` helper; copy shifted to future tense for availability, present tense for features
+- Imprint populated with real operator details (Belkis Aslani, Vogelsangstr. 32, 71691 Freiberg am Neckar, belkis.aslani@gmail.com, +49 176 81462526) and a professional note that sole-proprietor registration is in progress; trademarks for Google / Android TV / Play disclaimed; privacy policy names the operator
+- Mobile-first fixes: clamp() on hero/section/card paddings, second nav row below 800px, viewport-fit=cover, `-webkit-background-clip` fallback, keyboard skip-link
+- Visual overhaul: real `logo.png` in header + footer; animated `Logo_ani.gif` in hero on `#000` surface so GIF edges are seamless; 9 bespoke SVG feature icons (Sources, Profiles, KidsShield, EpgGrid, Lifetime, PrivacyLock, Playback, Device, Encrypted); `FeatureCard` refactored to take icon via named slot
+- Golden-ratio proportions: hero grid 1.618fr : 1fr at ≥ 960px, hero subtitle line-height = 1.618, CTA panel 1.618fr : 1fr at ≥ 800px, `.prose` container at 680px ≈ 1200 / phi, hero copy max-width 61.8ch, phi-tuned section + card padding clamps
+- Header: removed "Notify me" CTA to keep the header a clean navigation surface; brand wordmark now visible at every viewport via `clamp(13px, 1.9vw, 16px)` font-size + corresponding logo-mark scaling
+
+### MW-3 — 2026-04-14 — de-DE localisation + banner removal
+- Removed the purple `ComingSoonBanner` from `BaseLayout.astro` and deleted `src/components/ComingSoonBanner.astro` (history preserved in git). Skip-link translated to "Zum Inhalt springen"
+- `<html lang="en">` → `<html lang="de">`, OG locale `en_US` → `de_DE`, default page description translated
+- Translated all 6 pages into German with a warm, "Du"-form Premium-Marketing duktus:
+  - Home (`index.astro`): Hero, 6 feature cards, three-step "So wird es laufen", CTA panel
+  - `features.astro`: 4 thematic sections × 3 FeatureCards each (Wiedergabe / Bibliothek / Haushalt / Vertrauen)
+  - `pricing.astro`: "Lifetime Single" 19,99 € / "Lifetime Family" 39,99 € plans, trial, 6-entry FAQ
+  - `download.astro`: Play-Store-Status-Karte, Systemvoraussetzungen, Plattform-Roadmap
+  - `legal/privacy.astro`: Datenschutzerklärung — 8 Abschnitte (Anbieterin, Daten, Nicht-Erhobenes, Auftragsverarbeiter, Aufbewahrung, DSGVO, Kinder, Änderungen)
+  - `legal/imprint.astro`: § 5 TMG / § 18 MStV Impressum mit Belkis Aslani als verantwortliche Anbieterin, Hinweis auf laufende Gewerbeanmeldung + USt-ID-Erteilung, Streitschlichtungs-Klausel, Haftungs- und Urheberrechts-Klauseln, Markenhinweis für Google-Marken
+- Translated chrome: `Header` nav (Features / Preise / Download), `Footer` columns (Produkt / Rechtliches), all `aria-label`s, copyright line ("Alle Rechte vorbehalten")
+- `WAITLIST_MAILTO` in `src/utils/link.ts` now uses "Premium TV Player — Warteliste" subject + German body
+- Verified: `npm run build` produces all 6 pages + `sitemap-index.xml` in ~2.2s; HTML contains `lang="de"` and every new DE nav label; no dead references to `ComingSoonBanner`

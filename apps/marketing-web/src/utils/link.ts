@@ -24,10 +24,10 @@ export function isActive(currentPath: string, target: string): boolean {
 /** Email the operator uses as the waitlist / contact address. */
 export const WAITLIST_EMAIL = "belkis.aslani@gmail.com";
 
-/** mailto: link for the "Notify me when it launches" CTA. */
+/** mailto: link for the "Benachrichtige mich zum Start" CTA. */
 export const WAITLIST_MAILTO =
   `mailto:${WAITLIST_EMAIL}?subject=${encodeURIComponent(
-    "Premium TV Player — Waitlist"
+    "Premium TV Player — Warteliste"
   )}&body=${encodeURIComponent(
-    "Hi,\n\nI'd like to be notified when Premium TV Player launches on Google Play.\n\nThanks!"
+    "Hallo,\n\nbitte benachrichtige mich, sobald Premium TV Player im Google Play Store verfügbar ist.\n\nDanke!"
   )}`;
