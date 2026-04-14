@@ -61,6 +61,11 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          # Auto-enable Pages for the repo on the very first deploy so the
+          # workflow doesn't need a manual "Settings → Pages" click first.
+          # Requires the pages: write permission (granted above).
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

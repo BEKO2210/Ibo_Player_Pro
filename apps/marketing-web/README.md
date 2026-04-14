@@ -37,9 +37,18 @@ A CI workflow lives at `.github/workflows/deploy-marketing-web.yml`. It runs on 
 
 ### One-time setup (first deploy only)
 
-1. **Enable Pages:** repo Settings → Pages → set **Source** to **"GitHub Actions"**.
-2. **Push to `main`** with a change under `apps/marketing-web/` (or run the workflow manually from Actions → *Deploy marketing-web to GitHub Pages* → *Run workflow*).
-3. When the workflow finishes, the **deploy** job prints the live URL in its logs — for this repo, that's `https://beko2210.github.io/Ibo_Player_Pro/`.
+The workflow uses `actions/configure-pages@v5` with `enablement: true`, so it will **try to auto-enable** Pages on the first run. In most cases no manual step is needed — just push to `main` and watch the Actions tab.
+
+**If the first run still fails with `HttpError: Not Found — Get Pages site failed`**, Pages hasn't been enabled for the repo yet and the token couldn't auto-enable it. Fix:
+
+1. Repo **Settings → Pages**.
+2. Under **Build and deployment → Source**, choose **"GitHub Actions"**.
+3. Leave the branch/folder fields empty (GitHub Actions mode ignores them).
+4. Re-run the failed workflow: Actions → *Deploy marketing-web to GitHub Pages* → the failed run → **Re-run jobs**.
+
+When the workflow finishes, the **deploy** job prints the live URL in its logs — for this repo, that's `https://beko2210.github.io/Ibo_Player_Pro/`.
+
+> **Deprecation warning about Node.js 20 actions.** GitHub recently started flagging actions that still run on Node.js 20 (upstream actions will migrate to Node 24). The warning is cosmetic — the workflow still runs and deploys correctly. It will go away when `actions/checkout`, `setup-node`, `configure-pages`, `upload-pages-artifact` and `deploy-pages` release their Node-24 versions.
 
 ### Switching to a custom domain
 
