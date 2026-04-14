@@ -1,31 +1,51 @@
 ---
 import { link, isActive } from "../utils/link";
+import LocaleSwitcher from "./LocaleSwitcher.astro";
+import { getLocaleFromPath } from "../utils/i18n";
 
 const path = Astro.url.pathname;
-const nav = [
-  { href: "/features", label: "Features" },
-  { href: "/pricing", label: "Preise" },
-  { href: "/download", label: "Download" },
-];
-const logoHref = link("/logo.png");
+const locale = getLocaleFromPath(path);
+
+// Nav labels switch with the current locale.
+const navByLocale = {
+  de: [
+    { href: "/features", label: "Features" },
+    { href: "/pricing", label: "Preise" },
+    { href: "/download", label: "Download" },
+  ],
+  en: [
+    { href: "/features", label: "Features" },
+    { href: "/pricing", label: "Pricing" },
+    { href: "/download", label: "Download" },
+  ],
+} as const;
+const nav = navByLocale[locale];
+const logoHref = link("/logo.png", locale);
+const homeHref = link("/", locale);
+const homeAria = locale === "de" ? "Premium TV Player – Startseite" : "Premium TV Player – Home";
+const primaryNavLabel = locale === "de" ? "Hauptnavigation" : "Primary";
+const mobileNavLabel = locale === "de" ? "Mobile-Navigation" : "Mobile";
 ---
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href={link("/")} aria-label="Premium TV Player – Startseite">
+    <a class="brand" href={homeHref} aria-label={homeAria}>
       <img class="brand-mark" src={logoHref} alt="" width="36" height="36" />
       <span class="brand-wordmark">Premium TV Player</span>
     </a>
-    <nav class="primary-nav" aria-label="Hauptnavigation">
+    <nav class="primary-nav" aria-label={primaryNavLabel}>
       {nav.map((n) => (
-        <a class:list={["nav-link", { "is-active": isActive(path, n.href) }]} href={link(n.href)}>{n.label}</a>
+        <a class:list={["nav-link", { "is-active": isActive(path, n.href, locale) }]} href={link(n.href, locale)}>{n.label}</a>
       ))}
     </nav>
+    <div class="header-tail">
+      <LocaleSwitcher current={locale} pathname={path} />
+    </div>
   </div>
   {/* Mobile nav row — only below 800px */}
-  <nav class="mobile-nav" aria-label="Mobile-Navigation">
+  <nav class="mobile-nav" aria-label={mobileNavLabel}>
     <div class="container mobile-nav-inner">
       {nav.map((n) => (
-        <a class:list={["mobile-nav-link", { "is-active": isActive(path, n.href) }]} href={link(n.href)}>{n.label}</a>
+        <a class:list={["mobile-nav-link", { "is-active": isActive(path, n.href, locale) }]} href={link(n.href, locale)}>{n.label}</a>
       ))}
     </div>
   </nav>
@@ -65,9 +85,6 @@ const logoHref = link("/logo.png");
     object-fit: contain;
     filter: drop-shadow(0 4px 14px rgba(59, 130, 246, 0.35));
   }
-  /* App name is visible at every width. Font-size scales from 13px on
-     very narrow phones up to 16px on large screens so the wordmark
-     always fits next to the mark without truncation. */
   .brand-wordmark {
     font-size: clamp(13px, 1.9vw, 16px);
     white-space: nowrap;
@@ -91,6 +108,12 @@ const logoHref = link("/logo.png");
   }
   .nav-link:hover { color: var(--color-on-surface-high); }
   .nav-link.is-active { color: var(--color-on-surface-high); }
+
+  .header-tail {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+  }
 
   /* Mobile secondary nav — visible below 800px only */
   .mobile-nav {

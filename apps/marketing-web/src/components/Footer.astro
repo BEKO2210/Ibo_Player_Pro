@@ -1,7 +1,37 @@
 ---
 import { link } from "../utils/link";
+import LocaleSwitcher from "./LocaleSwitcher.astro";
+import { getLocaleFromPath } from "../utils/i18n";
+
+const path = Astro.url.pathname;
+const locale = getLocaleFromPath(path);
 const year = new Date().getFullYear();
-const logoHref = link("/logo.png");
+const logoHref = link("/logo.png", locale);
+
+const copy = {
+  de: {
+    footerLabel: "Footer-Navigation",
+    product: "Produkt",
+    legal: "Rechtliches",
+    features: "Features",
+    pricing: "Preise",
+    download: "Download",
+    privacy: "Datenschutz",
+    imprint: "Impressum",
+    rights: "Alle Rechte vorbehalten.",
+  },
+  en: {
+    footerLabel: "Footer",
+    product: "Product",
+    legal: "Legal",
+    features: "Features",
+    pricing: "Pricing",
+    download: "Download",
+    privacy: "Privacy",
+    imprint: "Imprint",
+    rights: "All rights reserved.",
+  },
+}[locale];
 ---
 <footer class="site-footer">
   <div class="container footer-inner">
@@ -9,22 +39,25 @@ const logoHref = link("/logo.png");
       <img class="brand-mark" src={logoHref} alt="" width="28" height="28" />
       <span>Premium TV Player</span>
     </div>
-    <nav class="footer-nav" aria-label="Footer-Navigation">
+    <nav class="footer-nav" aria-label={copy.footerLabel}>
       <div class="footer-col">
-        <h4 class="t-label-small">Produkt</h4>
-        <a href={link("/features")}>Features</a>
-        <a href={link("/pricing")}>Preise</a>
-        <a href={link("/download")}>Download</a>
+        <h4 class="t-label-small">{copy.product}</h4>
+        <a href={link("/features", locale)}>{copy.features}</a>
+        <a href={link("/pricing", locale)}>{copy.pricing}</a>
+        <a href={link("/download", locale)}>{copy.download}</a>
       </div>
       <div class="footer-col">
-        <h4 class="t-label-small">Rechtliches</h4>
-        <a href={link("/legal/privacy")}>Datenschutz</a>
-        <a href={link("/legal/imprint")}>Impressum</a>
+        <h4 class="t-label-small">{copy.legal}</h4>
+        <a href={link("/legal/privacy", locale)}>{copy.privacy}</a>
+        <a href={link("/legal/imprint", locale)}>{copy.imprint}</a>
       </div>
     </nav>
-    <p class="footer-note t-body-small">
-      © {year} Belkis Aslani. Alle Rechte vorbehalten.
-    </p>
+    <div class="footer-meta">
+      <LocaleSwitcher current={locale} pathname={path} />
+      <p class="footer-note t-body-small">
+        © {year} Belkis Aslani. {copy.rights}
+      </p>
+    </div>
   </div>
 </footer>
 
@@ -70,8 +103,15 @@ const logoHref = link("/logo.png");
     transition: color var(--dur-short) var(--easing-premium);
   }
   .footer-col a:hover { color: var(--color-on-surface-high); }
-  .footer-note { margin: 0; text-align: left; }
-  @media (min-width: 800px) {
-    .footer-note { text-align: right; }
+
+  .footer-meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-m);
+    align-items: flex-start;
   }
+  @media (min-width: 800px) {
+    .footer-meta { align-items: flex-end; text-align: right; }
+  }
+  .footer-note { margin: 0; }
 </style>

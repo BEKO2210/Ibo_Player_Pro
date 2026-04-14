@@ -10,7 +10,8 @@ import IconKidsShield from "../components/icons/IconKidsShield.astro";
 import IconEpgGrid from "../components/icons/IconEpgGrid.astro";
 import IconLifetime from "../components/icons/IconLifetime.astro";
 import IconPrivacyLock from "../components/icons/IconPrivacyLock.astro";
-import { link, WAITLIST_MAILTO } from "../utils/link";
+import { link, waitlistMailto } from "../utils/link";
+const WAITLIST = waitlistMailto("de");
 ---
 <BaseLayout
   title="Premium TV Player — demnächst für Android TV"
@@ -20,8 +21,8 @@ import { link, WAITLIST_MAILTO } from "../utils/link";
     eyebrow="Bald im Google Play Store"
     title="Deine Quellen. Deine Mediathek. Premium-Wiedergabe."
     subtitle="Premium TV Player ist ein neutraler, hochwertiger Player für die M3U-, M3U8- und XMLTV-Quellen, die du selbst mitbringst. Einmal zahlen, kein Abo, keine Werbung, kein Tracking. Der letzte Schliff ist in Arbeit — trag dich ein und du bekommst Bescheid, sobald die App live geht."
-    primaryCta={{ href: WAITLIST_MAILTO, label: "Zum Start benachrichtigen" }}
-    secondaryCta={{ href: link("/features"), label: "Was drinsteckt" }}
+    primaryCta={{ href: WAITLIST, label: "Zum Start benachrichtigen" }}
+    secondaryCta={{ href: link("/features", "de"), label: "Was drinsteckt" }}
   />
 
   <Section
@@ -95,7 +96,7 @@ import { link, WAITLIST_MAILTO } from "../utils/link";
         <h2 class="t-headline">Sei als erstes dabei.</h2>
         <p class="t-body-small cta-body">Wir sind im letzten Feinschliff. Schreib uns kurz und wir melden uns, sobald die App im Google Play Store live geht.</p>
       </div>
-      <Button href={WAITLIST_MAILTO} label="Zum Start benachrichtigen" variant="primary" external />
+      <Button href={WAITLIST} label="Zum Start benachrichtigen" variant="primary" external />
     </div>
   </Section>
 </BaseLayout>

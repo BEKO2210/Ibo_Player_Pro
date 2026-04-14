@@ -1,0 +1,139 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHeader from "../../components/PageHeader.astro";
+import Section from "../../components/Section.astro";
+import Button from "../../components/Button.astro";
+import { waitlistMailto } from "../../utils/link";
+const WAITLIST = waitlistMailto("en");
+---
+<BaseLayout
+  title="Pricing — Premium TV Player (coming soon)"
+  description="One-time payment at launch, no subscriptions. 14-day trial, then Lifetime Single (€19.99) or Lifetime Family (€39.99). Available on Google Play shortly — join the waitlist."
+>
+  <PageHeader
+    eyebrow="Pricing at launch"
+    title="Pay once. Keep it forever."
+    lede="At launch, every account starts with a 14-day trial. When you're ready, unlock the full experience with a one-time purchase — handled securely through Google Play Billing. Pricing below is final."
+  />
+
+  <Section>
+    <div class="plans">
+      <article class="plan">
+        <h3 class="t-title-large plan-name">Lifetime Single</h3>
+        <p class="plan-price">
+          <span class="t-display">€19.99</span>
+          <span class="plan-price-note"> one-time</span>
+        </p>
+        <ul class="plan-list">
+          <li><strong>1 device</strong> slot</li>
+          <li><strong>1 profile</strong></li>
+          <li>Unlimited sources</li>
+          <li>Full EPG &amp; Continue Watching</li>
+          <li>Cloud-synced watch history</li>
+          <li>All future updates included</li>
+        </ul>
+        <Button href={WAITLIST} label="Notify me at launch" variant="secondary" external />
+      </article>
+
+      <article class="plan plan--featured">
+        <p class="t-label-small plan-tag">Recommended for households</p>
+        <h3 class="t-title-large plan-name">Lifetime Family</h3>
+        <p class="plan-price">
+          <span class="t-display">€39.99</span>
+          <span class="plan-price-note"> one-time</span>
+        </p>
+        <ul class="plan-list">
+          <li><strong>5 device</strong> slots</li>
+          <li><strong>5 profiles</strong> (incl. Kids profile)</li>
+          <li>PIN gate &amp; age-rating filter</li>
+          <li>Unlimited sources</li>
+          <li>Full EPG &amp; Continue Watching</li>
+          <li>Cloud-synced watch history</li>
+          <li>All future updates included</li>
+        </ul>
+        <Button href={WAITLIST} label="Notify me at launch" variant="primary" external />
+      </article>
+    </div>
+  </Section>
+
+  <Section eyebrow="Trial" title="14 days on the house.">
+    <div class="trial">
+      <p class="t-body">
+        At launch, every new account will get a 14-day trial that starts on first login. Nothing is
+        charged, no card is required, and we won't auto-renew — the trial simply ends, and you can
+        upgrade to Lifetime any time from inside the app.
+      </p>
+      <p class="t-body-small">
+        Upgraded to Single but need Family later? Upgrade from the same billing flow — the difference is
+        applied, and your device + profile caps are lifted instantly.
+      </p>
+    </div>
+  </Section>
+
+  <Section eyebrow="FAQ" title="Before you buy.">
+    <dl class="faq">
+      <div>
+        <dt class="t-title">When does the app launch?</dt>
+        <dd class="t-body-small">We're in final preparation for Google Play. Sign up via the "Notify me" button above and we'll email you the moment the listing goes live.</dd>
+      </div>
+      <div>
+        <dt class="t-title">Is this a subscription?</dt>
+        <dd class="t-body-small">No. Both tiers are one-time payments handled by Google Play. You own the license for the life of the product — there's no monthly billing, ever.</dd>
+      </div>
+      <div>
+        <dt class="t-title">Does Premium TV Player include any content or channels?</dt>
+        <dd class="t-body-small">No. The app ships empty. You bring your own M3U, M3U8 or XMLTV URLs from a provider you are authorized to use. We're a neutral player — not a content provider.</dd>
+      </div>
+      <div>
+        <dt class="t-title">Can I use one license on multiple devices?</dt>
+        <dd class="t-body-small">Lifetime Single is bound to 1 device slot. Lifetime Family unlocks 5 device slots — you can revoke a device from the app at any time to free up a slot.</dd>
+      </div>
+      <div>
+        <dt class="t-title">What about refunds?</dt>
+        <dd class="t-body-small">Refunds are handled by Google Play's standard refund policy. When Google refunds a purchase, our backend revokes the entitlement automatically, no support ticket needed.</dd>
+      </div>
+      <div>
+        <dt class="t-title">Is my account tied to a specific TV?</dt>
+        <dd class="t-body-small">No. Device slots are account-bound, not MAC-bound. Replacing a TV is a matter of revoking the old slot and installing on the new one — your purchase stays with you.</dd>
+      </div>
+    </dl>
+  </Section>
+</BaseLayout>
+
+<style>
+  .plans { display: grid; grid-template-columns: 1fr; gap: var(--space-l); }
+  @media (min-width: 800px) { .plans { grid-template-columns: repeat(2, 1fr); } }
+  .plan {
+    padding: clamp(20px, 4vw, 32px);
+    border-radius: var(--radius-l);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(180deg, rgba(29, 33, 40, 0.7), rgba(20, 23, 28, 0.7));
+    display: flex; flex-direction: column; gap: var(--space-m);
+  }
+  .plan--featured {
+    border-color: rgba(96, 165, 250, 0.4);
+    box-shadow: 0 30px 60px -30px rgba(59, 130, 246, 0.4);
+  }
+  .plan-tag {
+    margin: 0; display: inline-block;
+    padding: 4px 10px; border-radius: 999px;
+    background: linear-gradient(135deg, var(--color-accent-blue), var(--color-accent-violet));
+    color: #fff; width: fit-content;
+  }
+  .plan-name { margin: 0; color: var(--color-on-surface-high); }
+  .plan-price { margin: 0; color: var(--color-on-surface-high); display: inline-flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .plan-price-note { color: var(--color-on-surface-muted); font-size: 16px; }
+  .plan-list { margin: 0; padding-left: 20px; color: var(--color-on-surface); display: flex; flex-direction: column; gap: var(--space-s); }
+  .trial { max-width: 820px; display: flex; flex-direction: column; gap: var(--space-m); }
+  .trial p { margin: 0; }
+  .faq { margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: var(--space-l); }
+  @media (min-width: 800px) { .faq { grid-template-columns: repeat(2, 1fr); } }
+  .faq > div {
+    padding: clamp(16px, 3.5vw, 24px);
+    border-radius: var(--radius-l);
+    background: rgba(29, 33, 40, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .faq dt { margin: 0 0 var(--space-s); color: var(--color-on-surface-high); }
+  .faq dd { margin: 0; color: var(--color-on-surface-muted); }
+</style>

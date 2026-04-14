@@ -3,7 +3,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import PageHeader from "../components/PageHeader.astro";
 import Section from "../components/Section.astro";
 import Button from "../components/Button.astro";
-import { WAITLIST_MAILTO } from "../utils/link";
+import { waitlistMailto } from "../utils/link";
+const WAITLIST = waitlistMailto("de");
 ---
 <BaseLayout
   title="Preise — Premium TV Player (demnächst)"
@@ -31,7 +32,7 @@ import { WAITLIST_MAILTO } from "../utils/link";
           <li>Wiedergabeverlauf in der Cloud</li>
           <li>Alle zukünftigen Updates inklusive</li>
         </ul>
-        <Button href={WAITLIST_MAILTO} label="Zum Start benachrichtigen" variant="secondary" external />
+        <Button href={WAITLIST} label="Zum Start benachrichtigen" variant="secondary" external />
       </article>
 
       <article class="plan plan--featured">
@@ -50,7 +51,7 @@ import { WAITLIST_MAILTO } from "../utils/link";
           <li>Wiedergabeverlauf in der Cloud</li>
           <li>Alle zukünftigen Updates inklusive</li>
         </ul>
-        <Button href={WAITLIST_MAILTO} label="Zum Start benachrichtigen" variant="primary" external />
+        <Button href={WAITLIST} label="Zum Start benachrichtigen" variant="primary" external />
       </article>
     </div>
   </Section>

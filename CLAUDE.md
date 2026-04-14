@@ -22,13 +22,13 @@
 
 - **Phase:** D — Polish & Ship-Ready
 - **Last completed run (app roadmap):** Run 19 — i18n + Premium error states + Diagnostics
-- **Last completed run (marketing-web):** MW-3 — de-DE localisation + banner removal
+- **Last completed run (marketing-web):** MW-4 — multi-language architecture (DE default + EN, extensible)
 - **Current branch:** `claude/fix-api-timeout-7AYxm`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-7AYxm`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Animated variant `assets/logo/Logo_ani.gif` consumed by marketing-web hero (MW-2).
 - **applicationId:** ✅ locked in Run 11 — `com.premiumtvplayer.app` (matches `BILLING_ANDROID_PACKAGE_NAME`)
 - **CI status:** ✅ `CI` workflow runs `drift-check`, `backend-tests`, `android-jvm-tests`. `deploy-marketing-web` workflow publishes `apps/marketing-web/` to GitHub Pages on pushes to `main` that touch `apps/marketing-web/**`.
-- **Marketing site:** `apps/marketing-web/` (Astro, static). Pre-launch state, de-DE, deploys to `https://beko2210.github.io/Ibo_Player_Pro/`. Waitlist CTA points at `mailto:belkis.aslani@gmail.com`.
+- **Marketing site:** `apps/marketing-web/` (Astro, static). Pre-launch state, bilingual (DE default at `/`, EN at `/en/…`), deploys to `https://beko2210.github.io/Ibo_Player_Pro/`. Adding a new locale = one entry in `src/utils/i18n.ts` + a new page tree under `src/pages/<locale>/`. Waitlist CTA points at `mailto:belkis.aslani@gmail.com` with locale-specific subject/body.
 
 ---
 
@@ -280,7 +280,7 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - **Playback URL resolver (from Run 16):** Run 16 passes the playback `mediaUrl` through the nav graph because the server doesn't yet have a dedicated resolver that decrypts source credentials + signs short-lived playback URLs. Home deep-links fall back to public test streams (Apple BipBop HLS / Big Buck Bunny MP4) so the playback path is exercisable today. Proper resolver (likely `POST /v1/playback/resolve`) is a Run 18.5 / 20 security hardening item; would also allow the server to enforce device-bound playback tokens and per-device concurrent-stream caps.
 - **EPG duplicate handling (from Run 16):** the EPG worker inserts programmes without a natural unique key (no provider consistently emits an id). Providers that re-emit the same programme window will create duplicates. A companion dedupe/cleanup job (on `(channel_id, starts_at)`) can be added if storage becomes an issue; defer until observability tells us it matters.
 - **i18n migration of remaining screens (from Run 19):** the string catalogue + `UserErrorMessage` infrastructure are in place; every key for every screen exists in `values/strings.xml` (and `values-de/strings.xml`). Many existing screens still have inline `Text(text = "...")` literals — swapping them to `stringResource(R.string.*)` is mechanical work that doesn't change behaviour. Touch each screen as part of the next time it's edited; full sweep can also be a single Run 19.5 if anyone wants the locale switch to be 100% complete before launch.
-- **marketing-web sub-project (from MW-1..3):** separate workstream at `apps/marketing-web/` (Astro, static). Owns its own README, Pages deploy workflow (`.github/workflows/deploy-marketing-web.yml`) and design tokens mirrored from `packages/ui-tokens`. Currently pre-launch / de-DE. Open items tracked in `apps/marketing-web/README.md` (Gewerbe-registration → update imprint, OG image, optional GIF → MP4/WebM conversion for payload reduction, optional `/en/` locale once launch is announced internationally).
+- **marketing-web sub-project (from MW-1..4):** separate workstream at `apps/marketing-web/` (Astro, static). Owns its own README, Pages deploy workflow (`.github/workflows/deploy-marketing-web.yml`), locale-aware link/mailto helpers (`src/utils/i18n.ts`, `src/utils/link.ts`) and design tokens mirrored from `packages/ui-tokens`. Pre-launch. Bilingual (DE default at `/`, EN at `/en/…`). Open items tracked in `apps/marketing-web/README.md` (Gewerbe-registration → update imprint, OG image, optional GIF → MP4/WebM conversion for payload reduction, hreflang link tags in `<head>` for proper SEO across locales).
 
 ---
 
@@ -603,3 +603,23 @@ Separate workstream from the app roadmap. Lives at `apps/marketing-web/`
 - Translated chrome: `Header` nav (Features / Preise / Download), `Footer` columns (Produkt / Rechtliches), all `aria-label`s, copyright line ("Alle Rechte vorbehalten")
 - `WAITLIST_MAILTO` in `src/utils/link.ts` now uses "Premium TV Player — Warteliste" subject + German body
 - Verified: `npm run build` produces all 6 pages + `sitemap-index.xml` in ~2.2s; HTML contains `lang="de"` and every new DE nav label; no dead references to `ComingSoonBanner`
+
+### MW-4 — 2026-04-14 — Multi-language architecture (DE default + EN, extensible)
+- Goal: turn the single-language DE site into a proper bilingual site with a clean path for adding further locales later (tr, fr, es, etc.). Architecture: **URL-prefixed locales** — default locale (DE) lives at `/`, all other locales live under `/<locale>/…`. Keeps German URLs stable for existing search-engine indexing; new locales are purely additive
+- New `src/utils/i18n.ts`: single source of truth for `locales`, `defaultLocale` (`"de"`), `localeLabels`, `localeShort` (for pill UI), `getLocaleFromPath(pathname)`, `pathWithoutLocale(pathname)`, `logicalPath(pathname)`. Adding a language = one extra entry in `locales` + `localeLabels` + a new page tree
+- Refactored `src/utils/link.ts`: `link(path, locale)` now owns the locale-prefix logic AND the BASE_URL prefix. `waitlistMailto(locale)` replaces the old static `WAITLIST_MAILTO` — it builds a locale-specific mailto subject + body, so the operator's inbox carries the visitor's language
+- Clear separation of concerns: **`logicalPath()` strips any locale prefix → `link()` adds the right locale prefix back.** No more double-prefixing. Caught + fixed a `/en/en/` bug during smoke-testing
+- New `src/components/LocaleSwitcher.astro`: pill-style segmented toggle rendered in both Header (top-right, always visible) and Footer (right column). Each pill has `hreflang`, `aria-current`, `aria-label`, and a locale-specific title tooltip. Current pill is highlighted via the brand-blue gradient chip
+- `Header.astro` is now locale-aware: reads the current locale from `Astro.url.pathname`, nav labels + `aria-label`s switch between DE and EN, `link()` calls carry the locale, `LocaleSwitcher` replaces the old CTA slot (the "Notify me" button was already removed in MW-3)
+- `Footer.astro` is now locale-aware: column titles (Produkt / Rechtliches vs. Product / Legal), link labels, copyright line, footer `aria-label`. Also hosts a second `LocaleSwitcher` above the copyright
+- `BaseLayout.astro`: `<html lang>` + `og:locale` derived dynamically from the URL. Default page description also switches: German default for DE pages, English default for EN pages. Skip-link text translated
+- Existing DE pages (`index`, `features`, `pricing`, `download`, `legal/privacy`, `legal/imprint`) migrated from `WAITLIST_MAILTO` + `link("/x")` to `waitlistMailto("de")` + `link("/x", "de")`. No content change — copy stays identical
+- New EN tree at `src/pages/en/` with full mirror: `index.astro`, `features.astro`, `pricing.astro`, `download.astro`, `legal/privacy.astro`, `legal/imprint.astro`. Each is a standalone Astro file — translator-friendly, no catalog/indirection layer. Same visual design, same components, English copy. Private key (privacy + imprint) cross-links stay within the locale
+- Verified via `npm run build` → **12 pages** (6 DE + 6 EN) + `sitemap-index.xml` in ~2.2s, zero warnings
+- Verified via grep against generated HTML:
+  - DE home `<html lang="de">`, EN home `<html lang="en">`
+  - DE home nav: "Preise", EN home nav: "Pricing"
+  - DE home LocaleSwitcher → `/en/`; EN home LocaleSwitcher → `/`
+  - Cross-page switch: EN `/en/features/` LocaleSwitcher → `/features/` (same logical page, DE locale) ✓
+  - Locale-scoped privacy-imprint link: DE privacy → `/legal/imprint`, EN privacy → `/en/legal/imprint`
+- Docs: `CLAUDE.md` Current State updated (bilingual site, extensibility note), Parking Lot marketing-web entry now points to the i18n helpers + notes hreflang as the next SEO follow-up. Marketing-Web Log appended with this MW-4 entry
