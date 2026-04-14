@@ -23,11 +23,12 @@
 - **Phase:** D — Polish & Ship-Ready
 - **Last completed run (app roadmap):** Run 19 — i18n + Premium error states + Diagnostics
 - **Last completed run (marketing-web):** MW-5 — Albanian (sq) added + asset/page path split
-- **Current branch:** `claude/fix-api-timeout-7AYxm`
-- **Push target:** same branch (`-u origin claude/fix-api-timeout-7AYxm`)
+- **Current branch:** `main`
+- **Push target:** `main` (CI fixes merged directly; Run 20 work goes here too)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Animated variant `assets/logo/Logo_ani.gif` consumed by marketing-web hero (MW-2).
 - **applicationId:** ✅ locked in Run 11 — `com.premiumtvplayer.app` (matches `BILLING_ANDROID_PACKAGE_NAME`)
-- **CI status:** ✅ `CI` workflow runs `drift-check`, `backend-tests`, `android-jvm-tests`. `deploy-marketing-web` workflow publishes `apps/marketing-web/` to GitHub Pages on pushes to `main` that touch `apps/marketing-web/**`.
+- **CI status:** ✅ `CI` workflow runs `drift-check`, `backend-tests`, `android-jvm-tests`. `deploy-marketing-web` workflow publishes `apps/marketing-web/` to GitHub Pages on pushes to `main` that touch `apps/marketing-web/**`. CI fixed in post-Run-19 commits (gradlew permissions, JVM toolchain, 2 unit-test regressions — all on `main`).
+- **Gradle wrapper:** upgraded to 8.14 (from 8.11) — supports Java 24; requires JDK 17 or 21 to build locally (Java 25 not yet supported by Kotlin 2.0.21 embedded parser). Install JDK 17: `winget install EclipseAdoptium.Temurin.17.JDK`
 - **Marketing site:** `apps/marketing-web/` (Astro, static). Pre-launch state, trilingual (DE default at `/`, EN at `/en/…`, SQ/Shqip at `/sq/…`), deploys to `https://beko2210.github.io/Ibo_Player_Pro/`. Adding a new locale = one entry in `src/utils/i18n.ts` + WAITLIST_COPY + nav labels in Header/Footer + a new page tree under `src/pages/<locale>/`. `link()` handles page URLs with locale prefix; `asset()` handles locale-independent assets (logo, favicon, sitemap). Waitlist CTA points at `mailto:belkis.aslani@gmail.com` with locale-specific subject/body.
 
 ---

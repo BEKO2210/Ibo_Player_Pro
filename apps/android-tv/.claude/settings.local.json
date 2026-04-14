@@ -12,7 +12,14 @@
       "Bash(timeout 15 npm run start:dev)",
       "Bash(netstat -ano)",
       "Bash(powershell:*)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(./gradlew build *)",
+      "Bash(java -version)",
+      "Bash(where java *)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Program Files/Eclipse Adoptium/**)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
