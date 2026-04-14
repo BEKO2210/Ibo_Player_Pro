@@ -1,0 +1,30 @@
+---
+// Run 1: minimal shell. Header, footer, theme tokens land in Run 2.
+interface Props {
+  title: string;
+  description?: string;
+}
+const { title, description = "Premium TV Player" } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+  </head>
+  <body>
+    <main>
+      <slot />
+    </main>
+    <nav aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/features">Features</a>
+      <a href="/pricing">Pricing</a>
+      <a href="/download">Download</a>
+      <a href="/legal/privacy">Privacy</a>
+      <a href="/legal/imprint">Imprint</a>
+    </nav>
+  </body>
+</html>
