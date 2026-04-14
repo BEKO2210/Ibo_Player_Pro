@@ -20,11 +20,11 @@
 
 ## 🎯 Current State
 
-- **Phase:** D — Polish & Ship-Ready
-- **Last completed run (app roadmap):** Run 19 — i18n + Premium error states + Diagnostics
+- **Phase:** D — ✅ Complete (all 20 runs done). Extra runs continue from Run 21.
+- **Last completed run (app roadmap):** Run 20 — E2E smoke + R8 release build + store-listing + handover
 - **Last completed run (marketing-web):** MW-5 — Albanian (sq) added + asset/page path split
 - **Current branch:** `main`
-- **Push target:** `main` (CI fixes merged directly; Run 20 work goes here too)
+- **Push target:** `main`
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Animated variant `assets/logo/Logo_ani.gif` consumed by marketing-web hero (MW-2).
 - **applicationId:** ✅ locked in Run 11 — `com.premiumtvplayer.app` (matches `BILLING_ANDROID_PACKAGE_NAME`)
 - **CI status:** ✅ `CI` workflow runs `drift-check`, `backend-tests`, `android-jvm-tests`. `deploy-marketing-web` workflow publishes `apps/marketing-web/` to GitHub Pages on pushes to `main` that touch `apps/marketing-web/**`. CI fixed in post-Run-19 commits (gradlew permissions, JVM toolchain, 2 unit-test regressions — all on `main`).
@@ -33,32 +33,23 @@
 
 ---
 
-## ▶️ Next Run (Run 20): E2E Smoke + Release Build Config + Store-Listing Checklist
+## ▶️ Extra Runs (Run 21+)
 
-### Goal
-Final ship-ready run. Wrap up Phase D so the project can be handed over to a release manager: end-to-end smoke test script that exercises the full user flow against a local docker stack, R8 / ProGuard release build config that produces a signed release APK, and a store-listing asset checklist (banner, screenshots, copy, age rating, content guidelines).
+The original 20-run roadmap is **complete**. Phase A–D are done. Everything from here is additive — new features, new platforms, or production hardening. Extra runs follow the same per-run protocol as Runs 1–20.
 
-### Deliverables
-- [ ] `infra/e2e/smoke.sh` — bash script that spins up `docker compose`, runs `prisma migrate deploy`, starts the API + EPG worker + billing worker, hits `/health`, runs a Firebase-mocked register/login/trial/profile create flow, then tears down. Exit non-zero on any failure
-- [ ] `apps/android-tv/app/proguard-rules.pro` — final release rules for Hilt, Compose, Media3, Retrofit, kotlinx.serialization, Firebase, Play Billing, googleapis. `release` build type already wired with `isMinifyEnabled = true`
-- [ ] Release build verifies via `./gradlew :app:assembleRelease`; documented in README
-- [ ] `docs/launch/store-listing.md` — Play Console asset checklist: app title, short + long descriptions, feature graphic, screenshots (TV banner + 4 in-app), categorization, content rating questionnaire answers, privacy policy URL placeholder, data safety form answers (we don't collect PII beyond email + Firebase UID)
-- [ ] `docs/launch/handover.md` — what's done vs. parked, where each layer lives, runbook entries (rotate Firebase keys, rotate `SOURCE_ENCRYPTION_KEY`, recover from a corrupt EPG row, etc.)
-- [x] Stretch: GitHub Actions workflows now cover backend test suites + Android JVM unit tests on push/PR
+### Next suggested extra run: Run 21
+Pick any open item from the Parking Lot or Buffer Runs below, or propose a new goal. Common candidates:
 
-### Acceptance criteria
-- `./infra/e2e/smoke.sh` passes locally on a fresh clone with `docker compose` available
-- `./gradlew :app:assembleRelease` produces a signed (debug-keystore-signed) release APK
-- Store-listing checklist is complete enough that a release manager can fill in the Play Console without reading code
-- All Run 19 tests stay green
-- CLAUDE.md Roadmap shows every Run 1-20 ticked
+- **Recording / Scheduler** — recording schedule UI + backend job + `recording-worker`
+- **Admin Web Portal** — source admin, user lookup, entitlement override, refund tooling
+- **Android Mobile client** — `apps/android-mobile/` with phone/tablet UX
+- **Playback URL Resolver** — `POST /v1/playback/resolve` with server-signed short-lived URLs + per-device stream cap
+- **i18n sweep** — replace remaining inline `Text("…")` literals in all screens with `stringResource(R.string.*)`
+- **Marketing site launch** — swap waitlist mailto → Play Store URL, publish OG image, add hreflang tags, Albanian native-speaker review
 
-### After this run — update CLAUDE.md
-1. Tick Run 20 in the roadmap
-2. Set "Last completed run" to `Run 20 — E2E + release build + store-listing`
-3. Move Phase D to "complete"; record any deferred work in Parking Lot
-4. Append entry to **Run Log**
-5. Commit: `release: e2e smoke + R8 release build + store-listing checklist (Run 20)` and push
+### How to start an extra run
+Tell Claude: *"Let's do Run 21 — [goal]."*  
+Claude will write the Goal / Deliverables / Acceptance criteria block here, execute, then tick it and append to the Run Log — same as always.
 
 ---
 
@@ -191,15 +182,18 @@ premium-player/            (repo root = /home/user/Ibo_Player_Pro)
 - [x] **Run 17** — Billing flow in app: Play Billing Client, purchase trigger, Restore Purchase, entitlement UI states
 - [x] **Run 18** — Parental controls: PIN gate, age filter, device list / logout / unpair
 
-### Phase D — Polish & Ship-Ready
+### Phase D — Polish & Ship-Ready ✅
 - [x] **Run 19** — i18n finalization (all strings keyed, en default, fallback), error states, diagnostics screen
-- [ ] **Run 20** — E2E smoke test script (backend + app against local docker stack), release build config (R8/Proguard), store-listing asset checklist, handover doc
+- [x] **Run 20** — E2E smoke test script (backend + app against local docker stack), release build config (R8/Proguard), store-listing asset checklist, handover doc
 
-### Buffer Runs (21+, optional)
+### Extra Runs (21+) — beyond the original scope
+- [ ] **Run 21** — *(to be defined — see Extra Runs block above)*
 - Recording / scheduler
 - Admin web portal
 - Android Mobile client
-- CI/CD pipeline (GitHub Actions)
+- Playback URL resolver (server-signed short-lived URLs)
+- i18n sweep (remaining inline literals → stringResource)
+- Marketing site launch (Play Store URL, OG image, hreflang, Albanian review)
 
 ---
 
@@ -329,6 +323,15 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - Added local Docker stack at `infra/docker/docker-compose.yml` (Postgres 16 + Redis 7 with healthchecks) and `infra/postgres/init/01-extensions.sql` to enable `pgcrypto` + `citext`
 - Added `services/api/README.md` with quickstart, script table, env reference, layout, and troubleshooting
 - Requested logo upload from user into `assets/logo/` (received as follow-up: `logo-no_background.png`)
+
+### Run 20 — 2026-04-14 — E2E smoke + R8 release build + store-listing + handover
+- `apps/android-tv/app/proguard-rules.pro` — finalized R8/ProGuard release rules covering Hilt, Compose, Media3, Retrofit, kotlinx.serialization, Firebase, Play Billing, googleapis; `release` build type uses `isMinifyEnabled = true`
+- `./gradlew :app:assembleRelease` verified locally with Gradle 8.14 + JDK 17 — produces signed (debug-keystore) release APK in `app/build/outputs/apk/release/`; documented in `apps/android-tv/README.md`
+- `infra/e2e/smoke.sh` — bash script that spins up `docker compose`, runs `prisma migrate deploy`, starts API + EPG + billing workers, hits `/health`, exercises register/login/trial/profile flow, then tears down; exits non-zero on any failure
+- `docs/launch/store-listing.md` — Play Console asset checklist: app title, short + long descriptions, feature graphic spec, screenshot requirements (TV banner + 4 in-app), categorization, content rating questionnaire answers, privacy policy placeholder, data-safety form answers
+- `docs/launch/handover.md` — what is done vs. parked, where each layer lives, runbook entries (rotate Firebase keys, rotate `SOURCE_ENCRYPTION_KEY`, recover corrupt EPG row, etc.)
+- CI: all 3 gates green on `main` (drift-check 8/8, 143 backend tests, Android JVM unit tests); Gradle wrapper upgraded 8.11 → 8.14; JVM toolchain fixed for Linux CI runners
+- **Phase D closed.** Original 20-run roadmap complete. Future work continues as Extra Runs (21+) — same per-run protocol, no scope restriction.
 
 ### Run 19 — 2026-04-13 — i18n + Premium error states + Diagnostics
 - New `app/src/main/res/values/strings.xml` (~120 keys covering Welcome/Auth/Trial/Profiles/Sources/Paywall/Player/Devices/PIN/Diagnostics/error codes) + machine-translated `values-de/strings.xml` seed marked TODO-i18n for human review
