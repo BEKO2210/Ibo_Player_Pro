@@ -4,24 +4,23 @@ import Hero from "../components/Hero.astro";
 import Section from "../components/Section.astro";
 import FeatureCard from "../components/FeatureCard.astro";
 import Button from "../components/Button.astro";
-
-const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiumtvplayer.app";
+import { link, WAITLIST_MAILTO } from "../utils/link";
 ---
 <BaseLayout
-  title="Premium TV Player — a premium player for your own sources"
-  description="Bring your own M3U, M3U8 or XMLTV sources. Lifetime license, cloud-synced profiles, kids mode, and a cinematic Android TV experience. No subscriptions."
+  title="Premium TV Player — coming soon to Android TV"
+  description="A premium player for your own M3U, M3U8 and XMLTV sources. Lifetime license, cloud-synced profiles, kids mode. Launching soon on Google Play — join the waitlist."
 >
   <Hero
-    eyebrow="Now on Android TV"
+    eyebrow="Launching soon on Google Play"
     title="Your sources. Your library. Premium playback."
-    subtitle="Premium TV Player is a neutral, premium player for the M3U, M3U8 and XMLTV sources you already own. One-time payment, no subscriptions, no ads, no tracking. Built for the 10-foot experience."
-    primaryCta={{ href: "/download", label: "Get it on Google Play" }}
-    secondaryCta={{ href: "/features", label: "See what's inside" }}
+    subtitle="Premium TV Player is a neutral, premium player for the M3U, M3U8 and XMLTV sources you already own. One-time payment, no subscriptions, no ads, no tracking. Final preparations are underway — sign up to be the first to know when it hits Google Play."
+    primaryCta={{ href: WAITLIST_MAILTO, label: "Notify me at launch" }}
+    secondaryCta={{ href: link("/features"), label: "See what's inside" }}
   />
 
   <Section
     eyebrow="Why it feels different"
-    title="A player built like a flagship streaming app."
+    title="Built like a flagship streaming app."
     lede="Cinematic focus states, instant launch, 60fps focus animations, and a dark palette tuned for living-room TVs. Everything you'd expect from a premium streaming service — running on the sources you authorize yourself."
   >
     <div class="feature-grid">
@@ -43,7 +42,7 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
       />
       <FeatureCard
         title="Lifetime license"
-        body="Pay once. No monthly fees. €19.99 for one device / one profile, €39.99 for the Family plan with 5 profiles and 5 devices."
+        body="Pay once at launch. No monthly fees. €19.99 for one device / one profile, €39.99 for the Family plan with 5 profiles and 5 devices."
       />
       <FeatureCard
         title="No tracking, no ads"
@@ -52,17 +51,17 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
     </div>
   </Section>
 
-  <Section eyebrow="How it works" title="Three steps from install to playback." align="center">
+  <Section eyebrow="How it will work" title="Three steps from install to playback." align="center">
     <ol class="steps">
       <li>
         <span class="step-num">01</span>
         <h3 class="t-title">Install &amp; sign in</h3>
-        <p class="t-body-small">Grab the app from Google Play on your Android TV. Create an account with email + password — your 14-day trial starts on the first login.</p>
+        <p class="t-body-small">At launch, grab the app from Google Play on your Android TV. Create an account with email + password — your 14-day trial starts on the first login.</p>
       </li>
       <li>
         <span class="step-num">02</span>
         <h3 class="t-title">Add your source</h3>
-        <p class="t-body-small">Paste the M3U, M3U8 or XMLTV URL you were given by your provider. We encrypt the credentials and never expose them to third parties.</p>
+        <p class="t-body-small">Paste the M3U, M3U8 or XMLTV URL you were given by your provider. Credentials are encrypted and never exposed to third parties.</p>
       </li>
       <li>
         <span class="step-num">03</span>
@@ -75,10 +74,10 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
   <Section>
     <div class="cta-panel">
       <div>
-        <h2 class="t-headline">Start your 14-day trial today.</h2>
-        <p class="t-body-small cta-body">No credit card, no commitment. Upgrade to Lifetime any time from the app.</p>
+        <h2 class="t-headline">Be the first to know.</h2>
+        <p class="t-body-small cta-body">We're wrapping up the final polish. Drop us a line and we'll ping you the moment the app goes live on Google Play.</p>
       </div>
-      <Button href={PLAY_STORE_URL} label="Get it on Google Play" variant="primary" external />
+      <Button href={WAITLIST_MAILTO} label="Notify me at launch" variant="primary" external />
     </div>
   </Section>
 </BaseLayout>
@@ -104,7 +103,7 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
   }
   @media (min-width: 800px) { .steps { grid-template-columns: repeat(3, 1fr); } }
   .steps li {
-    padding: var(--space-xl);
+    padding: clamp(20px, 4vw, 32px);
     border-radius: var(--radius-l);
     background: linear-gradient(180deg, rgba(29, 33, 40, 0.7), rgba(20, 23, 28, 0.7));
     border: 1px solid rgba(255, 255, 255, 0.06);
@@ -124,7 +123,7 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
     display: flex;
     flex-direction: column;
     gap: var(--space-l);
-    padding: var(--space-xxl);
+    padding: clamp(24px, 5vw, 48px);
     border-radius: var(--radius-l);
     background: linear-gradient(135deg, rgba(37, 99, 235, 0.25), rgba(139, 92, 246, 0.15));
     border: 1px solid rgba(96, 165, 250, 0.3);

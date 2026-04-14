@@ -38,16 +38,16 @@ body {
 .t-label         { font-size: 14px; line-height: 1.43; font-weight: 500; letter-spacing: 0.4px; }
 .t-label-small   { font-size: 12px; line-height: 1.33; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; }
 
-/* Container */
+/* Container — mobile-first, generous inner gutter that scales up */
 .container {
   width: 100%;
   max-width: var(--content-max);
   margin-inline: auto;
-  padding-inline: var(--space-l);
+  padding-inline: clamp(16px, 4vw, 48px);
 }
-@media (min-width: 900px) {
-  .container { padding-inline: var(--gutter); }
-}
+
+/* Uniform section padding — scales from 40px on phones to 96px on desktop */
+.section { padding-block: clamp(40px, 8vw, 96px); }
 
 /* Focus — accessible + premium */
 :focus-visible {

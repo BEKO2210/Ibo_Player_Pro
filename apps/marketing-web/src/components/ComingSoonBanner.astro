@@ -1,0 +1,52 @@
+---
+import { WAITLIST_MAILTO } from "../utils/link";
+---
+<aside class="coming-soon" role="status" aria-live="polite">
+  <div class="container cs-inner">
+    <span class="cs-pill">Coming soon</span>
+    <span class="cs-text">
+      The app is in final preparation for Google Play.
+      <a href={WAITLIST_MAILTO}>Get notified at launch</a>.
+    </span>
+  </div>
+</aside>
+
+<style>
+  .coming-soon {
+    position: relative;
+    z-index: 60;
+    background: linear-gradient(135deg, var(--color-accent-blue-deep), var(--color-accent-violet));
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .cs-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm);
+    padding-block: 10px;
+  }
+  .cs-pill {
+    flex-shrink: 0;
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(6px);
+    font-size: 11px;
+    letter-spacing: 1.1px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .cs-text {
+    color: rgba(255, 255, 255, 0.92);
+  }
+  .cs-text a {
+    color: #fff;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .cs-text a:hover { color: #fff; text-decoration-thickness: 2px; }
+</style>

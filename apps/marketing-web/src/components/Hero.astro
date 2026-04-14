@@ -45,7 +45,7 @@ const { eyebrow, title, subtitle, primaryCta, secondaryCta } = Astro.props;
 <style>
   .hero {
     position: relative;
-    padding-block: var(--space-huge) var(--space-hero);
+    padding-block: clamp(40px, 8vw, 96px) clamp(56px, 10vw, 128px);
     overflow: hidden;
   }
   .hero::before {
@@ -82,11 +82,17 @@ const { eyebrow, title, subtitle, primaryCta, secondaryCta } = Astro.props;
   }
   .hero-title {
     margin: 0;
-    color: var(--color-on-surface-high);
+    color: var(--color-on-surface-high); /* fallback */
     background: linear-gradient(180deg, #fff 0%, #cdd6e3 100%);
     -webkit-background-clip: text;
     background-clip: text;
-    color: transparent;
+    -webkit-text-fill-color: transparent;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  @supports not (-webkit-background-clip: text) {
+    .hero-title { color: var(--color-on-surface-high); -webkit-text-fill-color: currentColor; }
   }
   .hero-subtitle {
     margin: 0;

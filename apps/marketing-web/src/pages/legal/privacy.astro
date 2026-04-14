@@ -2,8 +2,10 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PageHeader from "../../components/PageHeader.astro";
 import Section from "../../components/Section.astro";
+import { link } from "../../utils/link";
 
 const LAST_UPDATED = "2026-04-14";
+const IMPRINT_HREF = link("/legal/imprint");
 ---
 <BaseLayout
   title="Privacy Policy — Premium TV Player"
@@ -26,10 +28,11 @@ const LAST_UPDATED = "2026-04-14";
 
       <h2 class="t-title-large">1. Who we are</h2>
       <p>
-        Premium TV Player ("the App", "we", "us") is operated by
-        <em>{"{Company name to be inserted}"}</em>
-        (the "Operator"). Contact details are published on the
-        <a href="/legal/imprint">Imprint</a> page.
+        Premium TV Player ("the App", "we", "us") is an independent project
+        operated by <strong>Belkis Aslani</strong> (the "Operator"),
+        based in Freiberg am Neckar, Germany. A sole-proprietor business
+        registration is currently in progress. Full contact details are
+        published on the <a href={IMPRINT_HREF}>Imprint</a> page.
       </p>
 
       <h2 class="t-title-large">2. Data we collect</h2>
@@ -71,7 +74,7 @@ const LAST_UPDATED = "2026-04-14";
         If you are in the EU / EEA / UK, you have the right to access, correct, port and
         delete your personal data under the GDPR. You can exercise all of these rights
         directly from the <em>Settings → Account</em> screen in the app. For anything that
-        isn't self-service, email the address on the <a href="/legal/imprint">Imprint</a> page.
+        isn't self-service, email the address on the <a href={IMPRINT_HREF}>Imprint</a> page.
       </p>
 
       <h2 class="t-title-large">7. Children</h2>

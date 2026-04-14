@@ -3,17 +3,16 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import PageHeader from "../components/PageHeader.astro";
 import Section from "../components/Section.astro";
 import Button from "../components/Button.astro";
-
-const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiumtvplayer.app";
+import { WAITLIST_MAILTO } from "../utils/link";
 ---
 <BaseLayout
-  title="Pricing — Premium TV Player"
-  description="One-time payment, no subscriptions. 14-day trial, then Lifetime Single (€19.99) or Lifetime Family (€39.99). Purchases are handled securely via Google Play Billing."
+  title="Pricing — Premium TV Player (coming soon)"
+  description="One-time payment at launch, no subscriptions. 14-day trial, then Lifetime Single (€19.99) or Lifetime Family (€39.99). Available on Google Play shortly — join the waitlist."
 >
   <PageHeader
-    eyebrow="Pricing"
+    eyebrow="Pricing at launch"
     title="Pay once. Keep it forever."
-    lede="Start with a 14-day trial. When you're ready, unlock the full experience with a one-time purchase — handled securely through Google Play Billing."
+    lede="At launch, every account starts with a 14-day trial. When you're ready, unlock the full experience with a one-time purchase — handled securely through Google Play Billing. Pricing below is final."
   />
 
   <Section>
@@ -32,7 +31,7 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
           <li>Cloud-synced watch history</li>
           <li>All future updates included</li>
         </ul>
-        <Button href={PLAY_STORE_URL} label="Buy from Google Play" variant="secondary" external />
+        <Button href={WAITLIST_MAILTO} label="Notify me at launch" variant="secondary" external />
       </article>
 
       <article class="plan plan--featured">
@@ -51,7 +50,7 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
           <li>Cloud-synced watch history</li>
           <li>All future updates included</li>
         </ul>
-        <Button href={PLAY_STORE_URL} label="Buy from Google Play" variant="primary" external />
+        <Button href={WAITLIST_MAILTO} label="Notify me at launch" variant="primary" external />
       </article>
     </div>
   </Section>
@@ -59,9 +58,9 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
   <Section eyebrow="Trial" title="14 days on the house.">
     <div class="trial">
       <p class="t-body">
-        Every new account gets a 14-day trial that starts on first login. Nothing is charged, no card is
-        required, and we don't auto-renew — the trial simply ends, and you can upgrade to Lifetime any
-        time from inside the app.
+        At launch, every new account will get a 14-day trial that starts on first login. Nothing is
+        charged, no card is required, and we won't auto-renew — the trial simply ends, and you can
+        upgrade to Lifetime any time from inside the app.
       </p>
       <p class="t-body-small">
         Upgraded to Single but need Family later? Upgrade from the same billing flow — the difference is
@@ -72,6 +71,10 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
 
   <Section eyebrow="FAQ" title="Before you buy.">
     <dl class="faq">
+      <div>
+        <dt class="t-title">When does the app launch?</dt>
+        <dd class="t-body-small">We're in final preparation for Google Play. Sign up via the "Notify me" button above and we'll email you the moment the listing goes live.</dd>
+      </div>
       <div>
         <dt class="t-title">Is this a subscription?</dt>
         <dd class="t-body-small">No. Both tiers are one-time payments handled by Google Play. You own the license for the life of the product — there's no monthly billing, ever.</dd>
@@ -100,7 +103,7 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
   .plans { display: grid; grid-template-columns: 1fr; gap: var(--space-l); }
   @media (min-width: 800px) { .plans { grid-template-columns: repeat(2, 1fr); } }
   .plan {
-    padding: var(--space-xl);
+    padding: clamp(20px, 4vw, 32px);
     border-radius: var(--radius-l);
     border: 1px solid rgba(255, 255, 255, 0.06);
     background: linear-gradient(180deg, rgba(29, 33, 40, 0.7), rgba(20, 23, 28, 0.7));
@@ -120,7 +123,7 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
     width: fit-content;
   }
   .plan-name { margin: 0; color: var(--color-on-surface-high); }
-  .plan-price { margin: 0; color: var(--color-on-surface-high); display: inline-flex; align-items: baseline; gap: 6px; }
+  .plan-price { margin: 0; color: var(--color-on-surface-high); display: inline-flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
   .plan-price-note { color: var(--color-on-surface-muted); font-size: 16px; }
   .plan-list {
     margin: 0; padding-left: 20px;
@@ -142,7 +145,7 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
   }
   @media (min-width: 800px) { .faq { grid-template-columns: repeat(2, 1fr); } }
   .faq > div {
-    padding: var(--space-l);
+    padding: clamp(16px, 3.5vw, 24px);
     border-radius: var(--radius-l);
     background: rgba(29, 33, 40, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.06);

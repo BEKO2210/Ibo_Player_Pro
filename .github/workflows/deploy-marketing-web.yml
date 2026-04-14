@@ -1,0 +1,80 @@
+name: Deploy marketing-web to GitHub Pages
+
+# Build and publish apps/marketing-web as a static site on GitHub Pages.
+# - Triggers on pushes to main that touch the marketing-web source
+# - Can also be run manually from the Actions tab
+#
+# Before this workflow works the FIRST time:
+#   1. Go to the repo Settings → Pages
+#   2. Set "Source" to "GitHub Actions"
+#   3. (Optional) If you add a custom domain (premiumtvplayer.app), set it in
+#      Settings → Pages → Custom domain and add the CNAME in your DNS.
+#      Then change SITE below to your custom domain and BASE_PATH to "/".
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/marketing-web/**"
+      - ".github/workflows/deploy-marketing-web.yml"
+  workflow_dispatch:
+
+# Permissions required to publish a Pages artifact and deploy it.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Serialize deploys so a new push supersedes any in-flight deploy
+concurrency:
+  group: pages-marketing-web
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build static site
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/marketing-web
+    env:
+      # GitHub Pages serves this project site at https://<user>.github.io/<repo>/
+      # Override both values when using a custom domain.
+      SITE: https://beko2210.github.io
+      BASE_PATH: /Ibo_Player_Pro/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: apps/marketing-web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/marketing-web/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

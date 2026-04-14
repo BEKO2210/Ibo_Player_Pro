@@ -1,7 +1,8 @@
 ---
 import Button from "./Button.astro";
+import { link, isActive, WAITLIST_MAILTO } from "../utils/link";
+
 const path = Astro.url.pathname;
-const isActive = (p: string) => path === p || path.startsWith(p + "/");
 const nav = [
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
@@ -10,19 +11,27 @@ const nav = [
 ---
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="/" aria-label="Premium TV Player home">
+    <a class="brand" href={link("/")} aria-label="Premium TV Player home">
       <span class="brand-mark" aria-hidden="true"></span>
       <span class="brand-wordmark">Premium TV Player</span>
     </a>
     <nav class="primary-nav" aria-label="Primary">
       {nav.map((n) => (
-        <a class:list={["nav-link", { "is-active": isActive(n.href) }]} href={n.href}>{n.label}</a>
+        <a class:list={["nav-link", { "is-active": isActive(path, n.href) }]} href={link(n.href)}>{n.label}</a>
       ))}
     </nav>
     <div class="header-cta">
-      <Button href="/download" variant="primary" label="Get the app" />
+      <Button href={WAITLIST_MAILTO} variant="primary" label="Notify me" external />
     </div>
   </div>
+  {/* Mobile nav row — only below 800px */}
+  <nav class="mobile-nav" aria-label="Mobile">
+    <div class="container mobile-nav-inner">
+      {nav.map((n) => (
+        <a class:list={["mobile-nav-link", { "is-active": isActive(path, n.href) }]} href={link(n.href)}>{n.label}</a>
+      ))}
+    </div>
+  </nav>
 </header>
 
 <style>
@@ -30,19 +39,17 @@ const nav = [
     position: sticky;
     top: 0;
     z-index: 50;
-    height: var(--header-height);
-    display: flex;
-    align-items: center;
     backdrop-filter: blur(18px) saturate(140%);
     -webkit-backdrop-filter: blur(18px) saturate(140%);
-    background: rgba(5, 6, 8, 0.72);
+    background: rgba(5, 6, 8, 0.82);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   }
   .header-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-l);
+    gap: var(--space-m);
+    min-height: var(--header-height);
   }
   .brand {
     display: inline-flex;
@@ -51,19 +58,27 @@ const nav = [
     font-weight: 600;
     letter-spacing: 0.2px;
     color: var(--color-on-surface-high);
+    min-width: 0;
   }
   .brand-mark {
+    flex-shrink: 0;
     width: 28px;
     height: 28px;
     border-radius: 8px;
     background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-blue-deep));
     box-shadow: 0 6px 20px -6px rgba(59, 130, 246, 0.6);
   }
-  .brand-wordmark { font-size: 15px; }
-  @media (max-width: 640px) {
+  .brand-wordmark {
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  @media (max-width: 480px) {
     .brand-wordmark { display: none; }
   }
 
+  /* Desktop primary nav */
   .primary-nav {
     display: none;
     gap: var(--space-l);
@@ -80,8 +95,42 @@ const nav = [
   .nav-link:hover { color: var(--color-on-surface-high); }
   .nav-link.is-active { color: var(--color-on-surface-high); }
 
+  /* Header CTA — smaller on small screens */
   .header-cta :global(.btn) {
-    padding: 10px 18px;
+    padding: 10px 16px;
     font-size: 14px;
+  }
+  @media (max-width: 360px) {
+    .header-cta :global(.btn) { padding: 8px 12px; font-size: 13px; }
+  }
+
+  /* Mobile secondary nav — visible below 800px only */
+  .mobile-nav {
+    display: block;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    background: rgba(5, 6, 8, 0.6);
+  }
+  @media (min-width: 800px) {
+    .mobile-nav { display: none; }
+  }
+  .mobile-nav-inner {
+    display: flex;
+    justify-content: space-around;
+    gap: var(--space-s);
+    padding-block: 8px;
+    overflow-x: auto;
+  }
+  .mobile-nav-link {
+    font-size: 13px;
+    color: var(--color-on-surface-muted);
+    padding: 6px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+    transition: color var(--dur-short) var(--easing-premium),
+                background var(--dur-short) var(--easing-premium);
+  }
+  .mobile-nav-link.is-active {
+    color: var(--color-on-surface-high);
+    background: rgba(96, 165, 250, 0.15);
   }
 </style>

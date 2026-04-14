@@ -1,4 +1,5 @@
 ---
+import { link } from "../utils/link";
 const year = new Date().getFullYear();
 ---
 <footer class="site-footer">
@@ -10,18 +11,18 @@ const year = new Date().getFullYear();
     <nav class="footer-nav" aria-label="Footer">
       <div class="footer-col">
         <h4 class="t-label-small">Product</h4>
-        <a href="/features">Features</a>
-        <a href="/pricing">Pricing</a>
-        <a href="/download">Download</a>
+        <a href={link("/features")}>Features</a>
+        <a href={link("/pricing")}>Pricing</a>
+        <a href={link("/download")}>Download</a>
       </div>
       <div class="footer-col">
         <h4 class="t-label-small">Legal</h4>
-        <a href="/legal/privacy">Privacy</a>
-        <a href="/legal/imprint">Imprint</a>
+        <a href={link("/legal/privacy")}>Privacy</a>
+        <a href={link("/legal/imprint")}>Imprint</a>
       </div>
     </nav>
     <p class="footer-note t-body-small">
-      © {year} Premium TV Player. All rights reserved.
+      © {year} Belkis Aslani. All rights reserved.
     </p>
   </div>
 </footer>

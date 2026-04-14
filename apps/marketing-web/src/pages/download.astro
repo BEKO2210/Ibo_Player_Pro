@@ -3,31 +3,31 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import PageHeader from "../components/PageHeader.astro";
 import Section from "../components/Section.astro";
 import Button from "../components/Button.astro";
-
-const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiumtvplayer.app";
+import { WAITLIST_MAILTO } from "../utils/link";
 ---
 <BaseLayout
-  title="Download Premium TV Player for Android TV"
-  description="Download Premium TV Player on your Google TV or Android TV from the Google Play Store. Android 8.0 Oreo (API 26) or later."
+  title="Download — Premium TV Player (launching soon)"
+  description="Premium TV Player is launching soon on Google Play for Android TV and Google TV. Android 8.0 Oreo (API 26) or later. Join the waitlist to be notified."
 >
   <PageHeader
     eyebrow="Download"
-    title="Get it on your TV in under a minute."
-    lede="Premium TV Player is available on Google Play for Android TV and Google TV devices. Sign in with the same Google account on your TV, hit install, and you're ready to go."
+    title="Launching soon on Google Play."
+    lede="Premium TV Player is in final preparation for Google Play. Once approved, you'll be able to install it on any Google TV or Android TV device in under a minute. Sign up to be notified the moment the listing goes live."
   />
 
   <Section>
     <div class="download">
       <div class="download-card">
         <p class="t-label-small platform">Android TV · Google TV</p>
-        <h2 class="t-headline download-title">Install from Google Play</h2>
+        <h2 class="t-headline download-title">Not on Google Play yet.</h2>
         <p class="t-body">
-          Search for <strong>Premium TV Player</strong> on your TV, or open Google Play in a browser,
-          sign in, and push the install to your TV from there.
+          Premium TV Player is currently being finalized for submission to Google Play. When the
+          listing is approved, search for <strong>Premium TV Player</strong> on your TV, or open
+          Google Play in a browser and push the install to your TV from there.
         </p>
-        <Button href={PLAY_STORE_URL} label="Open on Google Play" variant="primary" external />
+        <Button href={WAITLIST_MAILTO} label="Notify me at launch" variant="primary" external />
         <p class="t-body-small store-note">
-          Package: <code>com.premiumtvplayer.app</code>
+          Future package: <code>com.premiumtvplayer.app</code>
         </p>
       </div>
 
@@ -51,12 +51,12 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
     </div>
   </Section>
 
-  <Section eyebrow="Other platforms" title="Coming next.">
+  <Section eyebrow="Other platforms" title="Coming after launch.">
     <div class="roadmap">
       <div class="roadmap-card">
-        <p class="t-label-small stage">Active</p>
+        <p class="t-label-small stage">Launch</p>
         <h3 class="t-title">Android TV</h3>
-        <p class="t-body-small">Available now on Google Play.</p>
+        <p class="t-body-small">First on Google Play — currently in final preparation.</p>
       </div>
       <div class="roadmap-card">
         <p class="t-label-small stage">Next</p>
@@ -77,7 +77,7 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
   @media (min-width: 900px) { .download { grid-template-columns: 1.3fr 1fr; align-items: start; } }
 
   .download-card {
-    padding: var(--space-xl);
+    padding: clamp(20px, 4vw, 32px);
     border-radius: var(--radius-l);
     background: linear-gradient(135deg, rgba(37, 99, 235, 0.22), rgba(139, 92, 246, 0.12));
     border: 1px solid rgba(96, 165, 250, 0.3);
@@ -93,10 +93,11 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.08);
     color: var(--color-on-surface);
+    word-break: break-all;
   }
 
   .requirements {
-    padding: var(--space-xl);
+    padding: clamp(20px, 4vw, 32px);
     border-radius: var(--radius-l);
     background: linear-gradient(180deg, rgba(29, 33, 40, 0.6), rgba(20, 23, 28, 0.6));
     border: 1px solid rgba(255, 255, 255, 0.06);
@@ -112,7 +113,7 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.premiu
   .roadmap { display: grid; grid-template-columns: 1fr; gap: var(--space-l); }
   @media (min-width: 800px) { .roadmap { grid-template-columns: repeat(3, 1fr); } }
   .roadmap-card {
-    padding: var(--space-l);
+    padding: clamp(16px, 3.5vw, 24px);
     border-radius: var(--radius-l);
     background: rgba(29, 33, 40, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.06);

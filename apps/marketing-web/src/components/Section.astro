@@ -22,12 +22,10 @@ const { eyebrow, title, lede, align = "left", id } = Astro.props;
 </section>
 
 <style>
-  .section {
-    padding-block: var(--space-huge);
-  }
+  /* Padding comes from global .section rule (clamped responsive) */
   .section-head {
     max-width: 760px;
-    margin-bottom: var(--space-xxl);
+    margin-bottom: clamp(24px, 4vw, 48px);
     display: flex;
     flex-direction: column;
     gap: var(--space-m);
