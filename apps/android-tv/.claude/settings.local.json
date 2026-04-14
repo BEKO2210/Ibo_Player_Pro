@@ -19,7 +19,8 @@
       "Read(//c/Program Files/**)",
       "Read(//c/Program Files/Eclipse Adoptium/**)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }

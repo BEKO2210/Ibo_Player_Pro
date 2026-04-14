@@ -13,7 +13,7 @@ talking to the V1 NestJS backend over Retrofit.
 
 ## Stack
 
-- **Kotlin 2.0** + **Gradle 8.11** (Kotlin DSL, version catalog at
+- **Kotlin 2.0** + **Gradle 8.14** (Kotlin DSL, version catalog at
   `gradle/libs.versions.toml`)
 - **Android Gradle Plugin 8.7**
 - **Jetpack Compose** + **Compose for TV** (`androidx.tv:tv-foundation`,
@@ -123,7 +123,7 @@ Every component has at least one `@Preview` exercising it under
 
 ```bash
 # First checkout: generate the wrapper jar (Studio does this for you on import)
-gradle wrapper --gradle-version 8.11
+gradle wrapper --gradle-version 8.14
 
 # Build, install, launch
 ./gradlew :app:assembleDebug

@@ -160,7 +160,7 @@ ErrorEnvelope mapping, every ViewModel state transition.
 Phase A — Foundation & Specs                ✓ Run 1–5
 Phase B — Backend V1                        ✓ Run 6–10
 Phase C — Android TV Client                 ✓ Run 11–18
-Phase D — Polish & Ship-Ready               ✓ Run 20+ 
+Phase D — Polish & Ship-Ready               ⏳ Run 19 done · Run 20 pending
 
 ```
 
