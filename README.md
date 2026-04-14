@@ -128,11 +128,12 @@ Production deployment, hardening, restore drill, runbooks:
 
 ## Quality bar
 
-Every commit on this repo passes both gates before it lands:
+Every commit on this repo passes three CI gates before it lands:
 
 ```bash
 ./scripts/check-drift.sh           # 8 invariants (API, i18n, nav, tokens)
 cd services/api && npm test        # 143 backend + workers + parsers tests
+./apps/android-tv/gradlew -p apps/android-tv :app:testDebugUnitTest  # Android JVM unit tests (CI job: android-jvm-tests)
 ```
 
 Drift gate enforces, in 8 invariants:
