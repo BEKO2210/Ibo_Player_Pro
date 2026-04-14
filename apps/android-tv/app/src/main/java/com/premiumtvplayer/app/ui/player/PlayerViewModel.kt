@@ -123,7 +123,7 @@ class PlayerViewModel @Inject constructor(
         } else {
             PlayerUiState.Paused(session, currentPositionSeconds, currentDurationSeconds)
         }
-        ensureHeartbeatRunning()
+        // Heartbeat starts on first onProgress (when we have a real position).
     }
 
     fun onBuffering() {

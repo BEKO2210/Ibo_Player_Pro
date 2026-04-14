@@ -76,7 +76,7 @@ class PinGateViewModel @Inject constructor(
                     "locked" -> _uiState.value = editing.copy(
                         submitting = false,
                         pin = "",
-                        errorMessage = "Too many wrong tries. Try again later.",
+                        errorMessage = "Account locked. Too many wrong tries. Try again later.",
                         lockedUntilIso = result.lockedUntil,
                     )
                     "no_pin" -> {
