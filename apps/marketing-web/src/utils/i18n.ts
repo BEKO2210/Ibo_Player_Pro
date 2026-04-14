@@ -10,7 +10,7 @@
  * engines and lets us add new languages as purely additive changes.
  */
 
-export const locales = ["de", "en"] as const;
+export const locales = ["de", "en", "sq"] as const;
 export type Locale = (typeof locales)[number];
 
 /** Locale whose pages live at the URL root (no prefix). */
@@ -20,12 +20,21 @@ export const defaultLocale: Locale = "de";
 export const localeLabels: Record<Locale, string> = {
   de: "Deutsch",
   en: "English",
+  sq: "Shqip",
 };
 
 /** Short label used inside pill-style switchers. */
 export const localeShort: Record<Locale, string> = {
   de: "DE",
   en: "EN",
+  sq: "SQ",
+};
+
+/** BCP 47 / Open Graph locale tag for each language. */
+export const ogLocaleTag: Record<Locale, string> = {
+  de: "de_DE",
+  en: "en_US",
+  sq: "sq_AL",
 };
 
 /**

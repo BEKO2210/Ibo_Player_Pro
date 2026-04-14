@@ -1,0 +1,93 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHeader from "../../components/PageHeader.astro";
+import Section from "../../components/Section.astro";
+import Button from "../../components/Button.astro";
+import { waitlistMailto } from "../../utils/link";
+const WAITLIST = waitlistMailto("sq");
+---
+<BaseLayout
+  title="Shkarko — Premium TV Player (së shpejti)"
+  description="Premium TV Player vjen së shpejti në Google Play për Android TV dhe Google TV. Android 8.0 Oreo (API 26) ose më i ri. Regjistrohu në listën e pritjes."
+>
+  <PageHeader
+    eyebrow="Shkarko"
+    title="Së shpejti në Google Play."
+    lede="Premium TV Player është në përgatitjet e fundit për Google Play. Sapo listimi të aprovohet, do ta instalosh në çdo pajisje Google TV ose Android TV në më pak se një minutë. Regjistrohu dhe do të marrësh një email në çastin që listimi të bëhet live."
+  />
+
+  <Section>
+    <div class="download">
+      <div class="download-card">
+        <p class="t-label-small platform">Android TV · Google TV</p>
+        <h2 class="t-headline download-title">Ende jo në Google Play.</h2>
+        <p class="t-body">
+          Premium TV Player është duke u përfunduar për dorëzim. Sapo listimi të aprovohet,
+          kërko për <strong>Premium TV Player</strong> në televizorin tënd, ose hap Google Play
+          në shfletues dhe dërgo instalimin drejtpërdrejt te televizori yt.
+        </p>
+        <Button href={WAITLIST} label="Më njofto në nisje" variant="primary" external />
+        <p class="t-body-small store-note">
+          Paketa e ardhshme: <code>com.premiumtvplayer.app</code>
+        </p>
+      </div>
+
+      <aside class="requirements">
+        <h3 class="t-title">Kërkesat e sistemit</h3>
+        <ul>
+          <li><strong>Android 8.0 Oreo</strong> (API 26) ose më i ri</li>
+          <li>Pajisje Android TV ose Google TV me nisës Leanback</li>
+          <li>Lidhje aktive interneti për identifikim, sinkronizim EPG &amp; faturim</li>
+          <li>Të paktën 100 MB hapësirë të lirë</li>
+          <li>Llogari Google (për Play Billing)</li>
+        </ul>
+
+        <h3 class="t-title">Testuar në</h3>
+        <ul>
+          <li>Google TV Streamer, Chromecast me Google TV, NVIDIA Shield TV</li>
+          <li>Sony BRAVIA Google TV, TCL Google TV, Hisense Google TV</li>
+          <li>Emulator Android TV (API 30+)</li>
+        </ul>
+      </aside>
+    </div>
+  </Section>
+
+  <Section eyebrow="Platforma të tjera" title="Vijnë pas nisjes.">
+    <div class="roadmap">
+      <div class="roadmap-card">
+        <p class="t-label-small stage">Nisje</p>
+        <h3 class="t-title">Android TV</h3>
+        <p class="t-body-small">I pari në Google Play — aktualisht në përgatitjet e fundit.</p>
+      </div>
+      <div class="roadmap-card">
+        <p class="t-label-small stage">Tjetër</p>
+        <h3 class="t-title">Android Mobile</h3>
+        <p class="t-body-small">Aplikacion shoqërues për menaxhimin e burimeve, profileve dhe pajisjeve në lëvizje.</p>
+      </div>
+      <div class="roadmap-card">
+        <p class="t-label-small stage">I planifikuar</p>
+        <h3 class="t-title">Apple TV · Samsung · LG</h3>
+        <p class="t-body-small">Klientët tvOS, Tizen dhe webOS janë në hartën e rrugës. I njëjti llogari, e njëjta licencë, i njëjti sinkronizim në renë kompjuterike.</p>
+      </div>
+    </div>
+  </Section>
+</BaseLayout>
+
+<style>
+  .download { display: grid; grid-template-columns: 1fr; gap: var(--space-xl); }
+  @media (min-width: 900px) { .download { grid-template-columns: 1.3fr 1fr; align-items: start; } }
+  .download-card { padding: clamp(20px, 4vw, 32px); border-radius: var(--radius-l); background: linear-gradient(135deg, rgba(37, 99, 235, 0.22), rgba(139, 92, 246, 0.12)); border: 1px solid rgba(96, 165, 250, 0.3); display: flex; flex-direction: column; gap: var(--space-m); }
+  .platform { margin: 0; color: var(--color-accent-cyan); }
+  .download-title { margin: 0; color: var(--color-on-surface-high); }
+  .store-note { margin: 0; color: var(--color-on-surface-muted); }
+  .store-note code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; padding: 2px 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); color: var(--color-on-surface); word-break: break-all; }
+  .requirements { padding: clamp(20px, 4vw, 32px); border-radius: var(--radius-l); background: linear-gradient(180deg, rgba(29, 33, 40, 0.6), rgba(20, 23, 28, 0.6)); border: 1px solid rgba(255, 255, 255, 0.06); display: flex; flex-direction: column; gap: var(--space-m); }
+  .requirements h3 { margin: 0; color: var(--color-on-surface-high); }
+  .requirements ul { margin: 0; padding-left: 20px; color: var(--color-on-surface); display: flex; flex-direction: column; gap: var(--space-s); }
+  .roadmap { display: grid; grid-template-columns: 1fr; gap: var(--space-l); }
+  @media (min-width: 800px) { .roadmap { grid-template-columns: repeat(3, 1fr); } }
+  .roadmap-card { padding: clamp(16px, 3.5vw, 24px); border-radius: var(--radius-l); background: rgba(29, 33, 40, 0.5); border: 1px solid rgba(255, 255, 255, 0.06); display: flex; flex-direction: column; gap: var(--space-s); }
+  .stage { margin: 0; color: var(--color-accent-cyan); }
+  .roadmap-card h3 { margin: 0; color: var(--color-on-surface-high); }
+  .roadmap-card p  { margin: 0; }
+</style>

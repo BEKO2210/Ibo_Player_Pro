@@ -1,5 +1,5 @@
 ---
-import { link, isActive } from "../utils/link";
+import { link, isActive, asset } from "../utils/link";
 import LocaleSwitcher from "./LocaleSwitcher.astro";
 import { getLocaleFromPath } from "../utils/i18n";
 
@@ -18,13 +18,34 @@ const navByLocale = {
     { href: "/pricing", label: "Pricing" },
     { href: "/download", label: "Download" },
   ],
+  sq: [
+    { href: "/features", label: "Veçoritë" },
+    { href: "/pricing", label: "Çmimet" },
+    { href: "/download", label: "Shkarko" },
+  ],
 } as const;
 const nav = navByLocale[locale];
-const logoHref = link("/logo.png", locale);
+const logoHref = asset("/logo.png");
 const homeHref = link("/", locale);
-const homeAria = locale === "de" ? "Premium TV Player – Startseite" : "Premium TV Player – Home";
-const primaryNavLabel = locale === "de" ? "Hauptnavigation" : "Primary";
-const mobileNavLabel = locale === "de" ? "Mobile-Navigation" : "Mobile";
+
+const homeAriaByLocale = {
+  de: "Premium TV Player – Startseite",
+  en: "Premium TV Player – Home",
+  sq: "Premium TV Player – Ballina",
+} as const;
+const primaryNavLabelByLocale = {
+  de: "Hauptnavigation",
+  en: "Primary",
+  sq: "Navigimi kryesor",
+} as const;
+const mobileNavLabelByLocale = {
+  de: "Mobile-Navigation",
+  en: "Mobile",
+  sq: "Navigimi mobil",
+} as const;
+const homeAria = homeAriaByLocale[locale];
+const primaryNavLabel = primaryNavLabelByLocale[locale];
+const mobileNavLabel = mobileNavLabelByLocale[locale];
 ---
 <header class="site-header">
   <div class="container header-inner">

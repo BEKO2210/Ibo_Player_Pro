@@ -14,8 +14,14 @@ interface Props {
 }
 const { current, pathname } = Astro.props;
 const logical = logicalPath(pathname);
+
+const switcherAriaLabel: Record<Locale, string> = {
+  de: "Sprache wählen",
+  en: "Choose language",
+  sq: "Zgjidhni gjuhën",
+};
 ---
-<div class="locale-switcher" role="group" aria-label={current === "de" ? "Sprache wählen" : "Choose language"}>
+<div class="locale-switcher" role="group" aria-label={switcherAriaLabel[current]}>
   {locales.map((loc) => {
     const href = link(logical, loc);
     const isCurrent = loc === current;

@@ -1,12 +1,12 @@
 ---
-import { link } from "../utils/link";
+import { link, asset } from "../utils/link";
 import LocaleSwitcher from "./LocaleSwitcher.astro";
 import { getLocaleFromPath } from "../utils/i18n";
 
 const path = Astro.url.pathname;
 const locale = getLocaleFromPath(path);
 const year = new Date().getFullYear();
-const logoHref = link("/logo.png", locale);
+const logoHref = asset("/logo.png");
 
 const copy = {
   de: {
@@ -30,6 +30,17 @@ const copy = {
     privacy: "Privacy",
     imprint: "Imprint",
     rights: "All rights reserved.",
+  },
+  sq: {
+    footerLabel: "Navigimi i fundit",
+    product: "Produkti",
+    legal: "Ligjore",
+    features: "Veçoritë",
+    pricing: "Çmimet",
+    download: "Shkarko",
+    privacy: "Privatësia",
+    imprint: "Të dhënat ligjore",
+    rights: "Të gjitha të drejtat e rezervuara.",
   },
 }[locale];
 ---

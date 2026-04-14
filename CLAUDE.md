@@ -22,13 +22,13 @@
 
 - **Phase:** D — Polish & Ship-Ready
 - **Last completed run (app roadmap):** Run 19 — i18n + Premium error states + Diagnostics
-- **Last completed run (marketing-web):** MW-4 — multi-language architecture (DE default + EN, extensible)
+- **Last completed run (marketing-web):** MW-5 — Albanian (sq) added + asset/page path split
 - **Current branch:** `claude/fix-api-timeout-7AYxm`
 - **Push target:** same branch (`-u origin claude/fix-api-timeout-7AYxm`)
 - **Logo status:** ✅ received in Run 6 — `assets/logo/logo-no_background.png` (transparent PNG, blue gradient play-button with signal waves). Animated variant `assets/logo/Logo_ani.gif` consumed by marketing-web hero (MW-2).
 - **applicationId:** ✅ locked in Run 11 — `com.premiumtvplayer.app` (matches `BILLING_ANDROID_PACKAGE_NAME`)
 - **CI status:** ✅ `CI` workflow runs `drift-check`, `backend-tests`, `android-jvm-tests`. `deploy-marketing-web` workflow publishes `apps/marketing-web/` to GitHub Pages on pushes to `main` that touch `apps/marketing-web/**`.
-- **Marketing site:** `apps/marketing-web/` (Astro, static). Pre-launch state, bilingual (DE default at `/`, EN at `/en/…`), deploys to `https://beko2210.github.io/Ibo_Player_Pro/`. Adding a new locale = one entry in `src/utils/i18n.ts` + a new page tree under `src/pages/<locale>/`. Waitlist CTA points at `mailto:belkis.aslani@gmail.com` with locale-specific subject/body.
+- **Marketing site:** `apps/marketing-web/` (Astro, static). Pre-launch state, trilingual (DE default at `/`, EN at `/en/…`, SQ/Shqip at `/sq/…`), deploys to `https://beko2210.github.io/Ibo_Player_Pro/`. Adding a new locale = one entry in `src/utils/i18n.ts` + WAITLIST_COPY + nav labels in Header/Footer + a new page tree under `src/pages/<locale>/`. `link()` handles page URLs with locale prefix; `asset()` handles locale-independent assets (logo, favicon, sitemap). Waitlist CTA points at `mailto:belkis.aslani@gmail.com` with locale-specific subject/body.
 
 ---
 
@@ -280,7 +280,7 @@ Proprietary. All Rights Reserved. See `LICENSE`. Not open source. Do not distrib
 - **Playback URL resolver (from Run 16):** Run 16 passes the playback `mediaUrl` through the nav graph because the server doesn't yet have a dedicated resolver that decrypts source credentials + signs short-lived playback URLs. Home deep-links fall back to public test streams (Apple BipBop HLS / Big Buck Bunny MP4) so the playback path is exercisable today. Proper resolver (likely `POST /v1/playback/resolve`) is a Run 18.5 / 20 security hardening item; would also allow the server to enforce device-bound playback tokens and per-device concurrent-stream caps.
 - **EPG duplicate handling (from Run 16):** the EPG worker inserts programmes without a natural unique key (no provider consistently emits an id). Providers that re-emit the same programme window will create duplicates. A companion dedupe/cleanup job (on `(channel_id, starts_at)`) can be added if storage becomes an issue; defer until observability tells us it matters.
 - **i18n migration of remaining screens (from Run 19):** the string catalogue + `UserErrorMessage` infrastructure are in place; every key for every screen exists in `values/strings.xml` (and `values-de/strings.xml`). Many existing screens still have inline `Text(text = "...")` literals — swapping them to `stringResource(R.string.*)` is mechanical work that doesn't change behaviour. Touch each screen as part of the next time it's edited; full sweep can also be a single Run 19.5 if anyone wants the locale switch to be 100% complete before launch.
-- **marketing-web sub-project (from MW-1..4):** separate workstream at `apps/marketing-web/` (Astro, static). Owns its own README, Pages deploy workflow (`.github/workflows/deploy-marketing-web.yml`), locale-aware link/mailto helpers (`src/utils/i18n.ts`, `src/utils/link.ts`) and design tokens mirrored from `packages/ui-tokens`. Pre-launch. Bilingual (DE default at `/`, EN at `/en/…`). Open items tracked in `apps/marketing-web/README.md` (Gewerbe-registration → update imprint, OG image, optional GIF → MP4/WebM conversion for payload reduction, hreflang link tags in `<head>` for proper SEO across locales).
+- **marketing-web sub-project (from MW-1..5):** separate workstream at `apps/marketing-web/` (Astro, static). Owns its own README, Pages deploy workflow (`.github/workflows/deploy-marketing-web.yml`), locale-aware link/mailto helpers (`src/utils/i18n.ts`, `src/utils/link.ts`) and design tokens mirrored from `packages/ui-tokens`. Pre-launch. Trilingual (DE default at `/`, EN at `/en/…`, SQ/Shqip at `/sq/…`). Open items tracked in `apps/marketing-web/README.md` (Gewerbe-registration → update imprint, OG image, optional GIF → MP4/WebM conversion for payload reduction, hreflang link tags in `<head>` for proper SEO across locales, **native-speaker review pass on the Albanian copy** — the initial SQ translation is best-effort and should be proofread before going public).
 
 ---
 
@@ -623,3 +623,17 @@ Separate workstream from the app roadmap. Lives at `apps/marketing-web/`
   - Cross-page switch: EN `/en/features/` LocaleSwitcher → `/features/` (same logical page, DE locale) ✓
   - Locale-scoped privacy-imprint link: DE privacy → `/legal/imprint`, EN privacy → `/en/legal/imprint`
 - Docs: `CLAUDE.md` Current State updated (bilingual site, extensibility note), Parking Lot marketing-web entry now points to the i18n helpers + notes hreflang as the next SEO follow-up. Marketing-Web Log appended with this MW-4 entry
+
+### MW-5 — 2026-04-14 — Albanian (Shqip) locale + asset/page path split bug fix
+- **Bug fix (surfaced on `/en/` staging):** the Header's logo `<img>` resolved to `/en/logo.png` because `link("/logo.png", "en")` prefixed the locale onto asset URLs too. Assets in `public/` are locale-independent — they exist once. Introduced a second helper `asset(path)` in `src/utils/link.ts` that applies only the BASE_URL prefix, never a locale segment. `link()` stays as-is for page URLs. Header, Footer and BaseLayout now call `asset()` for logo, favicon, sitemap and og-image references. Documented in JSDoc so future contributors pick the right helper
+- `src/utils/i18n.ts`: `locales` array extended to `["de", "en", "sq"]`; `localeLabels.sq = "Shqip"`; `localeShort.sq = "SQ"`; new `ogLocaleTag` map (`de_DE` / `en_US` / `sq_AL`) consumed by BaseLayout so `<meta property="og:locale">` stays in lockstep with the URL
+- `src/utils/link.ts`: `WAITLIST_COPY.sq` — Albanian subject ("Premium TV Player — Lista e pritjes") + body so the operator's inbox preserves the visitor's language
+- Chrome (Header, Footer, BaseLayout, LocaleSwitcher): `navByLocale.sq = [Veçoritë, Çmimet, Shkarko]`, Footer columns (`Produkti / Ligjore`, `Privatësia / Të dhënat ligjore`, rights line `Të gjitha të drejtat e rezervuara.`), homepage aria-label `Premium TV Player – Ballina`, primary-nav label `Navigimi kryesor`, mobile-nav label `Navigimi mobil`, skip-link `Kalo te përmbajtja`, LocaleSwitcher group label `Zgjidhni gjuhën`, BaseLayout Albanian default description
+- New EN-sibling page tree at `src/pages/sq/`: `index.astro`, `features.astro`, `pricing.astro`, `download.astro`, `legal/privacy.astro`, `legal/imprint.astro`. Full Albanian copy. Structure, layout, icons and components stay identical — only the text differs, so translators never see markup
+- Verified via `npm run build` → **18 pages** (6 DE + 6 EN + 6 SQ) + `sitemap-index.xml` in ~3.3s, zero warnings
+- Verified via grep against generated HTML:
+  - Logo href is `/logo.png` (or `/Ibo_Player_Pro/logo.png` under GH Pages) on `/`, `/en/` and `/sq/` — no more `/en/logo.png` 404
+  - `<html lang>` is `de` / `en` / `sq` respectively; `og:locale` matches
+  - SQ home LocaleSwitcher offers all three targets (`/`, `/en/`, `/sq/`) with `/sq/` highlighted as current
+  - Albanian nav labels (Veçoritë · Çmimet · Shkarko) render on `/sq/`
+- **Honesty note in CLAUDE.md Parking Lot:** the SQ translation is operator-best-effort and should be proofread by a native speaker before public launch

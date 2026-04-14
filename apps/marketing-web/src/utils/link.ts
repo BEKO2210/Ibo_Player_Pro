@@ -2,7 +2,8 @@ import { defaultLocale, type Locale } from "./i18n";
 
 /**
  * Prefix an internal href with Astro's base path and, if needed, a
- * locale prefix.
+ * locale prefix. Use this for PAGE links only — not for assets under
+ * `public/`, which are locale-independent (use `asset()` instead).
  *
  *   link("/features")        // → "/features"                  (default locale)
  *   link("/features", "en")  // → "/en/features"               (English)
@@ -12,13 +13,32 @@ import { defaultLocale, type Locale } from "./i18n";
  * prefix on top (e.g. "/Ibo_Player_Pro/en/features").
  */
 export function link(path: string, locale: Locale = defaultLocale): string {
-  const base = import.meta.env.BASE_URL ?? "/";
-  const baseClean = base.endsWith("/") ? base.slice(0, -1) : base;
+  const baseClean = baseNoTrailingSlash();
   const pathClean = path.startsWith("/") ? path : `/${path}`;
 
   const localeSegment = locale === defaultLocale ? "" : `/${locale}`;
   const joined = `${baseClean}${localeSegment}${pathClean}`;
   return joined === "" ? "/" : joined;
+}
+
+/**
+ * Prefix an asset path (something under `public/`) with Astro's base
+ * path only — WITHOUT any locale segment. Logos, favicons, sitemap,
+ * og images etc. live once per site, not per language.
+ *
+ *   asset("/logo.png")   // → "/logo.png"                 (root deploy)
+ *   asset("/logo.png")   // → "/Ibo_Player_Pro/logo.png"  (GH Pages)
+ */
+export function asset(path: string): string {
+  const baseClean = baseNoTrailingSlash();
+  const pathClean = path.startsWith("/") ? path : `/${path}`;
+  const joined = `${baseClean}${pathClean}`;
+  return joined === "" ? "/" : joined;
+}
+
+function baseNoTrailingSlash(): string {
+  const base = import.meta.env.BASE_URL ?? "/";
+  return base.endsWith("/") ? base.slice(0, -1) : base;
 }
 
 /**
@@ -57,6 +77,13 @@ const WAITLIST_COPY: Record<Locale, { subject: string; body: string }> = {
       "Hi,\n\n" +
       "I'd like to be notified when Premium TV Player launches on Google Play.\n\n" +
       "Thanks!",
+  },
+  sq: {
+    subject: "Premium TV Player — Lista e pritjes",
+    body:
+      "Përshëndetje,\n\n" +
+      "ju lutem më njoftoni sapo Premium TV Player të jetë i disponueshëm në Google Play.\n\n" +
+      "Faleminderit!",
   },
 };
 
